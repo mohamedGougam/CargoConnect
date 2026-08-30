@@ -1,0 +1,25 @@
+World Port Index Number,Region Name,Main Port Name,Alternate Port Name,UN/LOCODE,Country Code,Harbor Size,Harbor Type,Channel Depth (m),Anchorage Depth (m),Cargo Pier Depth (m),Facilities - Container,Facilities - Solid Bulk,Facilities - Liquid Bulk,Facilities - Oil Terminal,Facilities - Breakbulk,Facilities - Ro-Ro,Facilities - LNG Terminal,Latitude,Longitude
+43760,Mediterranean - Eastern,PIRAEUS,,GRPIR,GR,Large,Coastal Natural,16,18,18.5,Yes,No,No,No,Yes,Yes,No,37.948,23.643
+43750,Mediterranean - Eastern,THESSALONIKI,,GRSKG,GR,Medium,Coastal Natural,12,14,11,Yes,Yes,No,No,Yes,No,No,40.632,22.936
+43740,Mediterranean - Eastern,HERAKLION,,GRHER,GR,Medium,Coastal Natural,10,12,11,Yes,No,No,No,Yes,Yes,No,35.341,25.14
+43720,Mediterranean - Eastern,VOLOS,,GRVOL,GR,Small,Coastal Natural,9,11,10,No,Yes,No,No,Yes,No,No,39.35,22.95
+43700,Mediterranean - Eastern,PATRAS,,GRGPA,GR,Medium,Coastal Natural,10,12,11,No,No,No,No,Yes,Yes,No,38.25,21.73
+43710,Mediterranean - Eastern,IGOUOMENITSA,,GRIGO,GR,Small,Coastal Natural,8,10,9,No,No,No,No,Yes,Yes,No,39.5,20.27
+44740,Mediterranean - Eastern,ISTANBUL,,TRIST,TR,Large,River Natural,12,15,11,Yes,Yes,Yes,Yes,Yes,Yes,No,41.01,28.98
+44750,Mediterranean - Eastern,IZMIR,,TRIZM,TR,Large,Coastal Natural,11,14,12,Yes,Yes,No,No,Yes,Yes,No,38.43,27.14
+44760,Mediterranean - Eastern,MERSIN,,TRMER,TR,Large,Coastal Natural,14,16,15,Yes,Yes,No,No,Yes,No,No,36.8,34.64
+44900,Mediterranean - Eastern,ISKENDERUN,,TRISK,TR,Medium,Coastal Natural,12,14,13,Yes,Yes,Yes,Yes,Yes,No,No,36.58,36.17
+39740,Mediterranean - Eastern,ALEXANDRIA,,EGALY,EG,Large,Coastal Natural,14,16,12,Yes,Yes,Yes,Yes,Yes,No,No,31.2,29.89
+39750,Mediterranean - Eastern,PORT SAID,,EGPSD,EG,Large,Coastal Natural,16,18,14,Yes,No,No,No,Yes,No,No,31.25,32.3
+39760,Mediterranean - Eastern,DAMIETTA,,EGDAM,EG,Medium,Coastal Natural,14,15,14,Yes,No,No,No,Yes,No,No,31.52,31.75
+39770,Mediterranean - Eastern,SUEZ,,EGSUZ,EG,Medium,Coastal Natural,12,14,11,No,Yes,Yes,Yes,Yes,No,No,29.96,32.55
+42750,Mediterranean - Eastern,LIMASSOL,,CYLMS,CY,Medium,Coastal Natural,14,16,15,Yes,No,No,No,Yes,Yes,No,34.65,33.02
+42740,Mediterranean - Eastern,LARNACA,,CYLCA,CY,Small,Coastal Natural,10,12,11,No,No,Yes,Yes,Yes,No,No,34.92,33.64
+40740,Mediterranean - Eastern,BEIRUT,,LBBEY,LB,Medium,Coastal Natural,12,14,13,Yes,No,No,No,Yes,No,No,33.9,35.52
+41740,Mediterranean - Eastern,HAIFA,,ILHFA,IL,Large,Coastal Natural,14,16,14,Yes,Yes,No,No,Yes,No,No,32.82,35.0
+41750,Mediterranean - Eastern,ASHDOD,,ILASH,IL,Medium,Coastal Natural,13,15,14,Yes,Yes,No,No,Yes,No,No,31.82,34.65
+37750,Mediterranean - Central,VALLETTA,,MTMLA,MT,Medium,Coastal Natural,14,16,12,Yes,No,No,No,Yes,Yes,No,35.89,14.51
+36740,Mediterranean - Central,AUGUSTA,,ITAUG,IT,Medium,Coastal Natural,12,14,13,No,Yes,Yes,Yes,Yes,No,No,37.23,15.22
+36750,Mediterranean - Central,CATANIA,,ITCTA,IT,Medium,Coastal Natural,10,12,11,Yes,No,No,No,Yes,No,No,37.49,15.09
+36760,Mediterranean - Central,PALERMO,,ITPMO,IT,Medium,Coastal Natural,11,13,12,Yes,No,No,No,Yes,Yes,No,38.12,13.37
+35740,Mediterranean - Eastern,DURRES,,ALDRZ,AL,Small,Coastal Natural,8,10,9,No,Yes,No,No,Yes,No,No,41.31,19.46

@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+:root {
+  --background: #071018;
+  --foreground: #e8eef5;
+  --cc-teal: #5eead4;
+  --cc-ocean: #0f766e;
+  --cc-glass: rgba(12, 22, 34, 0.72);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-manrope), system-ui, sans-serif;
+}
+
+.cc-map-canvas .maplibregl-canvas,
+.cc-map-canvas .maplibregl-canvas-container {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.maplibregl-map {
+  font: inherit;
+}
+
+.maplibregl-ctrl-bottom-right {
+  margin: 0 12px 48px 0;
+  transition: margin-right 220ms ease-out;
+}
+
+/* Keep zoom controls clear of the open details drawer */
+html.cc-drawer-open .maplibregl-ctrl-bottom-right {
+  margin-right: min(432px, calc(90vw + 12px));
+}
+
+html.cc-drawer-open .maplibregl-ctrl-bottom-left {
+  max-width: calc(100vw - min(440px, 90vw) - 24px);
+}
+
+.cc-drawer-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+}
+
+.cc-drawer-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cc-drawer-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cc-drawer-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+}
+
+.maplibregl-ctrl-group {
+  background: rgba(8, 16, 28, 0.82) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+  overflow: hidden;
+}
+
+.maplibregl-ctrl-group button {
+  background-color: transparent !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.maplibregl-ctrl-group button + button {
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.maplibregl-ctrl-group button span {
+  filter: invert(1) brightness(1.1);
+}
+
+.maplibregl-ctrl-attrib {
+  background: rgba(8, 16, 28, 0.55) !important;
+  color: rgba(226, 232, 240, 0.7) !important;
+  font-size: 10px !important;
+}
+
+.maplibregl-ctrl-attrib a {
+  color: rgba(153, 246, 228, 0.9) !important;
+}
+
+.cc-cursor {
+  animation: cc-blink 1s steps(1) infinite;
+}
+
+@keyframes cc-blink {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Hide default Next.js focus rings only where intentional overlays handle focus */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

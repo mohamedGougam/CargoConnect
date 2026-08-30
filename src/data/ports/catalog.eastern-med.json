@@ -1,0 +1,711 @@
+{
+  "version": 1,
+  "generatedAt": "2026-08-29T14:46:39.565Z",
+  "bbox": {
+    "minLat": 30,
+    "maxLat": 42,
+    "minLon": 18,
+    "maxLon": 37
+  },
+  "sources": [
+    "NGA_WPI",
+    "UN_LOCODE"
+  ],
+  "disclaimer": "Not for navigation. WPI is a U.S. Government work; do not imply NGA endorsement. UN/LOCODE per UNECE terms.",
+  "ports": [
+    {
+      "id": "port-egaly",
+      "name": "Alexandria",
+      "country": "Egypt",
+      "locationLabel": "Mediterranean - Eastern, Egypt",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 31.2,
+        "longitude": 29.89
+      },
+      "unlocode": "EGALY",
+      "wpiNumber": "39740",
+      "specifications": {
+        "channelDepthMeters": 14,
+        "anchorageDepthMeters": 16,
+        "cargoPierDepthMeters": 12,
+        "maxDraftMeters": 12,
+        "harborSize": "Large",
+        "harborType": "Coastal Natural"
+      },
+      "capabilities": {
+        "cargoTypes": [
+          "Containers",
+          "Solid bulk",
+          "Liquid bulk",
+          "Oil",
+          "Breakbulk"
+        ],
+        "canLoad": true,
+        "canUnload": true
+      },
+      "meta": {
+        "sources": [
+          "NGA_WPI",
+          "UN_LOCODE"
+        ],
+        "importedAt": "2026-08-29T14:46:39.551Z"
+      }
+    },
+    {
+      "id": "port-ilash",
+      "name": "Ashdod",
+      "country": "Israel",
+      "locationLabel": "Mediterranean - Eastern, Israel",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 31.82,
+        "longitude": 34.65
+      },
+      "unlocode": "ILASH",
+      "wpiNumber": "41750",
+      "specifications": {
+        "channelDepthMeters": 13,
+        "anchorageDepthMeters": 15,
+        "cargoPierDepthMeters": 14,
+        "maxDraftMeters": 14,
+        "harborSize": "Medium",
+        "harborType": "Coastal Natural"
+      },
+      "capabilities": {
+        "cargoTypes": [
+          "Containers",
+          "Solid bulk",
+          "Breakbulk"
+        ],
+        "canLoad": true,
+        "canUnload": true
+      },
+      "meta": {
+        "sources": [
+          "NGA_WPI"
+        ],
+        "importedAt": "2026-08-29T14:46:39.551Z"
+      }
+    },
+    {
+      "id": "port-lbbey",
+      "name": "Beirut",
+      "country": "Lebanon",
+      "locationLabel": "Mediterranean - Eastern, Lebanon",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 33.9,
+        "longitude": 35.52
+      },
+      "unlocode": "LBBEY",
+      "wpiNumber": "40740",
+      "specifications": {
+        "channelDepthMeters": 12,
+        "anchorageDepthMeters": 14,
+        "cargoPierDepthMeters": 13,
+        "maxDraftMeters": 13,
+        "harborSize": "Medium",
+        "harborType": "Coastal Natural"
+      },
+      "capabilities": {
+        "cargoTypes": [
+          "Containers",
+          "Breakbulk"
+        ],
+        "canLoad": true,
+        "canUnload": true
+      },
+      "meta": {
+        "sources": [
+          "NGA_WPI",
+          "UN_LOCODE"
+        ],
+        "importedAt": "2026-08-29T14:46:39.551Z"
+      }
+    },
+    {
+      "id": "port-egdam",
+      "name": "Damietta",
+      "country": "Egypt",
+      "locationLabel": "Mediterranean - Eastern, Egypt",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 31.52,
+        "longitude": 31.75
+      },
+      "unlocode": "EGDAM",
+      "wpiNumber": "39760",
+      "specifications": {
+        "channelDepthMeters": 14,
+        "anchorageDepthMeters": 15,
+        "cargoPierDepthMeters": 14,
+        "maxDraftMeters": 14,
+        "harborSize": "Medium",
+        "harborType": "Coastal Natural"
+      },
+      "capabilities": {
+        "cargoTypes": [
+          "Containers",
+          "Breakbulk"
+        ],
+        "canLoad": true,
+        "canUnload": true
+      },
+      "meta": {
+        "sources": [
+          "NGA_WPI"
+        ],
+        "importedAt": "2026-08-29T14:46:39.551Z"
+      }
+    },
+    {
+      "id": "port-aldrz",
+      "name": "Durres",
+      "country": "Albania",
+      "locationLabel": "Mediterranean - Eastern, Albania",
+      "type": "bulk_terminal",
+      "position": {
+        "latitude": 41.31,
+        "longitude": 19.46
+      },
+      "unlocode": "ALDRZ",
+      "wpiNumber": "35740",
+      "specifications": {
+        "channelDepthMeters": 8,
+        "anchorageDepthMeters": 10,
+        "cargoPierDepthMeters": 9,
+        "maxDraftMeters": 9,
+        "harborSize": "Small",
+        "harborType": "Coastal Natural"
+      },
+      "capabilities": {
+        "cargoTypes": [
+          "Solid bulk",
+          "Breakbulk"
+        ],
+        "canLoad": true,
+        "canUnload": true
+      },
+      "meta": {
+        "sources": [
+          "NGA_WPI"
+        ],
+        "importedAt": "2026-08-29T14:46:39.551Z"
+      }
+    },
+    {
+      "id": "port-ilhfa",
+      "name": "Haifa",
+      "country": "Israel",
+      "locationLabel": "Mediterranean - Eastern, Israel",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 32.82,
+        "longitude": 35
+      },
+      "unlocode": "ILHFA",
+      "wpiNumber": "41740",
+      "specifications": {
+        "channelDepthMeters": 14,
+        "anchorageDepthMeters": 16,
+        "cargoPierDepthMeters": 14,
+        "maxDraftMeters": 14,
+        "harborSize": "Large",
+        "harborType": "Coastal Natural"
+      },
+      "capabilities": {
+        "cargoTypes": [
+          "Containers",
+          "Solid bulk",
+          "Breakbulk"
+        ],
+        "canLoad": true,
+        "canUnload": true
+      },
+      "meta": {
+        "sources": [
+          "NGA_WPI",
+          "UN_LOCODE"
+        ],
+        "importedAt": "2026-08-29T14:46:39.551Z"
+      }
+    },
+    {
+      "id": "port-grher",
+      "name": "Heraklion",
+      "country": "Greece",
+      "locationLabel": "Mediterranean - Eastern, Greece",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 35.341,
+        "longitude": 25.14
+      },
+      "unlocode": "GRHER",
+      "wpiNumber": "43740",
+      "specifications": {
+        "channelDepthMeters": 10,
+        "anchorageDepthMeters": 12,
+        "cargoPierDepthMeters": 11,
+        "maxDraftMeters": 11,
+        "harborSize": "Medium",
+        "harborType": "Coastal Natural"
+      },
+      "capabilities": {
+        "cargoTypes": [
+          "Containers",
+          "Breakbulk",
+          "Ro-Ro"
+        ],
+        "canLoad": true,
+        "canUnload": true
+      },
+      "meta": {
+        "sources": [
+          "NGA_WPI",
+          "UN_LOCODE"
+        ],
+        "importedAt": "2026-08-29T14:46:39.551Z"
+      }
+    },
+    {
+      "id": "port-grigo",
+      "name": "Igouomenitsa",
+      "country": "Greece",
+      "locationLabel": "Mediterranean - Eastern, Greece",
+      "type": "seaport",
+      "position": {
+        "latitude": 39.5,
+        "longitude": 20.27
+      },
+      "unlocode": "GRIGO",
+      "wpiNumber": "43710",
+      "specifications": {
+        "channelDepthMeters": 8,
+        "anchorageDepthMeters": 10,
+        "cargoPierDepthMeters": 9,
+        "maxDraftMeters": 9,
+        "harborSize": "Small",
+        "harborType": "Coastal Natural"
+      },
+      "capabilities": {
+        "cargoTypes": [
+          "Breakbulk",
+          "Ro-Ro"
+        ],
+        "canLoad": true,
+        "canUnload": true
+      },
+      "meta": {
+        "sources": [
+          "NGA_WPI"
+        ],
+        "importedAt": "2026-08-29T14:46:39.551Z"
+      }
+    },
+    {
+      "id": "port-trisk",
+      "name": "Iskenderun",
+      "country": "Turkey",
+      "locationLabel": "Mediterranean - Eastern, Turkey",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 36.58,
+        "longitude": 36.17
+      },
+      "unlocode": "TRISK",
+      "wpiNumber": "44900",
+      "specifications": {
+        "channelDepthMeters": 12,
+        "anchorageDepthMeters": 14,
+        "cargoPierDepthMeters": 13,
+        "maxDraftMeters": 13,
+        "harborSize": "Medium",
+        "harborType": "Coastal Natural"
+      },
+      "capabilities": {
+        "cargoTypes": [
+          "Containers",
+          "Solid bulk",
+          "Liquid bulk",
+          "Oil",
+          "Breakbulk"
+        ],
+        "canLoad": true,
+        "canUnload": true
+      },
+      "meta": {
+        "sources": [
+          "NGA_WPI"
+        ],
+        "importedAt": "2026-08-29T14:46:39.551Z"
+      }
+    },
+    {
+      "id": "port-trist",
+      "name": "Istanbul",
+      "country": "Turkey",
+      "locationLabel": "Mediterranean - Eastern, Turkey",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 41.01,
+        "longitude": 28.98
+      },
+      "unlocode": "TRIST",
+      "wpiNumber": "44740",
+      "specifications": {
+        "channelDepthMeters": 12,
+        "anchorageDepthMeters": 15,
+        "cargoPierDepthMeters": 11,
+        "maxDraftMeters": 11,
+        "harborSize": "Large",
+        "harborType": "River Natural"
+      },
+      "capabilities": {
+        "cargoTypes": [
+          "Containers",
+          "Solid bulk",
+          "Liquid bulk",
+          "Oil",
+          "Breakbulk",
+          "Ro-Ro"
+        ],
+        "canLoad": true,
+        "canUnload": true
+      },
+      "meta": {
+        "sources": [
+          "NGA_WPI",
+          "UN_LOCODE"
+        ],
+        "importedAt": "2026-08-29T14:46:39.551Z"
+      }
+    },
+    {
+      "id": "port-trizm",
+      "name": "Izmir",
+      "country": "Turkey",
+      "locationLabel": "Mediterranean - Eastern, Turkey",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 38.43,
+        "longitude": 27.14
+      },
+      "unlocode": "TRIZM",
+      "wpiNumber": "44750",
+      "specifications": {
+        "channelDepthMeters": 11,
+        "anchorageDepthMeters": 14,
+        "cargoPierDepthMeters": 12,
+        "maxDraftMeters": 12,
+        "harborSize": "Large",
+        "harborType": "Coastal Natural"
+      },
+      "capabilities": {
+        "cargoTypes": [
+          "Containers",
+          "Solid bulk",
+          "Breakbulk",
+          "Ro-Ro"
+        ],
+        "canLoad": true,
+        "canUnload": true
+      },
+      "meta": {
+        "sources": [
+          "NGA_WPI"
+        ],
+        "importedAt": "2026-08-29T14:46:39.551Z"
+      }
+    },
+    {
+      "id": "port-cylca",
+      "name": "Larnaca",
+      "country": "Cyprus",
+      "locationLabel": "Mediterranean - Eastern, Cyprus",
+      "type": "oil_terminal",
+      "position": {
+        "latitude": 34.92,
+        "longitude": 33.64
+      },
+      "unlocode": "CYLCA",
+      "wpiNumber": "42740",
+      "specifications": {
+        "channelDepthMeters": 10,
+        "anchorageDepthMeters": 12,
+        "cargoPierDepthMeters": 11,
+        "maxDraftMeters": 11,
+        "harborSize": "Small",
+        "harborType": "Coastal Natural"
+      },
+      "capabilities": {
+        "cargoTypes": [
+          "Liquid bulk",
+          "Oil",
+          "Breakbulk"
+        ],
+        "canLoad": true,
+        "canUnload": true
+      },
+      "meta": {
+        "sources": [
+          "NGA_WPI"
+        ],
+        "importedAt": "2026-08-29T14:46:39.551Z"
+      }
+    },
+    {
+      "id": "port-cylms",
+      "name": "Limassol",
+      "country": "Cyprus",
+      "locationLabel": "Mediterranean - Eastern, Cyprus",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 34.65,
+        "longitude": 33.02
+      },
+      "unlocode": "CYLMS",
+      "wpiNumber": "42750",
+      "specifications": {
+        "channelDepthMeters": 14,
+        "anchorageDepthMeters": 16,
+        "cargoPierDepthMeters": 15,
+        "maxDraftMeters": 15,
+        "harborSize": "Medium",
+        "harborType": "Coastal Natural"
+      },
+      "capabilities": {
+        "cargoTypes": [
+          "Containers",
+          "Breakbulk",
+          "Ro-Ro"
+        ],
+        "canLoad": true,
+        "canUnload": true
+      },
+      "meta": {
+        "sources": [
+          "NGA_WPI",
+          "UN_LOCODE"
+        ],
+        "importedAt": "2026-08-29T14:46:39.551Z"
+      }
+    },
+    {
+      "id": "port-trmer",
+      "name": "Mersin",
+      "country": "Turkey",
+      "locationLabel": "Mediterranean - Eastern, Turkey",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 36.8,
+        "longitude": 34.64
+      },
+      "unlocode": "TRMER",
+      "wpiNumber": "44760",
+      "specifications": {
+        "channelDepthMeters": 14,
+        "anchorageDepthMeters": 16,
+        "cargoPierDepthMeters": 15,
+        "maxDraftMeters": 15,
+        "harborSize": "Large",
+        "harborType": "Coastal Natural"
+      },
+      "capabilities": {
+        "cargoTypes": [
+          "Containers",
+          "Solid bulk",
+          "Breakbulk"
+        ],
+        "canLoad": true,
+        "canUnload": true
+      },
+      "meta": {
+        "sources": [
+          "NGA_WPI"
+        ],
+        "importedAt": "2026-08-29T14:46:39.551Z"
+      }
+    },
+    {
+      "id": "port-grgpa",
+      "name": "Patras",
+      "country": "Greece",
+      "locationLabel": "Mediterranean - Eastern, Greece",
+      "type": "seaport",
+      "position": {
+        "latitude": 38.25,
+        "longitude": 21.73
+      },
+      "unlocode": "GRGPA",
+      "wpiNumber": "43700",
+      "specifications": {
+        "channelDepthMeters": 10,
+        "anchorageDepthMeters": 12,
+        "cargoPierDepthMeters": 11,
+        "maxDraftMeters": 11,
+        "harborSize": "Medium",
+        "harborType": "Coastal Natural"
+      },
+      "capabilities": {
+        "cargoTypes": [
+          "Breakbulk",
+          "Ro-Ro"
+        ],
+        "canLoad": true,
+        "canUnload": true
+      },
+      "meta": {
+        "sources": [
+          "NGA_WPI"
+        ],
+        "importedAt": "2026-08-29T14:46:39.551Z"
+      }
+    },
+    {
+      "id": "port-grpir",
+      "name": "Piraeus",
+      "country": "Greece",
+      "locationLabel": "Mediterranean - Eastern, Greece",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 37.948,
+        "longitude": 23.643
+      },
+      "unlocode": "GRPIR",
+      "wpiNumber": "43760",
+      "specifications": {
+        "channelDepthMeters": 16,
+        "anchorageDepthMeters": 18,
+        "cargoPierDepthMeters": 18.5,
+        "maxDraftMeters": 18.5,
+        "harborSize": "Large",
+        "harborType": "Coastal Natural"
+      },
+      "capabilities": {
+        "cargoTypes": [
+          "Containers",
+          "Breakbulk",
+          "Ro-Ro"
+        ],
+        "canLoad": true,
+        "canUnload": true
+      },
+      "meta": {
+        "sources": [
+          "NGA_WPI",
+          "UN_LOCODE"
+        ],
+        "importedAt": "2026-08-29T14:46:39.550Z"
+      }
+    },
+    {
+      "id": "port-egpsd",
+      "name": "Port Said",
+      "country": "Egypt",
+      "locationLabel": "Mediterranean - Eastern, Egypt",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 31.25,
+        "longitude": 32.3
+      },
+      "unlocode": "EGPSD",
+      "wpiNumber": "39750",
+      "specifications": {
+        "channelDepthMeters": 16,
+        "anchorageDepthMeters": 18,
+        "cargoPierDepthMeters": 14,
+        "maxDraftMeters": 14,
+        "harborSize": "Large",
+        "harborType": "Coastal Natural"
+      },
+      "capabilities": {
+        "cargoTypes": [
+          "Containers",
+          "Breakbulk"
+        ],
+        "canLoad": true,
+        "canUnload": true
+      },
+      "meta": {
+        "sources": [
+          "NGA_WPI",
+          "UN_LOCODE"
+        ],
+        "importedAt": "2026-08-29T14:46:39.551Z"
+      }
+    },
+    {
+      "id": "port-grskg",
+      "name": "Thessaloniki",
+      "country": "Greece",
+      "locationLabel": "Mediterranean - Eastern, Greece",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 40.632,
+        "longitude": 22.936
+      },
+      "unlocode": "GRSKG",
+      "wpiNumber": "43750",
+      "specifications": {
+        "channelDepthMeters": 12,
+        "anchorageDepthMeters": 14,
+        "cargoPierDepthMeters": 11,
+        "maxDraftMeters": 11,
+        "harborSize": "Medium",
+        "harborType": "Coastal Natural"
+      },
+      "capabilities": {
+        "cargoTypes": [
+          "Containers",
+          "Solid bulk",
+          "Breakbulk"
+        ],
+        "canLoad": true,
+        "canUnload": true
+      },
+      "meta": {
+        "sources": [
+          "NGA_WPI",
+          "UN_LOCODE"
+        ],
+        "importedAt": "2026-08-29T14:46:39.551Z"
+      }
+    },
+    {
+      "id": "port-grvol",
+      "name": "Volos",
+      "country": "Greece",
+      "locationLabel": "Mediterranean - Eastern, Greece",
+      "type": "bulk_terminal",
+      "position": {
+        "latitude": 39.35,
+        "longitude": 22.95
+      },
+      "unlocode": "GRVOL",
+      "wpiNumber": "43720",
+      "specifications": {
+        "channelDepthMeters": 9,
+        "anchorageDepthMeters": 11,
+        "cargoPierDepthMeters": 10,
+        "maxDraftMeters": 10,
+        "harborSize": "Small",
+        "harborType": "Coastal Natural"
+      },
+      "capabilities": {
+        "cargoTypes": [
+          "Solid bulk",
+          "Breakbulk"
+        ],
+        "canLoad": true,
+        "canUnload": true
+      },
+      "meta": {
+        "sources": [
+          "NGA_WPI"
+        ],
+        "importedAt": "2026-08-29T14:46:39.551Z"
+      }
+    }
+  ]
+}

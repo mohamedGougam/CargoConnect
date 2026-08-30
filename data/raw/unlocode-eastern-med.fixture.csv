@@ -1,0 +1,11 @@
+Country,Location,Name,NameWoDiacritics,SubDiv,Function,Status,Coordinates
+GR,PIR,Piraeus,Piraeus,A1,1-3-----,AI,3745N 02338E
+GR,SKG,Thessaloniki,Thessaloniki,B,1-3-----,AI,4038N 02256E
+GR,HER,Heraklion,Heraklion,M,1-------,AI,3520N 02508E
+TR,IST,Istanbul,Istanbul,34,1-3-----,AI,4100N 02859E
+EG,ALY,Alexandria,Alexandria,,1-3-----,AI,3112N 02953E
+EG,PSD,Port Said,Port Said,,1-3-----,AI,3115N 03218E
+CY,LMS,Limassol,Limassol,,1-3-----,AI,3439N 03301E
+MT,MLA,Valletta,Valletta,,1-3-----,AI,3554N 01431E
+IL,HFA,Haifa,Haifa,,1-3-----,AI,3249N 03500E
+LB,BEY,Beirut,Beirut,,1-3-----,AI,3354N 03530E
