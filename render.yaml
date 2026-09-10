@@ -1,0 +1,37 @@
+# Render Blueprint — always-on CargoConnect (live AIS prototype)
+# Docs: docs/RENDER_DEPLOY.md
+#
+# Use plan: starter (or higher) for reliable AIS WebSocket.
+# Free plan sleeps when idle and will drop the AISStream connection.
+
+services:
+  - type: web
+    name: cargo-connect
+    runtime: node
+    plan: starter
+    region: frankfurt
+    branch: master
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: NEXT_PUBLIC_MARITIME_DATA_MODE
+        value: composite
+      - key: MARITIME_DATA_MODE
+        value: composite
+      - key: AISSTREAM_ENABLED
+        value: "true"
+      - key: AISSTREAM_API_KEY
+        sync: false
+      - key: NEXT_PUBLIC_MAP_STYLE_URL
+        value: dark
+      - key: NEXT_PUBLIC_MARITIME_POLL_INTERVAL_MS
+        value: "10000"
+      - key: MARITIME_DIAGNOSTICS_ENABLED
+        value: "true"
+      # Optional Eastern Med bbox (default is already this region)
+      # - key: AISSTREAM_BBOXES
+      #   value: '[[[30.0,22.0],[41.5,37.0]]]'

@@ -60,6 +60,15 @@ UI components never import sample datasets or AISStream directly.
 
 See [docs/LIVE_MARITIME_DATA.md](docs/LIVE_MARITIME_DATA.md) and [docs/MARITIME_DATA_STRATEGY.md](docs/MARITIME_DATA_STRATEGY.md).
 
+## Deploy (always-on live AIS)
+
+**Recommended host:** [Render](https://render.com) **Starter** Web Service (not Free — Free sleeps and drops AIS).
+
+Blueprint: [`render.yaml`](render.yaml)  
+Step-by-step: [docs/RENDER_DEPLOY.md](docs/RENDER_DEPLOY.md)
+
+Vercel is fine for **sample** demos only. Persistent AISStream needs a long-lived Node process.
+
 ## Run locally
 
 ```bash
