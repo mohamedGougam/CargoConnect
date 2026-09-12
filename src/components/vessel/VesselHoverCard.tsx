@@ -22,7 +22,6 @@ interface VesselHoverCardProps extends HoverCardProps {
 
 export function VesselHoverCard({
   vessel,
-  originName,
   destinationName,
   x,
   y,
@@ -41,13 +40,16 @@ export function VesselHoverCard({
         </h3>
         <dl className="mt-2 space-y-1 text-xs text-slate-300">
           <HoverRow label="Type" value={formatVesselType(vessel.type)} />
-          <HoverRow label="Cargo" value={vessel.cargoCategory} />
-          {originName ? <HoverRow label="Origin" value={originName} /> : null}
-          {destinationName ? (
+          <HoverRow label="Status" value={formatVesselStatus(vessel.status)} />
+          {vessel.destinationRaw ? (
+            <HoverRow label="AIS destination" value={vessel.destinationRaw} />
+          ) : destinationName ? (
             <HoverRow label="Destination" value={destinationName} />
           ) : null}
-          <HoverRow label="Status" value={formatVesselStatus(vessel.status)} />
           {vessel.eta ? <HoverRow label="ETA" value={formatEta(vessel.eta)} /> : null}
+          {vessel.speed != null ? (
+            <HoverRow label="Speed" value={`${vessel.speed.toFixed(1)} kn`} />
+          ) : null}
         </dl>
       </GlassPanel>
     </div>

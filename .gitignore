@@ -46,3 +46,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# commercial MVP persistence (users, requests, intents)
+/.data/
+
+# local uploads / validation scratch
+/tmp/
+/uploads/
+*.log

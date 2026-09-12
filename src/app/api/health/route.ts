@@ -4,12 +4,13 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /**
- * Lightweight health check for Render / load balancers.
- * Does not expose secrets or AIS credentials.
+ * Legacy health endpoint — aliases liveness for existing Render healthCheckPath.
+ * Prefer /api/health/live and /api/health/ready.
  */
 export async function GET() {
   return NextResponse.json({
     ok: true,
+    status: "live",
     service: "cargo-connect",
     timestamp: new Date().toISOString(),
   });

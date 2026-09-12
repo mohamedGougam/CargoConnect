@@ -64,6 +64,60 @@ Set these in Render → Environment (or via Blueprint):
 | `NEXT_PUBLIC_MAP_STYLE_URL` | `dark` | Basemap |
 | `NEXT_PUBLIC_MARITIME_POLL_INTERVAL_MS` | `10000` | Client poll interval |
 | `MARITIME_DIAGNOSTICS_ENABLED` | `true` | Enables `/api/maritime/diagnostics` |
+| `AUTH_SECRET` | *(random ≥32 chars)* | Session cookie signing |
+| `DATABASE_URL` | *(Render Postgres)* | Commercial users/requests |
+| `EMAIL_DELIVERY_MODE` | `log` or `live` | Prefer `log` until domain verified |
+| `EMAIL_API_KEY` | *(Resend secret)* | Only for `live` |
+| `EMAIL_FROM_ADDRESS` | `requests@your-domain` | Verified domain |
+| `EMAIL_FROM_NAME` | `CargoConnect` | From display name |
+| `APP_BASE_URL` | `https://your-service.onrender.com` | Verification email links |
+| `EMAIL_VERIFICATION_TOKEN_TTL_MINUTES` | `60` | Token expiry |
+| `EMAIL_INBOUND_ENABLED` | `true` when ready | Capture broker replies |
+| `EMAIL_INBOUND_DOMAIN` | `reply.your-domain.com` | Receiving domain |
+| `EMAIL_WEBHOOK_SECRET` | `whsec_…` | Resend webhook signing secret |
+| `DOCUMENT_STORAGE_PROVIDER` | `s3` | **Do not** use `local` on Render (ephemeral disk) |
+| `DOCUMENT_STORAGE_BUCKET` | private bucket | Never public-read |
+| `DOCUMENT_STORAGE_ENDPOINT` | R2/S3 endpoint | e.g. Cloudflare R2 |
+| `DOCUMENT_STORAGE_REGION` | `auto` or AWS region | |
+| `DOCUMENT_STORAGE_ACCESS_KEY` | *(secret)* | Never `NEXT_PUBLIC_` |
+| `DOCUMENT_STORAGE_SECRET_KEY` | *(secret)* | Never `NEXT_PUBLIC_` |
+| `DOCUMENT_STORAGE_FORCE_PATH_STYLE` | `true` for R2/MinIO | |
+| `DOCUMENT_MAX_FILE_SIZE_MB` | `15` | Upload size cap |
+| `MALWARE_SCAN_PROVIDER` | `noop` | **Demo only** — see DEMO_ACTIVATION |
+| `MALWARE_SCAN_ALLOW_NOOP` | `true` | **Demo only** — remove before production |
+| `RATE_LIMIT_PROVIDER` | `redis` | With Upstash REST credentials |
+| `UPSTASH_REDIS_REST_URL` | *(secret)* | Never `NEXT_PUBLIC_` |
+| `UPSTASH_REDIS_REST_TOKEN` | *(secret)* | Never `NEXT_PUBLIC_` |
+| `SHIPMENT_OBSERVATION_JOB_SECRET` | *(≥16 char secret)* | Cron auth |
+| `SHIPMENT_OBSERVATION_INTERVAL_SECONDS` | `300` | Watcher freshness window |
+
+### Shipment observation cron (Render)
+
+`render.yaml` defines cron service `cargo-connect-shipment-observation` on schedule `*/5 * * * *`.
+
+Set on the **cron** service:
+
+| Key | Value |
+| --- | --- |
+| `CRON_TARGET_URL` | `https://YOUR-SERVICE.onrender.com/api/internal/shipment-observation/run` |
+| `SHIPMENT_OBSERVATION_JOB_SECRET` | same value as the web service |
+
+Do **not** add an in-process infinite watcher loop inside the web service.
+
+Validate from an operator machine (app must be up):
+
+```bash
+CRON_VALIDATE_BASE_URL=https://YOUR-SERVICE.onrender.com npm run cron:validate
+```
+
+After adding Postgres:
+
+```bash
+npm run db:migrate
+npm run db:seed
+```
+
+(run from a machine/shell with `DATABASE_URL` set — not on every request).
 
 Optional:
 
@@ -77,6 +131,7 @@ Default bbox ≈ Eastern Mediterranean (Greece / Aegean / Crete / W. Turkey / Cy
 
 - `AISSTREAM_APIKEY` (typo — wrong name)
 - `NEXT_PUBLIC_AISSTREAM_API_KEY` (leaks the key to browsers)
+- `NEXT_PUBLIC_EMAIL_API_KEY` / any email secret with `NEXT_PUBLIC_`
 - Unused Mapbox / external maritime URL vars from other projects
 
 ## 4. Deploy and verify
@@ -120,6 +175,10 @@ Give the feed **30–60 seconds** after boot to accumulate vessels.
 - [ ] Map shows Eastern Med camera + live badge  
 - [ ] Live vessels do **not** animate on demo routes  
 - [ ] Rotate AISStream key if it was ever exposed in screenshots  
+- [ ] Postgres migrated through `0012` (`npm run db:status`)  
+- [ ] Observation cron secret set + cron job hitting `/api/internal/shipment-observation/run`  
+- [ ] Demo malware bypass intentional (`noop` + `ALLOW_NOOP`) or real HTTP scanner configured  
+- [ ] See [DEMO_ACTIVATION.md](./DEMO_ACTIVATION.md) for full demo checklist  
 
 ## 6. Cost note
 

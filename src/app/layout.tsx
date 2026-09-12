@@ -24,7 +24,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${manrope.variable} ${fraunces.variable} h-full antialiased`}
     >
-      <body className="h-full overflow-hidden bg-[#071018] font-sans text-slate-100">
+      <body className="h-full overflow-y-auto bg-[#071018] font-sans text-slate-100">
         {children}
       </body>
     </html>

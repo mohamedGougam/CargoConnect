@@ -1,14 +1,23 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { AiAssistantBar } from "@/components/ai/AiAssistantBar";
 import { PortDetailPanel } from "@/components/port/PortDetailPanel";
+import { RouteSearchSummary } from "@/components/search/RouteSearchSummary";
 import { PortHoverCard, VesselHoverCard } from "@/components/vessel/VesselHoverCard";
 import { VesselDetailPanel } from "@/components/vessel/VesselDetailPanel";
+import { DemoOperatorControls } from "@/components/demo/DemoOperatorControls";
+import {
+  RouteSearchProvider,
+  useRouteSearch,
+} from "@/context/RouteSearchContext";
 import { useMapInteraction } from "@/hooks/useMapInteraction";
 import { useMaritimeData } from "@/hooks/useMaritimeData";
 import { EASTERN_MED_MAP_VIEW } from "@/lib/map/style";
+import { startCommercialWorkflow } from "@/lib/commercial/intent";
+import type { Port } from "@/domain/models";
+import { createIdleSearchState } from "@/domain/search/types";
 
 const MaritimeMap = dynamic(
   () => import("@/components/map/MaritimeMap").then((mod) => mod.MaritimeMap),
@@ -23,8 +32,24 @@ const MaritimeMap = dynamic(
 );
 
 export function LandingExperience() {
+  return (
+    <RouteSearchProvider>
+      <LandingExperienceInner />
+    </RouteSearchProvider>
+  );
+}
+
+function LandingExperienceInner() {
   const { vessels, ports, routes, statusLabel, isDemonstrationData, isLoading, error } =
     useMaritimeData();
+  const {
+    search,
+    isSearching,
+    runQuery,
+    clearSearch,
+    refreshRelevance,
+    relevantIdSet,
+  } = useRouteSearch();
 
   const mapInitialView = useMemo(
     () => (isDemonstrationData ? undefined : EASTERN_MED_MAP_VIEW),
@@ -39,12 +64,22 @@ export function LandingExperience() {
     setHoverTarget,
     clearHover,
   } = useMapInteraction();
-  const [aiNotice, setAiNotice] = useState<string | null>(null);
+  const urlHydratedRef = useRef(false);
+
+  const mapPorts = useMemo(() => {
+    const byId = new Map<string, Port>();
+    for (const port of ports) byId.set(port.id, port);
+    if (search.origin) byId.set(search.origin.id, search.origin);
+    if (search.destination) byId.set(search.destination.id, search.destination);
+    return Array.from(byId.values());
+  }, [ports, search.origin, search.destination]);
 
   const portsById = useMemo(() => {
-    const map = new Map(ports.map((p) => [p.id, p]));
+    const map = new Map(mapPorts.map((p) => [p.id, p]));
     return map;
-  }, [ports]);
+  }, [mapPorts]);
+
+  const searchActive = search.status === "active";
 
   const selectedVessel =
     selection.kind === "vessel" && selection.id
@@ -52,7 +87,7 @@ export function LandingExperience() {
       : null;
   const selectedPort =
     selection.kind === "port" && selection.id
-      ? (ports.find((p) => p.id === selection.id) ?? null)
+      ? (portsById.get(selection.id) ?? null)
       : null;
 
   const hoveredVessel =
@@ -61,7 +96,7 @@ export function LandingExperience() {
       : null;
   const hoveredPort =
     hover.kind === "port" && hover.id
-      ? (ports.find((p) => p.id === hover.id) ?? null)
+      ? (portsById.get(hover.id) ?? null)
       : null;
 
   const onVesselHover = useCallback(
@@ -86,6 +121,31 @@ export function LandingExperience() {
     [clearHover, setHoverTarget],
   );
 
+  const handleSearchSubmit = useCallback(
+    async (query: string) => {
+      await runQuery(query, vessels);
+    },
+    [runQuery, vessels],
+  );
+
+  // Hydrate active search from ?q= once vessels are available
+  useEffect(() => {
+    if (urlHydratedRef.current || isLoading || vessels.length === 0) return;
+    const q = new URL(window.location.href).searchParams.get("q");
+    if (!q?.trim()) {
+      urlHydratedRef.current = true;
+      return;
+    }
+    urlHydratedRef.current = true;
+    void runQuery(q, vessels);
+  }, [isLoading, vessels, runQuery]);
+
+  // Recalculate corridor relevance when live AIS snapshot updates (not per frame)
+  useEffect(() => {
+    if (search.status !== "active") return;
+    refreshRelevance(vessels);
+  }, [vessels, search.status, refreshRelevance]);
+
   const drawerOpen = Boolean(selectedVessel || selectedPort);
 
   useEffect(() => {
@@ -93,16 +153,49 @@ export function LandingExperience() {
     return () => document.documentElement.classList.remove("cc-drawer-open");
   }, [drawerOpen]);
 
+  const routeRole =
+    selectedPort && searchActive
+      ? selectedPort.id === search.origin?.id
+        ? "origin"
+        : selectedPort.id === search.destination?.id
+          ? "destination"
+          : null
+      : null;
+
+  const beginCommercial = useCallback(
+    (workflow: "price" | "reservation") => {
+      const contextSearch =
+        search.status === "active"
+          ? search
+          : {
+              ...createIdleSearchState(),
+              status: "idle" as const,
+              originalQuery: search.originalQuery || "",
+            };
+      void startCommercialWorkflow({
+        workflow,
+        search: contextSearch,
+        selectedVessel: selectedVessel,
+        selectedPort: selectedPort,
+      });
+    },
+    [search, selectedVessel, selectedPort],
+  );
+
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-[#0b1520]">
-      {/* Map always mounts as soon as data is ready — full viewport hero */}
       {!isLoading && !error ? (
         <MaritimeMap
           vessels={vessels}
-          ports={ports}
+          ports={mapPorts}
           routes={routes}
-          allowDemoAnimation={isDemonstrationData}
+          allowDemoAnimation={isDemonstrationData && !searchActive}
           initialView={mapInitialView}
+          corridor={searchActive ? search.corridor : null}
+          originPortId={searchActive ? search.origin?.id : null}
+          destinationPortId={searchActive ? search.destination?.id : null}
+          relevantVesselIds={searchActive ? search.relevantVesselIds : []}
+          searchActive={searchActive}
           onVesselHover={onVesselHover}
           onPortHover={onPortHover}
           onVesselClick={selectVessel}
@@ -126,28 +219,19 @@ export function LandingExperience() {
         </div>
       ) : null}
 
-      {/* Very light vignette only — must not hide geography */}
       <div className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(7,16,24,0.28)_100%)]" />
 
       <AiAssistantBar
-        onSubmit={(query) => {
-          setAiNotice(`AI routing is not connected yet. Query captured: “${query}”`);
-          window.setTimeout(() => setAiNotice(null), 4800);
-        }}
+        onSubmit={handleSearchSubmit}
+        isSearching={isSearching}
       />
+
+      <RouteSearchSummary search={search} onClear={clearSearch} />
 
       {statusLabel ? (
         <div className="pointer-events-none absolute bottom-4 left-4 z-20">
           <div className="rounded-full border border-white/8 bg-black/45 px-2.5 py-1 text-[10px] tracking-wide text-slate-400/90">
             {statusLabel}
-          </div>
-        </div>
-      ) : null}
-
-      {aiNotice ? (
-        <div className="pointer-events-none absolute bottom-4 left-1/2 z-30 max-w-md -translate-x-1/2 px-4">
-          <div className="rounded-xl border border-teal-300/20 bg-[rgba(8,16,28,0.92)] px-3 py-2 text-center text-[11px] text-teal-50">
-            {aiNotice}
           </div>
         </div>
       ) : null}
@@ -174,7 +258,6 @@ export function LandingExperience() {
         <PortHoverCard port={hoveredPort} x={hover.x} y={hover.y} />
       ) : null}
 
-      {/* Single contextual drawer layer — vessel OR port */}
       <VesselDetailPanel
         vessel={selectedVessel}
         origin={
@@ -189,13 +272,33 @@ export function LandingExperience() {
         }
         open={Boolean(selectedVessel)}
         onClose={clearSelection}
+        routeContext={
+          searchActive && search.origin && search.destination
+            ? {
+                originName: search.origin.name,
+                destinationName: search.destination.name,
+                isRelevant: selectedVessel
+                  ? relevantIdSet.has(selectedVessel.id)
+                  : false,
+              }
+            : null
+        }
+        hasActiveSearch={searchActive}
+        onCheckPrice={() => beginCommercial("price")}
+        onMakeReservation={() => beginCommercial("reservation")}
       />
 
       <PortDetailPanel
         port={selectedPort}
         open={Boolean(selectedPort)}
         onClose={clearSelection}
+        routeRole={routeRole}
+        hasActiveSearch={searchActive}
+        onCheckPrice={() => beginCommercial("price")}
+        onMakeReservation={() => beginCommercial("reservation")}
       />
+
+      <DemoOperatorControls variant="map" />
     </div>
   );
 }

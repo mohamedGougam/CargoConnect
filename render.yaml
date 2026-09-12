@@ -32,6 +32,45 @@ services:
         value: "10000"
       - key: MARITIME_DIAGNOSTICS_ENABLED
         value: "true"
+      # Demo persistence — PostgreSQL intentionally deferred
+      - key: DEMO_MODE
+        value: "true"
+      - key: COMMERCIAL_STORE
+        value: memory
+      # Demo malware bypass — PRE-PRODUCTION: switch to http scanner and remove ALLOW_NOOP
+      - key: MALWARE_SCAN_PROVIDER
+        value: noop
+      - key: MALWARE_SCAN_ALLOW_NOOP
+        value: "true"
+      - key: AIS_PROVIDER_MODE
+        value: development
+      - key: EMAIL_DELIVERY_MODE
+        value: log
+      - key: SHIPMENT_OBSERVATION_INTERVAL_SECONDS
+        value: "300"
+      - key: SHIPMENT_OBSERVATION_JOB_SECRET
+        sync: false
+      - key: DEMO_RESET_SECRET
+        sync: false
       # Optional Eastern Med bbox (default is already this region)
       # - key: AISSTREAM_BBOXES
       #   value: '[[[30.0,22.0],[41.5,37.0]]]'
+  # External cron — does not run an in-process loop inside the web service.
+  # Calls the protected observation endpoint every 5 minutes.
+  - type: cron
+    name: cargo-connect-shipment-observation
+    runtime: node
+    plan: starter
+    region: frankfurt
+    branch: master
+    schedule: "*/5 * * * *"
+    buildCommand: npm install
+    startCommand: >-
+      node -e "const u=process.env.CRON_TARGET_URL;const s=process.env.SHIPMENT_OBSERVATION_JOB_SECRET;if(!u||!s){console.error('missing CRON_TARGET_URL or secret');process.exit(1)}fetch(u,{method:'POST',headers:{Authorization:'Bearer '+s}}).then(async r=>{const t=await r.text();console.log(r.status,t.slice(0,500));process.exit(r.ok?0:1)}).catch(e=>{console.error(e.message);process.exit(1)})"
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: CRON_TARGET_URL
+        sync: false
+      - key: SHIPMENT_OBSERVATION_JOB_SECRET
+        sync: false

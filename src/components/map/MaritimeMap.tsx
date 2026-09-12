@@ -9,8 +9,10 @@ import {
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { MaritimeRoute, Port, Vessel } from "@/domain/models";
+import type { MaritimeCorridor } from "@/domain/search/types";
 import { appConfig } from "@/lib/config/env";
 import {
+  corridorToGeoJSON,
   interpolateAlongRoute,
   portsToGeoJSON,
   routesToGeoJSON,
@@ -23,6 +25,7 @@ import { registerVesselIcons } from "@/lib/map/vesselIcons";
 const VESSELS_SOURCE = "cc-vessels";
 const PORTS_SOURCE = "cc-ports";
 const ROUTES_SOURCE = "cc-routes";
+const CORRIDOR_SOURCE = "cc-corridor";
 const INTERACTIVE_LAYERS = ["cc-vessels-symbol", "cc-vessels-dot", "cc-ports-hit"];
 
 /** Idle vessel motion cadence — NOT every paint frame (setData is expensive). */
@@ -41,6 +44,12 @@ interface MaritimeMapProps {
     minZoom?: number;
     maxZoom?: number;
   };
+  /** Active visual/search corridor (NL route search). */
+  corridor?: MaritimeCorridor | null;
+  originPortId?: string | null;
+  destinationPortId?: string | null;
+  relevantVesselIds?: string[];
+  searchActive?: boolean;
   onVesselHover: (id: string | null, x: number, y: number) => void;
   onPortHover: (id: string | null, x: number, y: number) => void;
   onVesselClick: (id: string) => void;
@@ -58,6 +67,11 @@ export const MaritimeMap = memo(function MaritimeMap({
   routes,
   allowDemoAnimation = true,
   initialView,
+  corridor = null,
+  originPortId = null,
+  destinationPortId = null,
+  relevantVesselIds = [],
+  searchActive = false,
   onVesselHover,
   onPortHover,
   onVesselClick,
@@ -71,6 +85,11 @@ export const MaritimeMap = memo(function MaritimeMap({
   const vesselMotionRef = useRef<Vessel[]>(vessels);
   const routesRef = useRef(routes);
   const portsRef = useRef(ports);
+  const relevantRef = useRef(new Set(relevantVesselIds));
+  const searchActiveRef = useRef(searchActive);
+  const originPortIdRef = useRef(originPortId);
+  const destinationPortIdRef = useRef(destinationPortId);
+  const corridorRef = useRef(corridor);
   const layersAttachedRef = useRef(false);
   const interactingRef = useRef(false);
   const animStartedRef = useRef(0);
@@ -105,7 +124,21 @@ export const MaritimeMap = memo(function MaritimeMap({
     vesselMotionRef.current = vessels;
     routesRef.current = routes;
     portsRef.current = ports;
-  }, [vessels, routes, ports]);
+    relevantRef.current = new Set(relevantVesselIds);
+    searchActiveRef.current = searchActive;
+    originPortIdRef.current = originPortId;
+    destinationPortIdRef.current = destinationPortId;
+    corridorRef.current = corridor;
+  }, [
+    vessels,
+    routes,
+    ports,
+    relevantVesselIds,
+    searchActive,
+    originPortId,
+    destinationPortId,
+    corridor,
+  ]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -165,9 +198,23 @@ export const MaritimeMap = memo(function MaritimeMap({
       const portsSource = map.getSource(PORTS_SOURCE) as GeoJSONSource | undefined;
       const routesSource = map.getSource(ROUTES_SOURCE) as GeoJSONSource | undefined;
       const vesselsSource = map.getSource(VESSELS_SOURCE) as GeoJSONSource | undefined;
-      portsSource?.setData(portsToGeoJSON(portsRef.current));
-      routesSource?.setData(routesToGeoJSON(routesRef.current));
-      vesselsSource?.setData(vesselsToGeoJSON(vesselMotionRef.current));
+      const corridorSource = map.getSource(CORRIDOR_SOURCE) as GeoJSONSource | undefined;
+      portsSource?.setData(
+        portsToGeoJSON(portsRef.current, {
+          originId: originPortIdRef.current ?? undefined,
+          destinationId: destinationPortIdRef.current ?? undefined,
+        }),
+      );
+      routesSource?.setData(
+        routesToGeoJSON(searchActiveRef.current ? [] : routesRef.current),
+      );
+      corridorSource?.setData(corridorToGeoJSON(corridorRef.current ?? undefined));
+      vesselsSource?.setData(
+        vesselsToGeoJSON(vesselMotionRef.current, {
+          relevantIds: relevantRef.current,
+          searchActive: searchActiveRef.current,
+        }),
+      );
     };
 
     const attachOverlayLayers = () => {
@@ -283,23 +330,75 @@ export const MaritimeMap = memo(function MaritimeMap({
     };
   }, []);
 
-  // Static port/route data — only when underlying data changes (not every frame)
+  // Static port/route/corridor data — only when underlying data changes
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady) return;
     const portsSource = map.getSource(PORTS_SOURCE) as GeoJSONSource | undefined;
     const routesSource = map.getSource(ROUTES_SOURCE) as GeoJSONSource | undefined;
-    portsSource?.setData(portsToGeoJSON(ports));
-    routesSource?.setData(routesToGeoJSON(routes));
-  }, [ports, routes, mapReady]);
+    const corridorSource = map.getSource(CORRIDOR_SOURCE) as GeoJSONSource | undefined;
+    portsSource?.setData(
+      portsToGeoJSON(ports, {
+        originId: originPortId ?? undefined,
+        destinationId: destinationPortId ?? undefined,
+      }),
+    );
+    // Hide demo routes while a search corridor is active
+    routesSource?.setData(routesToGeoJSON(searchActive ? [] : routes));
+    corridorSource?.setData(corridorToGeoJSON(corridor ?? undefined));
+  }, [
+    ports,
+    routes,
+    mapReady,
+    corridor,
+    originPortId,
+    destinationPortId,
+    searchActive,
+  ]);
+
+  // Fit camera to corridor when search becomes active
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady || !searchActive || !corridor?.waypoints.length) return;
+    const lngs = corridor.waypoints.map((p) => p.longitude);
+    const lats = corridor.waypoints.map((p) => p.latitude);
+    const bounds: [[number, number], [number, number]] = [
+      [Math.min(...lngs), Math.min(...lats)],
+      [Math.max(...lngs), Math.max(...lats)],
+    ];
+    map.fitBounds(bounds, { padding: 80, duration: 1200, maxZoom: 6.5 });
+  }, [searchActive, corridor, mapReady]);
+
+  // Subtle corridor glow pulse — paint only, never setData / never per-frame scoring
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady || !searchActive) return;
+    let bright = false;
+    const id = window.setInterval(() => {
+      if (!map.getLayer("cc-corridor-glow") || interactingRef.current) return;
+      bright = !bright;
+      map.setPaintProperty("cc-corridor-glow", "line-opacity", bright ? 0.24 : 0.14);
+    }, 1100);
+    return () => {
+      window.clearInterval(id);
+      if (map.getLayer("cc-corridor-glow")) {
+        map.setPaintProperty("cc-corridor-glow", "line-opacity", 0.18);
+      }
+    };
+  }, [searchActive, mapReady]);
 
   // Static vessel positions when demo route animation is off (live AIS).
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady || demoMotionEnabled) return;
     const source = map.getSource(VESSELS_SOURCE) as GeoJSONSource | undefined;
-    source?.setData(vesselsToGeoJSON(vessels));
-  }, [vessels, mapReady, demoMotionEnabled]);
+    source?.setData(
+      vesselsToGeoJSON(vessels, {
+        relevantIds: new Set(relevantVesselIds),
+        searchActive,
+      }),
+    );
+  }, [vessels, mapReady, demoMotionEnabled, relevantVesselIds, searchActive]);
 
   // Throttled demo vessel motion along sample routes only; paused while user zooms/pans.
   // Live AIS vessels are never interpolated onto fabricated routes.
@@ -356,7 +455,12 @@ export const MaritimeMap = memo(function MaritimeMap({
       });
 
       const source = map.getSource(VESSELS_SOURCE) as GeoJSONSource | undefined;
-      source?.setData(vesselsToGeoJSON(animated));
+      source?.setData(
+        vesselsToGeoJSON(animated, {
+          relevantIds: relevantRef.current,
+          searchActive: searchActiveRef.current,
+        }),
+      );
     };
 
     raf = requestAnimationFrame(tick);
@@ -387,22 +491,30 @@ function addLayers(map: MapLibreMap) {
     "cc-vessels-symbol",
     "cc-vessels-dot",
     "cc-vessels-halo",
+    "cc-vessels-relevant-halo",
     "cc-ports-label",
     "cc-ports-hit",
     "cc-ports-core",
     "cc-ports-halo",
     "cc-routes-glow",
     "cc-routes-line",
+    "cc-corridor-glow",
+    "cc-corridor-line",
+    "cc-corridor-dash",
   ]) {
     if (map.getLayer(id)) map.removeLayer(id);
   }
-  for (const id of [VESSELS_SOURCE, PORTS_SOURCE, ROUTES_SOURCE]) {
+  for (const id of [VESSELS_SOURCE, PORTS_SOURCE, ROUTES_SOURCE, CORRIDOR_SOURCE]) {
     if (map.getSource(id)) map.removeSource(id);
   }
 
   map.addSource(ROUTES_SOURCE, {
     type: "geojson",
     data: routesToGeoJSON([]),
+  });
+  map.addSource(CORRIDOR_SOURCE, {
+    type: "geojson",
+    data: corridorToGeoJSON(undefined),
   });
   map.addSource(PORTS_SOURCE, {
     type: "geojson",
@@ -413,7 +525,6 @@ function addLayers(map: MapLibreMap) {
     data: vesselsToGeoJSON([]),
   });
 
-  // Soft route glow — no line-blur (expensive during zoom)
   map.addLayer({
     id: "cc-routes-glow",
     type: "line",
@@ -440,14 +551,67 @@ function addLayers(map: MapLibreMap) {
   });
 
   map.addLayer({
+    id: "cc-corridor-glow",
+    type: "line",
+    source: CORRIDOR_SOURCE,
+    layout: { "line-cap": "round", "line-join": "round" },
+    paint: {
+      "line-color": "#2dd4bf",
+      "line-width": ["interpolate", ["linear"], ["zoom"], 2, 10, 5, 14, 8, 18],
+      "line-opacity": 0.18,
+    },
+  });
+
+  map.addLayer({
+    id: "cc-corridor-line",
+    type: "line",
+    source: CORRIDOR_SOURCE,
+    layout: { "line-cap": "round", "line-join": "round" },
+    paint: {
+      "line-color": "#99f6e4",
+      "line-width": ["interpolate", ["linear"], ["zoom"], 2, 2.2, 5, 3.2, 8, 4],
+      "line-opacity": 0.85,
+    },
+  });
+
+  map.addLayer({
+    id: "cc-corridor-dash",
+    type: "line",
+    source: CORRIDOR_SOURCE,
+    layout: { "line-cap": "round", "line-join": "round" },
+    paint: {
+      "line-color": "#ccfbf1",
+      "line-width": ["interpolate", ["linear"], ["zoom"], 2, 1.1, 5, 1.6],
+      "line-opacity": 0.55,
+      "line-dasharray": [0.5, 2.2],
+    },
+  });
+
+  map.addLayer({
     id: "cc-ports-halo",
     type: "circle",
     source: PORTS_SOURCE,
     paint: {
-      "circle-radius": ["interpolate", ["linear"], ["zoom"], 2, 9, 6, 14],
-      "circle-color": "#38bdf8",
-      // Avoid circle-blur — it is costly while the camera moves
-      "circle-opacity": ["interpolate", ["linear"], ["zoom"], 2, 0.28, 5, 0.2],
+      "circle-radius": [
+        "case",
+        ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
+        ["interpolate", ["linear"], ["zoom"], 2, 14, 6, 22],
+        ["interpolate", ["linear"], ["zoom"], 2, 9, 6, 14],
+      ],
+      "circle-color": [
+        "case",
+        ["==", ["get", "role"], "origin"],
+        "#34d399",
+        ["==", ["get", "role"], "destination"],
+        "#38bdf8",
+        "#38bdf8",
+      ],
+      "circle-opacity": [
+        "case",
+        ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
+        0.42,
+        ["interpolate", ["linear"], ["zoom"], 2, 0.28, 5, 0.2],
+      ],
     },
   });
 
@@ -456,9 +620,26 @@ function addLayers(map: MapLibreMap) {
     type: "circle",
     source: PORTS_SOURCE,
     paint: {
-      "circle-radius": ["interpolate", ["linear"], ["zoom"], 2, 4.5, 4, 5, 6, 6.2],
-      "circle-color": "#e0f2fe",
-      "circle-stroke-color": "#0284c7",
+      "circle-radius": [
+        "case",
+        ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
+        ["interpolate", ["linear"], ["zoom"], 2, 6, 6, 8],
+        ["interpolate", ["linear"], ["zoom"], 2, 4.5, 4, 5, 6, 6.2],
+      ],
+      "circle-color": [
+        "case",
+        ["==", ["get", "role"], "origin"],
+        "#d1fae5",
+        "#e0f2fe",
+      ],
+      "circle-stroke-color": [
+        "case",
+        ["==", ["get", "role"], "origin"],
+        "#059669",
+        ["==", ["get", "role"], "destination"],
+        "#0284c7",
+        "#0284c7",
+      ],
       "circle-stroke-width": 1.6,
       "circle-opacity": 1,
     },
@@ -496,7 +677,6 @@ function addLayers(map: MapLibreMap) {
     },
   });
 
-  // World view: slightly larger presence so maritime activity reads immediately
   map.addLayer({
     id: "cc-vessels-halo",
     type: "circle",
@@ -504,7 +684,26 @@ function addLayers(map: MapLibreMap) {
     paint: {
       "circle-radius": ["interpolate", ["linear"], ["zoom"], 2, 10, 4, 11, 6, 13],
       "circle-color": "#5eead4",
-      "circle-opacity": ["interpolate", ["linear"], ["zoom"], 2, 0.32, 5, 0.22],
+      "circle-opacity": [
+        "case",
+        ["==", ["get", "muted"], 1],
+        0.06,
+        ["==", ["get", "relevant"], 1],
+        0.08,
+        ["interpolate", ["linear"], ["zoom"], 2, 0.32, 5, 0.22],
+      ],
+    },
+  });
+
+  map.addLayer({
+    id: "cc-vessels-relevant-halo",
+    type: "circle",
+    source: VESSELS_SOURCE,
+    filter: ["==", ["get", "relevant"], 1],
+    paint: {
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 2, 14, 5, 18, 7, 22],
+      "circle-color": "#fbbf24",
+      "circle-opacity": 0.35,
     },
   });
 
@@ -513,11 +712,28 @@ function addLayers(map: MapLibreMap) {
     type: "circle",
     source: VESSELS_SOURCE,
     paint: {
-      "circle-radius": ["interpolate", ["linear"], ["zoom"], 2, 4.2, 4, 4.8, 6, 5.5],
-      "circle-color": "#ccfbf1",
-      "circle-stroke-color": "#042f2e",
-      "circle-stroke-width": 1.3,
-      "circle-opacity": 1,
+      "circle-radius": [
+        "case",
+        ["==", ["get", "relevant"], 1],
+        ["interpolate", ["linear"], ["zoom"], 2, 5.5, 6, 7],
+        ["interpolate", ["linear"], ["zoom"], 2, 4.2, 4, 4.8, 6, 5.5],
+      ],
+      "circle-color": [
+        "case",
+        ["==", ["get", "relevant"], 1],
+        "#fde68a",
+        ["==", ["get", "muted"], 1],
+        "#64748b",
+        "#ccfbf1",
+      ],
+      "circle-stroke-color": [
+        "case",
+        ["==", ["get", "relevant"], 1],
+        "#b45309",
+        "#042f2e",
+      ],
+      "circle-stroke-width": ["case", ["==", ["get", "relevant"], 1], 2, 1.3],
+      "circle-opacity": ["case", ["==", ["get", "muted"], 1], 0.28, 1],
     },
   });
 
@@ -527,19 +743,11 @@ function addLayers(map: MapLibreMap) {
     source: VESSELS_SOURCE,
     layout: {
       "icon-image": ["get", "icon"],
-      // Larger at world zoom so ships read as the hero layer
       "icon-size": [
-        "interpolate",
-        ["linear"],
-        ["zoom"],
-        2,
-        0.82,
-        3.5,
-        0.88,
-        5,
-        0.95,
-        7,
-        1.1,
+        "case",
+        ["==", ["get", "relevant"], 1],
+        ["interpolate", ["linear"], ["zoom"], 2, 0.95, 5, 1.15, 7, 1.3],
+        ["interpolate", ["linear"], ["zoom"], 2, 0.82, 3.5, 0.88, 5, 0.95, 7, 1.1],
       ],
       "icon-rotate": ["get", "course"],
       "icon-rotation-alignment": "map",
@@ -557,7 +765,7 @@ function addLayers(map: MapLibreMap) {
       "text-color": "#e2e8f0",
       "text-halo-color": "rgba(8,16,28,0.85)",
       "text-halo-width": 1.2,
-      "icon-opacity": 1,
+      "icon-opacity": ["case", ["==", ["get", "muted"], 1], 0.32, 1],
     },
   });
 }

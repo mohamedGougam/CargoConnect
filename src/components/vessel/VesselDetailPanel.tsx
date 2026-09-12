@@ -8,6 +8,13 @@ import {
   formatVesselType,
 } from "@/lib/format";
 import { DetailDrawer, DetailField, DetailSection } from "@/components/ui/DetailDrawer";
+import { CommercialDrawerActions } from "@/components/commercial/CommercialDrawerActions";
+
+interface VesselRouteContext {
+  originName: string;
+  destinationName: string;
+  isRelevant: boolean;
+}
 
 interface VesselDetailPanelProps {
   vessel: Vessel | null;
@@ -15,6 +22,11 @@ interface VesselDetailPanelProps {
   destination?: Port;
   open: boolean;
   onClose: () => void;
+  /** Present when a corridor search is active — no commercial claims. */
+  routeContext?: VesselRouteContext | null;
+  hasActiveSearch?: boolean;
+  onCheckPrice?: () => void;
+  onMakeReservation?: () => void;
 }
 
 export function VesselDetailPanel({
@@ -23,6 +35,10 @@ export function VesselDetailPanel({
   destination,
   open,
   onClose,
+  routeContext = null,
+  hasActiveSearch = false,
+  onCheckPrice,
+  onMakeReservation,
 }: VesselDetailPanelProps) {
   if (!vessel) {
     return (
@@ -43,8 +59,25 @@ export function VesselDetailPanel({
       subtitle={`${formatVesselType(vessel.type)} · ${vessel.cargoCategory}`}
       status={formatVesselStatus(vessel.status)}
       onClose={onClose}
-      footerHint="Full vessel page coming later — this drawer is the progressive-disclosure step."
     >
+      {routeContext ? (
+        <DetailSection title="Route context">
+          <DetailField label="Origin" value={routeContext.originName} />
+          <DetailField label="Destination" value={routeContext.destinationName} />
+          <DetailField
+            label="Search"
+            value={
+              routeContext.isRelevant
+                ? "Corridor-relevant vessel"
+                : "Visible while search is active"
+            }
+          />
+          <p className="mt-1 text-[10px] leading-relaxed text-slate-400/85">
+            Corridor relevance only — commercial availability not confirmed.
+          </p>
+        </DetailSection>
+      ) : null}
+
       <DetailSection title="Voyage">
         <DetailField label="Origin" value={origin?.name} fallback="Not available" />
         <DetailField
@@ -140,6 +173,14 @@ export function VesselDetailPanel({
           }
         />
       </DetailSection>
+
+      {onCheckPrice && onMakeReservation ? (
+        <CommercialDrawerActions
+          hasActiveSearch={hasActiveSearch}
+          onCheckPrice={onCheckPrice}
+          onMakeReservation={onMakeReservation}
+        />
+      ) : null}
     </DetailDrawer>
   );
 }

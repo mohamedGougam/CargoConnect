@@ -3,14 +3,28 @@
 import type { Port } from "@/domain/models";
 import { formatCoordinate, formatPortType } from "@/lib/format";
 import { DetailDrawer, DetailField, DetailSection } from "@/components/ui/DetailDrawer";
+import { CommercialDrawerActions } from "@/components/commercial/CommercialDrawerActions";
 
 interface PortDetailPanelProps {
   port: Port | null;
   open: boolean;
   onClose: () => void;
+  /** When this port is the active search origin or destination. */
+  routeRole?: "origin" | "destination" | null;
+  hasActiveSearch?: boolean;
+  onCheckPrice?: () => void;
+  onMakeReservation?: () => void;
 }
 
-export function PortDetailPanel({ port, open, onClose }: PortDetailPanelProps) {
+export function PortDetailPanel({
+  port,
+  open,
+  onClose,
+  routeRole = null,
+  hasActiveSearch = false,
+  onCheckPrice,
+  onMakeReservation,
+}: PortDetailPanelProps) {
   if (!port) {
     return (
       <DetailDrawer open={false} kind="port" title="" onClose={onClose}>
@@ -28,10 +42,24 @@ export function PortDetailPanel({ port, open, onClose }: PortDetailPanelProps) {
       kind="port"
       title={port.name}
       subtitle={`${port.locationLabel} · ${formatPortType(port.type)}`}
-      status={port.country}
+      status={
+        routeRole === "origin"
+          ? "Origin"
+          : routeRole === "destination"
+            ? "Destination"
+            : port.country
+      }
       onClose={onClose}
-      footerHint="Dedicated port pages (brokers, deeper contacts) will plug in here later."
     >
+      {routeRole ? (
+        <DetailSection title="Route search" accent="sky">
+          <DetailField
+            label="Role"
+            value={routeRole === "origin" ? "Origin" : "Destination"}
+          />
+        </DetailSection>
+      ) : null}
+
       <DetailSection title="Overview" accent="sky">
         <DetailField label="Country" value={port.country} />
         <DetailField label="Location" value={port.locationLabel} />
@@ -86,6 +114,14 @@ export function PortDetailPanel({ port, open, onClose }: PortDetailPanelProps) {
             />
           ))}
         </DetailSection>
+      ) : null}
+
+      {onCheckPrice && onMakeReservation ? (
+        <CommercialDrawerActions
+          hasActiveSearch={hasActiveSearch}
+          onCheckPrice={onCheckPrice}
+          onMakeReservation={onMakeReservation}
+        />
       ) : null}
     </DetailDrawer>
   );
