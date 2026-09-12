@@ -6,6 +6,7 @@ import { AiAssistantBar } from "@/components/ai/AiAssistantBar";
 import { PortDetailPanel } from "@/components/port/PortDetailPanel";
 import { RouteSearchSummary } from "@/components/search/RouteSearchSummary";
 import { DestinationPortSwitcher } from "@/components/search/DestinationPortSwitcher";
+import { MapFullscreenControl } from "@/components/map/MapFullscreenControl";
 import { PortHoverCard, VesselHoverCard } from "@/components/vessel/VesselHoverCard";
 import { VesselDetailPanel } from "@/components/vessel/VesselDetailPanel";
 import { DemoOperatorControls } from "@/components/demo/DemoOperatorControls";
@@ -17,6 +18,14 @@ import { useMapInteraction } from "@/hooks/useMapInteraction";
 import { useMaritimeData } from "@/hooks/useMaritimeData";
 import { EASTERN_MED_MAP_VIEW } from "@/lib/map/style";
 import { startCommercialWorkflow } from "@/lib/commercial/intent";
+import {
+  createMapChromeUiState,
+  enterMapFullscreen,
+  exitMapFullscreen,
+  handleMapChromeEscape,
+  isSearchChromeVisible,
+  setSummaryCollapsed,
+} from "@/lib/map/mapChromeUi";
 import type { Port } from "@/domain/models";
 import { createIdleSearchState } from "@/domain/search/types";
 
@@ -91,6 +100,8 @@ function LandingExperienceInner() {
   const [highlightCandidatePortId, setHighlightCandidatePortId] = useState<
     string | null
   >(null);
+  const [mapChrome, setMapChrome] = useState(createMapChromeUiState);
+  const searchChromeVisible = isSearchChromeVisible(mapChrome);
 
   const portsById = useMemo(() => {
     const map = new Map(mapPorts.map((p) => [p.id, p]));
@@ -169,6 +180,17 @@ function LandingExperienceInner() {
     return () => document.documentElement.classList.remove("cc-drawer-open");
   }, [drawerOpen]);
 
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setMapChrome((prev) =>
+        handleMapChromeEscape(prev, { drawerOrModalOpen: drawerOpen }),
+      );
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [drawerOpen]);
+
   const routeRole =
     selectedPort && searchActive
       ? selectedPort.id === search.origin?.id
@@ -240,20 +262,37 @@ function LandingExperienceInner() {
 
       <div className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(7,16,24,0.28)_100%)]" />
 
-      <AiAssistantBar
-        onSubmit={handleSearchSubmit}
-        isSearching={isSearching}
+      <MapFullscreenControl
+        fullscreen={mapChrome.mapFullscreen}
+        onEnter={() => setMapChrome((s) => enterMapFullscreen(s))}
+        onExit={() => setMapChrome((s) => exitMapFullscreen(s))}
       />
 
-      <DestinationPortSwitcher
-        search={search}
-        onSelect={(portId) => selectDestination(portId, vessels)}
-        onHoverCandidate={setHighlightCandidatePortId}
-      />
+      {searchChromeVisible ? (
+        <>
+          <AiAssistantBar
+            onSubmit={handleSearchSubmit}
+            isSearching={isSearching}
+          />
 
-      <RouteSearchSummary search={search} onClear={clearSearch} />
+          <DestinationPortSwitcher
+            search={search}
+            onSelect={(portId) => selectDestination(portId, vessels)}
+            onHoverCandidate={setHighlightCandidatePortId}
+          />
 
-      {statusLabel ? (
+          <RouteSearchSummary
+            search={search}
+            onClear={clearSearch}
+            collapsed={mapChrome.summaryCollapsed}
+            onCollapsedChange={(collapsed) =>
+              setMapChrome((s) => setSummaryCollapsed(s, collapsed))
+            }
+          />
+        </>
+      ) : null}
+
+      {statusLabel && searchChromeVisible ? (
         <div className="pointer-events-none absolute bottom-4 left-4 z-20">
           <div className="rounded-full border border-white/8 bg-black/45 px-2.5 py-1 text-[10px] tracking-wide text-slate-400/90">
             {statusLabel}
@@ -323,7 +362,7 @@ function LandingExperienceInner() {
         onMakeReservation={() => beginCommercial("reservation")}
       />
 
-      <DemoOperatorControls variant="map" />
+      {searchChromeVisible ? <DemoOperatorControls variant="map" /> : null}
     </div>
   );
 }

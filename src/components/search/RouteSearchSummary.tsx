@@ -8,12 +8,20 @@ import type { VesselType } from "@/domain/models";
 interface RouteSearchSummaryProps {
   search: RouteSearchState;
   onClear: () => void;
+  /** Presentation-only; parent owns session persistence. */
+  collapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
 /**
  * Compact route-search context — map stays dominant.
  */
-export function RouteSearchSummary({ search, onClear }: RouteSearchSummaryProps) {
+export function RouteSearchSummary({
+  search,
+  onClear,
+  collapsed = false,
+  onCollapsedChange,
+}: RouteSearchSummaryProps) {
   if (search.status === "idle") return null;
 
   const hasSwitcher =
@@ -97,9 +105,44 @@ export function RouteSearchSummary({ search, onClear }: RouteSearchSummaryProps)
       ? search.requestedDestinationLabel
       : null;
 
+  if (collapsed) {
+    return (
+      <div className={`pointer-events-auto absolute inset-x-0 z-20 flex justify-center px-3 ${topClass}`}>
+        <button
+          type="button"
+          onClick={() => onCollapsedChange?.(false)}
+          aria-label="Expand route details"
+          title="Expand route details"
+          className="flex max-w-xl items-center gap-2 rounded-2xl border border-teal-300/20 bg-[rgba(8,16,28,0.9)] px-3.5 py-1.5 text-left shadow-[0_8px_28px_rgba(0,0,0,0.3)] backdrop-blur-md transition hover:border-teal-300/35 sm:px-4"
+        >
+          <p className="min-w-0 flex-1 truncate text-[12px] font-medium tracking-tight text-white/95">
+            <span className="text-emerald-200/95">{search.origin.name}</span>
+            <span className="mx-1.5 text-teal-300/70">→</span>
+            <span className="text-sky-200/95">{search.destination.name}</span>
+            <span className="ml-2 font-normal text-slate-400">
+              · {count} corridor-relevant vessel{count === 1 ? "" : "s"}
+            </span>
+          </p>
+          <span className="shrink-0 text-[11px] text-slate-400" aria-hidden>
+            ▾
+          </span>
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className={`pointer-events-auto absolute inset-x-0 z-20 flex justify-center px-3 ${topClass}`}>
-      <div className="flex max-w-xl flex-col gap-1.5 rounded-2xl border border-teal-300/20 bg-[rgba(8,16,28,0.9)] px-3.5 py-2.5 shadow-[0_8px_28px_rgba(0,0,0,0.3)] backdrop-blur-md sm:px-4">
+      <div className="relative flex max-w-xl flex-col gap-1.5 rounded-2xl border border-teal-300/20 bg-[rgba(8,16,28,0.9)] px-3.5 py-2.5 pr-9 shadow-[0_8px_28px_rgba(0,0,0,0.3)] backdrop-blur-md sm:px-4 sm:pr-10">
+        <button
+          type="button"
+          onClick={() => onCollapsedChange?.(true)}
+          aria-label="Collapse route details"
+          title="Collapse route details"
+          className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full text-[11px] text-slate-400 transition hover:bg-white/[0.06] hover:text-slate-200"
+        >
+          <span aria-hidden>▴</span>
+        </button>
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
           <p className="text-[12px] font-medium tracking-tight text-white/95">
             <span className="text-emerald-200/95">{search.origin.name}</span>
