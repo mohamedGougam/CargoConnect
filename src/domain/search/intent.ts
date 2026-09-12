@@ -45,6 +45,10 @@ export interface MaritimeSearchIntent {
 }
 
 /** Deterministic resolution outcome after catalogue matching. */
-export type PortResolutionOutcome = "auto" | "candidates" | "clarification";
+export type PortResolutionOutcome =
+  | "auto"
+  | "candidates"
+  | "clarification"
+  | "catalogue_no_match";
 
 export type SearchInterpreterKind = "deterministic" | "openai";

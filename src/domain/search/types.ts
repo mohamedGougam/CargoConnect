@@ -90,7 +90,7 @@ export interface RouteSearchState {
   /** Which interpreter produced the structured intent. */
   interpreterUsed?: "deterministic" | "openai";
   /** Catalogue resolution path (not model confidence). */
-  resolutionOutcome?: "auto" | "candidates" | "clarification";
+  resolutionOutcome?: "auto" | "candidates" | "clarification" | "catalogue_no_match";
   /** True when OpenAI was attempted but deterministic fallback was used. */
   interpreterFallbackUsed?: boolean;
   /** Safe error code when OpenAI failed (never includes secrets or raw keys). */

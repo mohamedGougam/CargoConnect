@@ -21,7 +21,12 @@ export interface SearchIndexPortRecord {
 
 interface SearchIndexFile {
   version: number;
+  kind?: string;
   ports: SearchIndexPortRecord[];
+  stats?: {
+    totalPorts?: number;
+    totalCountries?: number;
+  };
 }
 
 /**
@@ -39,26 +44,39 @@ export function getSearchPortIndex(): Port[] {
     if (code && byUnlo.has(code) && prefer) {
       const oldId = byUnlo.get(code)!;
       const previous = byId.get(oldId);
-      const previousMeta = previous?.meta;
-      if (previous && previousMeta && port.meta) {
+      if (previous) {
+        const previousMeta = previous.meta;
         const mergedAliases = Array.from(
           new Set([
-            ...(previousMeta.aliases ?? []),
-            ...(port.meta.aliases ?? []),
+            previous.name,
+            ...(previousMeta?.aliases ?? []),
+            ...(port.meta?.aliases ?? []),
           ]),
+        ).filter(
+          (a) => a && a.toLowerCase() !== port.name.toLowerCase(),
         );
         port = {
           ...port,
+          wpiNumber: port.wpiNumber ?? previous.wpiNumber,
+          specifications: {
+            ...(previous.specifications ?? {}),
+            ...(port.specifications ?? {}),
+            harborSize:
+              port.specifications?.harborSize ??
+              previous.specifications?.harborSize,
+          },
           meta: {
-            ...port.meta,
             sources: Array.from(
               new Set([
-                ...(previousMeta.sources ?? []),
-                ...(port.meta.sources ?? []),
+                ...(previousMeta?.sources ?? []),
+                ...(port.meta?.sources ?? []),
               ]),
             ),
             aliases: mergedAliases.length ? mergedAliases : undefined,
-            tier: port.meta.tier ?? previousMeta.tier,
+            tier:
+              port.meta?.tier ??
+              previousMeta?.tier ??
+              (prefer ? "major" : undefined),
           },
         };
       }

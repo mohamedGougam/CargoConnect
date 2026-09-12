@@ -42,15 +42,7 @@ export function resolveLocation(
     return single(queryText, byCode, 100, "exact_unlocode", "HIGH");
   }
 
-  // Country / region → same-country candidates only
-  const countryCode = COUNTRY_QUERY_CODES[q];
-  if (countryCode) {
-    return resolveCountry(queryText, ports, countryCode);
-  }
-
-  // e. explicit city → serving ports (before fuzzy name, after exact checks below)
-  // First try exact name / alias / city on catalogue rows
-
+  // Exact name / alias / city BEFORE country labels so "Singapore" can hit SGSIN
   const exactName: PortResolution[] = [];
   const aliasHits: PortResolution[] = [];
   const cityHits: PortResolution[] = [];
@@ -73,32 +65,19 @@ export function resolveLocation(
     }
   }
 
-  if (exactName.length === 1) {
-    return finish(queryText, exactName);
-  }
-  if (exactName.length > 1) {
-    return ambiguousResult(queryText, exactName);
-  }
+  const exactResolved = resolveExactGroup(queryText, exactName);
+  if (exactResolved) return exactResolved;
 
-  if (aliasHits.length === 1) {
-    return finish(queryText, aliasHits);
-  }
-  if (aliasHits.length > 1) {
-    // Same-country aliases only keep; cross-country → ambiguous for CI guard
-    const countries = new Set(aliasHits.map((h) => h.port.country));
-    if (countries.size === 1) return ambiguousResult(queryText, aliasHits);
-    return ambiguousResult(queryText, aliasHits);
-  }
+  const aliasResolved = resolveExactGroup(queryText, aliasHits);
+  if (aliasResolved) return aliasResolved;
 
-  if (cityHits.length === 1) {
-    return finish(queryText, cityHits);
-  }
-  if (cityHits.length > 1) {
-    const countries = new Set(cityHits.map((h) => h.port.country));
-    if (countries.size > 1) {
-      return ambiguousResult(queryText, cityHits);
-    }
-    return ambiguousResult(queryText, cityHits);
+  const cityResolved = resolveExactGroup(queryText, cityHits);
+  if (cityResolved) return cityResolved;
+
+  // Country / region → same-country candidates only (after exact port names)
+  const countryCode = COUNTRY_QUERY_CODES[q];
+  if (countryCode) {
+    return resolveCountry(queryText, ports, countryCode);
   }
 
   // e. nearby / serving ports for city (explicit config only, same country)
@@ -139,18 +118,97 @@ export function resolveLocation(
       }
     }
   }
-  fuzzy.sort((a, b) => b.score - a.score);
-  if (fuzzy.length === 1 && fuzzy[0].score >= 80) {
-    return finish(queryText, fuzzy);
+  // Also fuzzy-match aliases for misspellings like Algirs → Alger
+  for (const port of ports) {
+    for (const alias of aliasesOf(port)) {
+      const a = normalize(alias);
+      if (a.length < 5 || q.length < 5) continue;
+      const dist = levenshtein(q, a);
+      if (dist === 1) {
+        fuzzy.push(hit(port, 83, "alias_edit_distance_1", "HIGH"));
+      } else if (dist === 2 && q.length >= 6) {
+        fuzzy.push(hit(port, 70, "alias_edit_distance_2", "MEDIUM"));
+      }
+    }
   }
-  if (fuzzy.length > 1 && fuzzy[0].score >= 80) {
-    const top = fuzzy.filter((f) => f.score >= fuzzy[0].score - 5);
-    if (top.length === 1) return finish(queryText, top);
-    return ambiguousResult(queryText, top.slice(0, 5));
+  // Prefer higher scores; de-dupe by port id keeping best score
+  const byId = new Map<string, PortResolution>();
+  for (const f of fuzzy) {
+    const prev = byId.get(f.port.id);
+    if (!prev || f.score > prev.score) byId.set(f.port.id, f);
+  }
+  const fuzzyUnique = Array.from(byId.values());
+  fuzzyUnique.sort(
+    (a, b) =>
+      b.score - a.score ||
+      tierRank(a.port) - tierRank(b.port) ||
+      sourceRank(a.port) - sourceRank(b.port),
+  );
+  if (fuzzyUnique.length === 1 && fuzzyUnique[0].score >= 80) {
+    return finish(queryText, fuzzyUnique);
+  }
+  if (fuzzyUnique.length > 1 && fuzzyUnique[0].score >= 80) {
+    const top = fuzzyUnique.filter((f) => f.score >= fuzzyUnique[0].score - 5);
+    const preferred = preferDominantPorts(top);
+    if (preferred.length === 1) return finish(queryText, preferred);
+    return ambiguousResult(queryText, preferred.slice(0, 5));
   }
 
   // g. clarification
   return { queryText, candidates: [], ambiguous: true };
+}
+
+/**
+ * When multiple catalogue rows share a name, prefer a clear major hub rather than
+ * treating every cross-country collision as user ambiguity.
+ */
+function resolveExactGroup(
+  queryText: string,
+  hits: PortResolution[],
+): LocationResolutionResult | null {
+  if (hits.length === 0) return null;
+  if (hits.length === 1) return finish(queryText, hits);
+  const preferred = preferDominantPorts(hits);
+  if (preferred.length === 1) return finish(queryText, preferred);
+  return ambiguousResult(queryText, preferred.slice(0, 5));
+}
+
+function preferDominantPorts(hits: PortResolution[]): PortResolution[] {
+  if (hits.length <= 1) return hits;
+  const ranked = [...hits].sort(
+    (a, b) =>
+      tierRank(a.port) - tierRank(b.port) ||
+      sourceRank(a.port) - sourceRank(b.port) ||
+      b.score - a.score ||
+      a.port.name.localeCompare(b.port.name),
+  );
+  const bestTier = tierRank(ranked[0].port);
+  const topTier = ranked.filter((h) => tierRank(h.port) === bestTier);
+  const countries = new Set(topTier.map((h) => h.port.country));
+  if (countries.size > 1) {
+    const majors = ranked.filter((h) => tierRank(h.port) === 0);
+    if (majors.length === 1) return majors;
+    // Prefer WPI-backed major when UN/LOCODE-only namesakes collide
+    const wpiBacked = ranked.filter(
+      (h) =>
+        tierRank(h.port) === bestTier &&
+        (h.port.meta?.sources ?? []).includes("NGA_WPI"),
+    );
+    if (wpiBacked.length === 1) return wpiBacked;
+    if (majors.length > 1) return majors.slice(0, 5);
+  }
+  if (countries.size === 1 && topTier.length > 1) {
+    return [topTier[0]];
+  }
+  return topTier;
+}
+
+function sourceRank(port: Port): number {
+  const s = port.meta?.sources ?? [];
+  if (s.includes("NGA_WPI") && s.includes("UN_LOCODE")) return 0;
+  if (s.includes("NGA_WPI")) return 1;
+  if (s.includes("UN_LOCODE")) return 3;
+  return 2;
 }
 
 function resolveCountry(
@@ -267,9 +325,12 @@ function ambiguousResult(
 }
 
 function stripPortNoise(value: string): string {
+  // Only strip "Port of X" / foreign equivalents — never bare "Port Klang" / "Port Said".
   return value
-    .replace(/^(port of|port|haven|hafen|puerto|porto|λιμανι)\s+/i, "")
-    .replace(/\s+(port|haven|hafen)$/i, "")
+    .replace(
+      /^(port of|haven van|hafen von|puerto de|porto di|λιμανι)\s+/i,
+      "",
+    )
     .trim();
 }
 

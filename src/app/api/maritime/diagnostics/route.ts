@@ -4,6 +4,7 @@ import {
   ensureAisIngestStarted,
   getAisIngestDiagnostics,
 } from "@/server/maritime/ais/ingest";
+import { getPortCatalogueDiagnostics } from "@/lib/search/catalogueHealth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -23,6 +24,7 @@ export async function GET() {
   }
 
   const diag = getAisIngestDiagnostics();
+  const catalogue = getPortCatalogueDiagnostics();
 
   return NextResponse.json({
     mode: config.mode,
@@ -31,6 +33,7 @@ export async function GET() {
     aisstreamEnabled: config.aisstreamEnabled,
     hasApiKey: Boolean(config.apiKey),
     canConnectAis: config.canConnectAis,
+    portCatalogue: catalogue,
     feed: {
       connectionState: diag.connectionState,
       vesselsInCache: diag.vesselsInCache,

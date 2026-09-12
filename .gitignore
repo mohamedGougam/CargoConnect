@@ -36,9 +36,11 @@ yarn-error.log*
 .env*
 !.env.example
 
-# large raw maritime dumps (keep fixtures)
+# large raw maritime dumps (keep fixtures under data/fixtures/ports/)
 /data/raw/UpdatedPub150.csv
 /data/raw/unlocode.csv
+/data/raw/unlocode-code-list.csv
+/data/raw/*.bak
 
 # vercel
 .vercel

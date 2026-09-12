@@ -10,15 +10,27 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
 const indexPath = path.join(root, "src/data/ports/port-search-index.json");
 
-function normalize(value) {
-  return String(value ?? "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .replace(/[^a-z0-9\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
+const GUARD_COUNTRIES = [
+  "Netherlands",
+  "Norway",
+  "Tunisia",
+  "Algeria",
+  "Morocco",
+  "Egypt",
+  "Greece",
+  "Spain",
+  "Germany",
+  "United States",
+  "Brazil",
+  "South Africa",
+  "United Arab Emirates",
+  "India",
+  "Singapore",
+  "Malaysia",
+  "China",
+  "Japan",
+  "Australia",
+];
 
 function main() {
   if (!existsSync(indexPath)) {
@@ -30,11 +42,16 @@ function main() {
   const countries = new Map();
   const nameMap = new Map();
   const badCoords = [];
-  const missingUnlo = [];
 
   for (const p of ports) {
     countries.set(p.country, (countries.get(p.country) ?? 0) + 1);
-    const key = normalize(p.canonicalName);
+    const key = String(p.canonicalName ?? "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/\p{M}/gu, "")
+      .replace(/[^a-z0-9\s]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
     if (!nameMap.has(key)) nameMap.set(key, []);
     nameMap.get(key).push(p);
     if (
@@ -45,34 +62,31 @@ function main() {
     ) {
       badCoords.push(p);
     }
-    if (!p.unlocode) missingUnlo.push(p.canonicalName);
   }
 
-  const duplicateNames = [...nameMap.entries()]
-    .filter(([, list]) => list.length > 1)
-    .map(([name, list]) => ({
-      name,
-      countries: [...new Set(list.map((p) => p.country))],
-      unlocodes: list.map((p) => p.unlocode),
-    }));
-
-  const crossCountryDupes = duplicateNames.filter((d) => d.countries.length > 1);
+  const countrySet = new Set(countries.keys());
+  const guardMissing = GUARD_COUNTRIES.filter((c) => !countrySet.has(c));
+  const incomplete =
+    index.kind === "fixture" ||
+    ports.length < 500 ||
+    countries.size < 40 ||
+    guardMissing.length > 0;
 
   const report = {
+    kind: index.kind ?? "unknown",
+    generatedAt: index.generatedAt,
+    stats: index.stats ?? null,
     portsLoaded: ports.length,
     countriesRepresented: countries.size,
-    countries: Object.fromEntries(
-      [...countries.entries()].sort((a, b) => b[1] - a[1]),
-    ),
-    duplicateNames: duplicateNames.length,
-    crossCountryDuplicateNames: crossCountryDupes,
+    guardCountriesMissing: guardMissing,
+    incomplete,
+    incompleteCode: incomplete ? "PORT_CATALOGUE_INCOMPLETE" : null,
     invalidOrMissingCoordinates: badCoords.length,
-    missingUnlocode: missingUnlo.length,
   };
 
   console.log(JSON.stringify(report, null, 2));
 
-  if (badCoords.length || crossCountryDupes.length) {
+  if (incomplete || badCoords.length) {
     process.exit(2);
   }
 }

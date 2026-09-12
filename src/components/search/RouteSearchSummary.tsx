@@ -46,11 +46,13 @@ export function RouteSearchSummary({
 
   if (search.status === "error" || search.status === "ambiguous") {
     const title =
-      search.status === "ambiguous"
-        ? search.resolutionOutcome === "clarification"
-          ? "One more detail"
-          : "A few matching ports"
-        : "We couldn't resolve that route";
+      search.resolutionOutcome === "catalogue_no_match"
+        ? "Catalogue coverage"
+        : search.status === "ambiguous"
+          ? search.resolutionOutcome === "clarification"
+            ? "One more detail"
+            : "A few matching ports"
+          : "We couldn't resolve that route";
 
     return (
       <div className={`pointer-events-auto absolute inset-x-0 z-20 flex justify-center px-3 ${topClass}`}>

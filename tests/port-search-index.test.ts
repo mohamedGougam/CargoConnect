@@ -9,10 +9,10 @@ describe("global port search index coverage", () => {
   const ports = getSearchPortIndex();
 
   it("loads WPI/UNLOCODE-backed ports", () => {
-    expect(searchIndex.portCount).toBeGreaterThan(40);
-    expect(ports.length).toBeGreaterThan(40);
+    expect(searchIndex.portCount).toBeGreaterThan(500);
+    expect(ports.length).toBeGreaterThan(500);
     const countries = new Set(ports.map((p) => p.country));
-    expect(countries.size).toBeGreaterThan(15);
+    expect(countries.size).toBeGreaterThan(40);
   });
 
   it("has no invalid coordinates in search index", () => {
@@ -61,7 +61,7 @@ describe("route resolution regressions (catalogue)", () => {
   const ports = getSearchPortIndex();
 
   it.each([
-    ["Barcelona", "Algiers", /Barcelona/i, /Algiers/i, "active"],
+    ["Barcelona", "Algiers", /Barcelona/i, /Alger/i, "active"],
     ["Hamburg", "Alexandria", /Hamburg/i, /Alexandria/i, "active"],
     ["Antwerp", "Alexandria", /Antwerp/i, /Alexandria/i, "active"],
     ["Piraeus", "Alexandria", /Piraeus/i, /Alexandria/i, "active"],
@@ -151,7 +151,7 @@ describe("route resolution regressions (catalogue)", () => {
 
 describe("multilingual resolution regressions", () => {
   it.each([
-    ["De Barcelona a Argel", /Barcelona/i, /Algiers/i],
+    ["De Barcelona a Argel", /Barcelona/i, /Alger/i],
     ["Von Hamburg nach Alexandria", /Hamburg/i, /Alexandria/i],
     ["Van Antwerpen naar Alexandrië", /Antwerp/i, /Alexandria/i],
     ["Από τον Πειραιά στην Αλεξάνδρεια", /Piraeus/i, /Alexandria/i],

@@ -119,7 +119,7 @@ Composite may **fall back entirely** to sample if the live API is unavailable â€
 
 Fixtures for Eastern Med ship with the repo:
 
-- `data/raw/wpi-eastern-med.fixture.csv`
+- `data/fixtures/ports/wpi-eastern-med.fixture.csv`
 - `data/raw/unlocode-eastern-med.fixture.csv`
 
 To rebuild the catalog:

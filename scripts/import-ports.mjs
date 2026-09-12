@@ -23,11 +23,11 @@ const root = path.resolve(__dirname, "..");
 
 const WPI_CANDIDATES = [
   path.join(root, "data/raw/UpdatedPub150.csv"),
-  path.join(root, "data/raw/wpi-eastern-med.fixture.csv"),
+  path.join(root, "data/fixtures/ports/wpi-eastern-med.fixture.csv"),
 ];
 const UNLO_CANDIDATES = [
   path.join(root, "data/raw/unlocode.csv"),
-  path.join(root, "data/raw/unlocode-eastern-med.fixture.csv"),
+  path.join(root, "data/fixtures/ports/unlocode-eastern-med.fixture.csv"),
 ];
 
 const OUT = path.join(root, "src/data/ports/catalog.eastern-med.json");

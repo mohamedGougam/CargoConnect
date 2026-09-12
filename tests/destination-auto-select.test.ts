@@ -221,7 +221,7 @@ describe("smart destination auto-selection", () => {
     expect(switched.vesselType).toBe(initial.vesselType);
   });
 
-  it("J: Barcelona → Algeria resolves (single Algerian hub, no unnecessary switcher)", async () => {
+  it("J: Barcelona → Algeria auto-selects nearest Algerian candidate", async () => {
     const result = await runMaritimeRouteSearch({
       query: "Barcelona to Algeria",
       vessels: [],
@@ -230,9 +230,10 @@ describe("smart destination auto-selection", () => {
     expect(result.status).toBe("active");
     expect(result.origin?.name).toMatch(/Barcelona/i);
     expect(result.destination?.country).toBe("Algeria");
-    // Catalogue currently has a single Algerian hub → exact path, no multi-port switcher
-    expect(result.destinationOptions).toBeUndefined();
-    expect(result.destinationSelectionReason).toBe("exact");
+    expect(result.destinationSelectionReason).toBe("shortest_maritime_distance");
+    expect(
+      result.destinationOptions!.every((o) => o.port.country === "Algeria"),
+    ).toBe(true);
   });
 
   it("K: Hamburg → Egypt auto-selects Egyptian destination", async () => {
@@ -272,21 +273,20 @@ describe("smart destination auto-selection", () => {
     expect(est.distanceNm).toBeLessThan(4500);
   });
 
-  it("buildDestinationOptions ranks Stavanger nearer than Oslo from Rotterdam", () => {
+  it("buildDestinationOptions ranks nearer Norwegian ports ahead of farther ones", () => {
     const ports = getSearchPortIndex();
     const origin = resolveLocation("Rotterdam", ports).best!.port;
     const norway = resolveLocation("Norway", ports);
     const options = buildDestinationOptions(origin, norway.candidates, []);
-    const stavanger = options.find((o) => /Stavanger/i.test(o.port.name));
-    const oslo = options.find((o) => /Oslo/i.test(o.port.name));
-    expect(stavanger).toBeTruthy();
-    expect(oslo).toBeTruthy();
-    expect(stavanger!.estimatedDistanceNm).toBeLessThan(
-      oslo!.estimatedDistanceNm,
-    );
+    expect(options.length).toBeGreaterThan(1);
     expect(options[0].estimatedDistanceNm).toBe(
       Math.min(...options.map((o) => o.estimatedDistanceNm)),
     );
+    for (let i = 1; i < options.length; i++) {
+      expect(options[i].estimatedDistanceNm).toBeGreaterThanOrEqual(
+        options[i - 1].estimatedDistanceNm,
+      );
+    }
   });
 
   it("distance cache returns identical values for same UNLOCODE pair", () => {

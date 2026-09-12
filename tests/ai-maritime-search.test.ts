@@ -102,7 +102,7 @@ describe("AI maritime search (mocked OpenAI)", () => {
       interpreter: mock,
     });
     expect(result.status).toBe("active");
-    expect(result.origin?.name).toMatch(/Algiers/i);
+    expect(result.origin?.name).toMatch(/Alger/i);
     expect(result.destination?.name).toMatch(/Rotterdam/i);
     expect(result.interpreterUsed).toBe("openai");
     expect(result.cargo?.description?.toLowerCase()).toMatch(/steel/);
@@ -111,7 +111,7 @@ describe("AI maritime search (mocked OpenAI)", () => {
   it("resolves Port of Algiers string via catalogue strip", () => {
     const ports = getSearchPortIndex();
     expect(resolveLocation("Port of Algiers", ports).best?.port.name).toMatch(
-      /Algiers/i,
+      /Alger/i,
     );
     expect(resolveLocation("Port of Rotterdam", ports).best?.port.name).toMatch(
       /Rotterdam/i,
@@ -186,7 +186,7 @@ describe("AI maritime search (mocked OpenAI)", () => {
     });
     expect(result.status).toBe("active");
     expect(result.origin?.name).toMatch(/Barcelona/i);
-    expect(result.destination?.name).toMatch(/Algiers/i);
+    expect(result.destination?.name).toMatch(/Alger/i);
     expect(result.origin?.unlocode).toBe("ESBCN");
     expect(result.destination?.unlocode).toBe("DZALG");
     expect(result.interpreterUsed).toBe("deterministic");
@@ -289,7 +289,7 @@ describe("AI maritime search (mocked OpenAI)", () => {
     });
     expect(result.status).toBe("active");
     expect(result.origin?.name).toMatch(/Barcelona/i);
-    expect(result.destination?.name).toMatch(/Algiers/i);
+    expect(result.destination?.name).toMatch(/Alger/i);
   });
 
   it("resolves Arabic with mock OpenAI (catalogue validates ports)", async () => {
@@ -334,7 +334,7 @@ describe("AI maritime search (mocked OpenAI)", () => {
     });
     expect(result.status).toBe("active");
     expect(result.origin?.name).toMatch(/Barcelona/i);
-    expect(result.destination?.name).toMatch(/Algiers/i);
+    expect(result.destination?.name).toMatch(/Alger/i);
   });
 
   it("city Athens maps to Piraeus", async () => {
@@ -412,7 +412,9 @@ describe("AI maritime search (mocked OpenAI)", () => {
       interpreter: mock,
     });
     expect(["ambiguous", "error"]).toContain(result.status);
-    expect(result.resolutionOutcome).toMatch(/clarification|candidates/);
+    expect(result.resolutionOutcome).toMatch(
+      /clarification|candidates|catalogue_no_match/,
+    );
   });
 
   it("OpenAI outage falls back to deterministic (mock failure)", async () => {
@@ -494,7 +496,7 @@ describe("port aliases for AI search", () => {
   });
 
   it("resolves Algirs and Barcalona via fuzzy/alias", () => {
-    expect(resolveLocation("Algirs", ports).best?.port.name).toMatch(/Algiers/i);
+    expect(resolveLocation("Algirs", ports).best?.port.name).toMatch(/Alger/i);
     expect(resolveLocation("Barcalona", ports).best?.port.name).toMatch(
       /Barcelona/i,
     );

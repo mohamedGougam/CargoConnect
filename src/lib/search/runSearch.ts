@@ -21,6 +21,7 @@ import { resolvePlaceIntent } from "./resolvePlaceIntent";
 import {
   ambiguousBothMessage,
   ambiguousNearMessage,
+  catalogueNoMatchMessage,
   clarificationMessage,
 } from "./uxMessages";
 import {
@@ -204,6 +205,57 @@ export async function runMaritimeRouteSearch(
           now,
         });
       }
+    }
+
+    const originMiss =
+      Boolean(parsed.originText?.trim()) &&
+      !originRes.best &&
+      originRes.candidates.length === 0;
+    const destMiss =
+      Boolean(parsed.destinationText?.trim()) &&
+      !destRes.best &&
+      destRes.candidates.length === 0;
+
+    if (originMiss || destMiss) {
+      const missLabel = originMiss
+        ? [
+            parsed.originText,
+            originRes.queryText !== parsed.originText
+              ? originRes.queryText
+              : null,
+          ]
+            .filter(Boolean)
+            .join(", ")
+        : [
+            parsed.destinationText,
+            destRes.queryText !== parsed.destinationText
+              ? destRes.queryText
+              : null,
+          ]
+            .filter(Boolean)
+            .join(", ");
+      const ux = catalogueNoMatchMessage(missLabel || "the requested place", language);
+      return {
+        ...createIdleSearchState(),
+        id: `search-${Date.now()}`,
+        status: "error",
+        originalQuery: input.query,
+        parsed,
+        origin: originRes.best?.port,
+        destination: destRes.best?.port,
+        originCandidates: originRes.candidates,
+        destinationCandidates: destRes.candidates,
+        cargo: parsed.cargo,
+        vesselType: parsed.vesselType,
+        ...interpretMeta,
+        resolutionOutcome: "catalogue_no_match",
+        uxMessage: ux,
+        errorMessage: ux,
+        requestedDestinationLabel: parsed.destinationText,
+        requestedOriginLabel: parsed.originText,
+        createdAt: now,
+        updatedAt: now,
+      };
     }
 
     const ux =

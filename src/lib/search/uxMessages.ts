@@ -69,6 +69,26 @@ export function clarificationMessage(
   }
 }
 
+export function catalogueNoMatchMessage(
+  placeLabel: string,
+  language?: string,
+): string {
+  const place = placeLabel.trim() || "that place";
+  const lang = (language ?? "en").toLowerCase().slice(0, 2);
+  switch (lang) {
+    case "nl":
+      return `We begrepen “${place}”, maar vonden geen matchende haven in de huidige maritieme catalogus.`;
+    case "de":
+      return `Wir haben „${place}“ verstanden, aber keinen passenden Hafen im aktuellen Seekatalog gefunden.`;
+    case "fr":
+      return `Nous avons compris « ${place} », mais aucun port correspondant n’a été trouvé dans le catalogue maritime actuel.`;
+    case "es":
+      return `Entendimos “${place}”, pero no encontramos un puerto coincidente en el catálogo marítimo actual.`;
+    default:
+      return `We understood ${place}, but couldn't find a matching port in the current maritime catalogue.`;
+  }
+}
+
 export function understoodAsPrefix(language?: string): string {
   const lang = (language ?? "en").toLowerCase().slice(0, 2);
   switch (lang) {

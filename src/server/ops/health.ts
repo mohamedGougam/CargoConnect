@@ -11,6 +11,7 @@ import {
   getCommercialPersistenceMode,
   isDemoPersistenceMode,
 } from "@/server/commercial/repos";
+import { getPortCatalogueDiagnostics } from "@/lib/search/catalogueHealth";
 import { sql } from "drizzle-orm";
 
 export type ComponentStatus =
@@ -170,6 +171,21 @@ export async function checkReady(): Promise<{
   const aisMode = getAisProviderMode();
   components.ais = aisMode === "licensed" ? "configured" : "development";
   details.aisLabel = getAisProviderLabel();
+
+  // Port search catalogue (detect accidental fixture deployment)
+  const catalogue = getPortCatalogueDiagnostics();
+  details.portCatalogue = {
+    kind: catalogue.kind,
+    totalPorts: catalogue.totalPorts,
+    totalCountries: catalogue.totalCountries,
+    incomplete: catalogue.incomplete,
+    code: catalogue.code,
+  };
+  components.portCatalogue = catalogue.incomplete ? "degraded" : "ok";
+  if (catalogue.incomplete) {
+    details.portCatalogueCode = "PORT_CATALOGUE_INCOMPLETE";
+    details.portCatalogueMessage = catalogue.message;
+  }
 
   // Watcher freshness
   const health = getWatcherHealth();
