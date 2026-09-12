@@ -39,10 +39,11 @@ export function getSearchPortIndex(): Port[] {
     if (code && byUnlo.has(code) && prefer) {
       const oldId = byUnlo.get(code)!;
       const previous = byId.get(oldId);
-      if (previous && port.meta) {
+      const previousMeta = previous?.meta;
+      if (previous && previousMeta && port.meta) {
         const mergedAliases = Array.from(
           new Set([
-            ...(previous.meta.aliases ?? []),
+            ...(previousMeta.aliases ?? []),
             ...(port.meta.aliases ?? []),
           ]),
         );
@@ -52,12 +53,12 @@ export function getSearchPortIndex(): Port[] {
             ...port.meta,
             sources: Array.from(
               new Set([
-                ...(previous.meta.sources ?? []),
+                ...(previousMeta.sources ?? []),
                 ...(port.meta.sources ?? []),
               ]),
             ),
             aliases: mergedAliases.length ? mergedAliases : undefined,
-            tier: port.meta.tier ?? previous.meta.tier,
+            tier: port.meta.tier ?? previousMeta.tier,
           },
         };
       }
