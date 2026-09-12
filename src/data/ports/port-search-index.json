@@ -1,0 +1,1160 @@
+{
+  "version": 1,
+  "generatedAt": "2026-09-12T20:42:36.975Z",
+  "primarySources": [
+    "NGA_WPI",
+    "UN_LOCODE"
+  ],
+  "disclaimer": "Search index derived from NGA World Port Index and/or UNECE UN/LOCODE fixtures. Not for navigation. No NGA endorsement.",
+  "portCount": 64,
+  "ports": [
+    {
+      "id": "port-aldrz",
+      "canonicalName": "Durres",
+      "aliases": [],
+      "city": "Durres",
+      "country": "Albania",
+      "countryCode": "AL",
+      "unlocode": "ALDRZ",
+      "latitude": 41.31,
+      "longitude": 19.46,
+      "wpiNumber": "35740",
+      "harborSize": "Small",
+      "tier": "local",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-dzalg",
+      "canonicalName": "Algiers",
+      "aliases": [
+        "Alger",
+        "Argel"
+      ],
+      "city": "Algiers",
+      "country": "Algeria",
+      "countryCode": "DZ",
+      "unlocode": "DZALG",
+      "latitude": 36.765,
+      "longitude": 3.067,
+      "wpiNumber": "32500",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-ausyd",
+      "canonicalName": "Sydney",
+      "aliases": [],
+      "city": "Sydney",
+      "country": "Australia",
+      "countryCode": "AU",
+      "unlocode": "AUSYD",
+      "latitude": -33.8688,
+      "longitude": 151.2093,
+      "wpiNumber": "42000",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-beanr",
+      "canonicalName": "Antwerp",
+      "aliases": [
+        "Antwerpen",
+        "Anvers"
+      ],
+      "city": "Antwerp",
+      "country": "Belgium",
+      "countryCode": "BE",
+      "unlocode": "BEANR",
+      "latitude": 51.27,
+      "longitude": 4.4,
+      "wpiNumber": "30700",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-brssz",
+      "canonicalName": "Santos",
+      "aliases": [],
+      "city": "Santos",
+      "country": "Brazil",
+      "countryCode": "BR",
+      "unlocode": "BRSSZ",
+      "latitude": -23.9608,
+      "longitude": -46.3336,
+      "wpiNumber": "52000",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-cnngb",
+      "canonicalName": "Ningbo",
+      "aliases": [],
+      "city": "Ningbo",
+      "country": "China",
+      "countryCode": "CN",
+      "unlocode": "CNNGB",
+      "latitude": 29.8683,
+      "longitude": 121.544,
+      "wpiNumber": "36010",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-cnsha",
+      "canonicalName": "Shanghai",
+      "aliases": [],
+      "city": "Shanghai",
+      "country": "China",
+      "countryCode": "CN",
+      "unlocode": "CNSHA",
+      "latitude": 31.2304,
+      "longitude": 121.4737,
+      "wpiNumber": "36000",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-cylca",
+      "canonicalName": "Larnaca",
+      "aliases": [],
+      "city": "Larnaca",
+      "country": "Cyprus",
+      "countryCode": "CY",
+      "unlocode": "CYLCA",
+      "latitude": 34.92,
+      "longitude": 33.64,
+      "wpiNumber": "42740",
+      "harborSize": "Small",
+      "tier": "local",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-cylms",
+      "canonicalName": "Limassol",
+      "aliases": [],
+      "city": "Limassol",
+      "country": "Cyprus",
+      "countryCode": "CY",
+      "unlocode": "CYLMS",
+      "latitude": 34.665,
+      "longitude": 33.04,
+      "wpiNumber": "44000",
+      "harborSize": "Medium",
+      "tier": "local",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-egaly",
+      "canonicalName": "Alexandria",
+      "aliases": [
+        "Alexandrie",
+        "Alexandrië",
+        "Αλεξάνδρεια"
+      ],
+      "city": "Alexandria",
+      "country": "Egypt",
+      "countryCode": "EG",
+      "unlocode": "EGALY",
+      "latitude": 31.2001,
+      "longitude": 29.9187,
+      "wpiNumber": "33500",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-egdam",
+      "canonicalName": "Damietta",
+      "aliases": [],
+      "city": "Damietta",
+      "country": "Egypt",
+      "countryCode": "EG",
+      "unlocode": "EGDAM",
+      "latitude": 31.467,
+      "longitude": 31.767,
+      "wpiNumber": "33520",
+      "harborSize": "Medium",
+      "tier": "secondary",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-egpsd",
+      "canonicalName": "Port Said",
+      "aliases": [],
+      "city": "Port Said",
+      "country": "Egypt",
+      "countryCode": "EG",
+      "unlocode": "EGPSD",
+      "latitude": 31.265,
+      "longitude": 32.302,
+      "wpiNumber": "33510",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-egsuz",
+      "canonicalName": "Suez",
+      "aliases": [],
+      "city": "Suez",
+      "country": "Egypt",
+      "countryCode": "EG",
+      "unlocode": "EGSUZ",
+      "latitude": 29.96,
+      "longitude": 32.55,
+      "wpiNumber": "39770",
+      "harborSize": "Medium",
+      "tier": "secondary",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-frleh",
+      "canonicalName": "Le Havre",
+      "aliases": [],
+      "city": "Le Havre",
+      "country": "France",
+      "countryCode": "FR",
+      "unlocode": "FRLEH",
+      "latitude": 49.4944,
+      "longitude": 0.1079,
+      "wpiNumber": "49000",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-frmrs",
+      "canonicalName": "Marseille",
+      "aliases": [],
+      "city": "Marseille",
+      "country": "France",
+      "countryCode": "FR",
+      "unlocode": "FRMRS",
+      "latitude": 43.2965,
+      "longitude": 5.3698,
+      "wpiNumber": "48000",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-deham",
+      "canonicalName": "Hamburg",
+      "aliases": [],
+      "city": "Hamburg",
+      "country": "Germany",
+      "countryCode": "DE",
+      "unlocode": "DEHAM",
+      "latitude": 53.5461,
+      "longitude": 9.9661,
+      "wpiNumber": "30500",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-grher",
+      "canonicalName": "Heraklion",
+      "aliases": [],
+      "city": "Heraklion",
+      "country": "Greece",
+      "countryCode": "GR",
+      "unlocode": "GRHER",
+      "latitude": 35.341,
+      "longitude": 25.14,
+      "wpiNumber": "43740",
+      "harborSize": "Medium",
+      "tier": "local",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-grigo",
+      "canonicalName": "Igouomenitsa",
+      "aliases": [],
+      "city": "Igouomenitsa",
+      "country": "Greece",
+      "countryCode": "GR",
+      "unlocode": "GRIGO",
+      "latitude": 39.5,
+      "longitude": 20.27,
+      "wpiNumber": "43710",
+      "harborSize": "Small",
+      "tier": "local",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-grgpa",
+      "canonicalName": "Patras",
+      "aliases": [],
+      "city": "Patras",
+      "country": "Greece",
+      "countryCode": "GR",
+      "unlocode": "GRGPA",
+      "latitude": 38.25,
+      "longitude": 21.73,
+      "wpiNumber": "43700",
+      "harborSize": "Medium",
+      "tier": "secondary",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-grpir",
+      "canonicalName": "Piraeus",
+      "aliases": [
+        "Πειραιάς",
+        "Πειραιά"
+      ],
+      "city": "Piraeus",
+      "country": "Greece",
+      "countryCode": "GR",
+      "unlocode": "GRPIR",
+      "latitude": 37.948,
+      "longitude": 23.643,
+      "wpiNumber": "33000",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-grskg",
+      "canonicalName": "Thessaloniki",
+      "aliases": [],
+      "city": "Thessaloniki",
+      "country": "Greece",
+      "countryCode": "GR",
+      "unlocode": "GRSKG",
+      "latitude": 40.632,
+      "longitude": 22.936,
+      "wpiNumber": "33010",
+      "harborSize": "Medium",
+      "tier": "local",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-grvol",
+      "canonicalName": "Volos",
+      "aliases": [],
+      "city": "Volos",
+      "country": "Greece",
+      "countryCode": "GR",
+      "unlocode": "GRVOL",
+      "latitude": 39.35,
+      "longitude": 22.95,
+      "wpiNumber": "43720",
+      "harborSize": "Small",
+      "tier": "local",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-hkhkg",
+      "canonicalName": "Hong Kong",
+      "aliases": [],
+      "city": "Hong Kong",
+      "country": "Hong Kong",
+      "countryCode": "HK",
+      "unlocode": "HKHKG",
+      "latitude": 22.3193,
+      "longitude": 114.1694,
+      "wpiNumber": "53000",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-inmaa",
+      "canonicalName": "Chennai",
+      "aliases": [
+        "Madras"
+      ],
+      "city": "Chennai",
+      "country": "India",
+      "countryCode": "IN",
+      "unlocode": "INMAA",
+      "latitude": 13.0827,
+      "longitude": 80.2707,
+      "wpiNumber": "39020",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-inmun",
+      "canonicalName": "Mundra",
+      "aliases": [],
+      "city": "Mundra",
+      "country": "India",
+      "countryCode": "IN",
+      "unlocode": "INMUN",
+      "latitude": 22.84,
+      "longitude": 69.72,
+      "wpiNumber": "39010",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-innsa",
+      "canonicalName": "Nhava Sheva",
+      "aliases": [
+        "Jawaharlal Nehru"
+      ],
+      "city": "Nhava Sheva",
+      "country": "India",
+      "countryCode": "IN",
+      "unlocode": "INNSA",
+      "latitude": 18.95,
+      "longitude": 72.95,
+      "wpiNumber": "39000",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-ilash",
+      "canonicalName": "Ashdod",
+      "aliases": [],
+      "city": "Ashdod",
+      "country": "Israel",
+      "countryCode": "IL",
+      "unlocode": "ILASH",
+      "latitude": 31.816,
+      "longitude": 34.65,
+      "wpiNumber": "56000",
+      "harborSize": "Medium",
+      "tier": "secondary",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-ilhfa",
+      "canonicalName": "Haifa",
+      "aliases": [],
+      "city": "Haifa",
+      "country": "Israel",
+      "countryCode": "IL",
+      "unlocode": "ILHFA",
+      "latitude": 32.819,
+      "longitude": 35,
+      "wpiNumber": "45000",
+      "harborSize": "Medium",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-itaug",
+      "canonicalName": "Augusta",
+      "aliases": [],
+      "city": "Augusta",
+      "country": "Italy",
+      "countryCode": "IT",
+      "unlocode": "ITAUG",
+      "latitude": 37.23,
+      "longitude": 15.22,
+      "wpiNumber": "36740",
+      "harborSize": "Medium",
+      "tier": "secondary",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-itcta",
+      "canonicalName": "Catania",
+      "aliases": [],
+      "city": "Catania",
+      "country": "Italy",
+      "countryCode": "IT",
+      "unlocode": "ITCTA",
+      "latitude": 37.49,
+      "longitude": 15.09,
+      "wpiNumber": "36750",
+      "harborSize": "Medium",
+      "tier": "secondary",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-itgoa",
+      "canonicalName": "Genoa",
+      "aliases": [],
+      "city": "Genoa",
+      "country": "Italy",
+      "countryCode": "IT",
+      "unlocode": "ITGOA",
+      "latitude": 44.4056,
+      "longitude": 8.9463,
+      "wpiNumber": "47000",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-itpmo",
+      "canonicalName": "Palermo",
+      "aliases": [],
+      "city": "Palermo",
+      "country": "Italy",
+      "countryCode": "IT",
+      "unlocode": "ITPMO",
+      "latitude": 38.12,
+      "longitude": 13.37,
+      "wpiNumber": "36760",
+      "harborSize": "Medium",
+      "tier": "secondary",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-jptyo",
+      "canonicalName": "Tokyo",
+      "aliases": [],
+      "city": "Tokyo",
+      "country": "Japan",
+      "countryCode": "JP",
+      "unlocode": "JPTYO",
+      "latitude": 35.6528,
+      "longitude": 139.8395,
+      "wpiNumber": "37000",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-lbbey",
+      "canonicalName": "Beirut",
+      "aliases": [],
+      "city": "Beirut",
+      "country": "Lebanon",
+      "countryCode": "LB",
+      "unlocode": "LBBEY",
+      "latitude": 33.9,
+      "longitude": 35.52,
+      "wpiNumber": "40740",
+      "harborSize": "Medium",
+      "tier": "local",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-mypkg",
+      "canonicalName": "Port Klang",
+      "aliases": [
+        "Port Kelang"
+      ],
+      "city": "Port Klang",
+      "country": "Malaysia",
+      "countryCode": "MY",
+      "unlocode": "MYPKG",
+      "latitude": 3,
+      "longitude": 101.4,
+      "wpiNumber": "35500",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-mytpp",
+      "canonicalName": "Tanjung Pelepas",
+      "aliases": [],
+      "city": "Tanjung Pelepas",
+      "country": "Malaysia",
+      "countryCode": "MY",
+      "unlocode": "MYTPP",
+      "latitude": 1.366,
+      "longitude": 103.551,
+      "wpiNumber": "35510",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-mtmla",
+      "canonicalName": "Valletta",
+      "aliases": [],
+      "city": "Valletta",
+      "country": "Malta",
+      "countryCode": "MT",
+      "unlocode": "MTMLA",
+      "latitude": 35.898,
+      "longitude": 14.514,
+      "wpiNumber": "46000",
+      "harborSize": "Medium",
+      "tier": "local",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-nlams",
+      "canonicalName": "Amsterdam",
+      "aliases": [],
+      "city": "Amsterdam",
+      "country": "Netherlands",
+      "countryCode": "NL",
+      "unlocode": "NLAMS",
+      "latitude": 52.378,
+      "longitude": 4.9,
+      "wpiNumber": "30100",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-nlrtm",
+      "canonicalName": "Rotterdam",
+      "aliases": [
+        "Rdam"
+      ],
+      "city": "Rotterdam",
+      "country": "Netherlands",
+      "countryCode": "NL",
+      "unlocode": "NLRTM",
+      "latitude": 51.9225,
+      "longitude": 4.4792,
+      "wpiNumber": "30090",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-nobgo",
+      "canonicalName": "Bergen",
+      "aliases": [],
+      "city": "Bergen",
+      "country": "Norway",
+      "countryCode": "NO",
+      "unlocode": "NOBGO",
+      "latitude": 60.392,
+      "longitude": 5.324,
+      "wpiNumber": "31510",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-noosl",
+      "canonicalName": "Oslo",
+      "aliases": [],
+      "city": "Oslo",
+      "country": "Norway",
+      "countryCode": "NO",
+      "unlocode": "NOOSL",
+      "latitude": 59.904,
+      "longitude": 10.74,
+      "wpiNumber": "31500",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-nosvg",
+      "canonicalName": "Stavanger",
+      "aliases": [],
+      "city": "Stavanger",
+      "country": "Norway",
+      "countryCode": "NO",
+      "unlocode": "NOSVG",
+      "latitude": 58.974,
+      "longitude": 5.73,
+      "wpiNumber": "31520",
+      "harborSize": "Medium",
+      "tier": "local",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-plgdn",
+      "canonicalName": "Gdansk",
+      "aliases": [],
+      "city": "Gdansk",
+      "country": "Poland",
+      "countryCode": "PL",
+      "unlocode": "PLGDN",
+      "latitude": 54.352,
+      "longitude": 18.6466,
+      "wpiNumber": "50000",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-sajed",
+      "canonicalName": "Jeddah",
+      "aliases": [],
+      "city": "Jeddah",
+      "country": "Saudi Arabia",
+      "countryCode": "SA",
+      "unlocode": "SAJED",
+      "latitude": 21.4858,
+      "longitude": 39.1925,
+      "wpiNumber": "55000",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-sgsin",
+      "canonicalName": "Singapore",
+      "aliases": [],
+      "city": "Singapore",
+      "country": "Singapore",
+      "countryCode": "SG",
+      "unlocode": "SGSIN",
+      "latitude": 1.2644,
+      "longitude": 103.8228,
+      "wpiNumber": "35000",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-zacpt",
+      "canonicalName": "Cape Town",
+      "aliases": [],
+      "city": "Cape Town",
+      "country": "South Africa",
+      "countryCode": "ZA",
+      "unlocode": "ZACPT",
+      "latitude": -33.9249,
+      "longitude": 18.4241,
+      "wpiNumber": "43000",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-krpus",
+      "canonicalName": "Busan",
+      "aliases": [
+        "Pusan"
+      ],
+      "city": "Busan",
+      "country": "South Korea",
+      "countryCode": "KR",
+      "unlocode": "KRPUS",
+      "latitude": 35.1028,
+      "longitude": 129.0403,
+      "wpiNumber": "36500",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-esalg",
+      "canonicalName": "Algeciras",
+      "aliases": [],
+      "city": "Algeciras",
+      "country": "Spain",
+      "countryCode": "ES",
+      "unlocode": "ESALG",
+      "latitude": 36.1408,
+      "longitude": -5.4565,
+      "wpiNumber": "32030",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-esbcn",
+      "canonicalName": "Barcelona",
+      "aliases": [],
+      "city": "Barcelona",
+      "country": "Spain",
+      "countryCode": "ES",
+      "unlocode": "ESBCN",
+      "latitude": 41.3543,
+      "longitude": 2.1685,
+      "wpiNumber": "32000",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-estar",
+      "canonicalName": "Tarragona",
+      "aliases": [],
+      "city": "Tarragona",
+      "country": "Spain",
+      "countryCode": "ES",
+      "unlocode": "ESTAR",
+      "latitude": 41.105,
+      "longitude": 1.24,
+      "wpiNumber": "32020",
+      "harborSize": "Medium",
+      "tier": "secondary",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-esvlc",
+      "canonicalName": "Valencia",
+      "aliases": [],
+      "city": "Valencia",
+      "country": "Spain",
+      "countryCode": "ES",
+      "unlocode": "ESVLC",
+      "latitude": 39.4457,
+      "longitude": -0.3205,
+      "wpiNumber": "32010",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-trisk",
+      "canonicalName": "Iskenderun",
+      "aliases": [],
+      "city": "Iskenderun",
+      "country": "Turkey",
+      "countryCode": "TR",
+      "unlocode": "TRISK",
+      "latitude": 36.58,
+      "longitude": 36.17,
+      "wpiNumber": "44900",
+      "harborSize": "Medium",
+      "tier": "secondary",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-trist",
+      "canonicalName": "Istanbul",
+      "aliases": [],
+      "city": "Istanbul",
+      "country": "Turkey",
+      "countryCode": "TR",
+      "unlocode": "TRIST",
+      "latitude": 41.0082,
+      "longitude": 28.9784,
+      "wpiNumber": "34000",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-trizm",
+      "canonicalName": "Izmir",
+      "aliases": [],
+      "city": "Izmir",
+      "country": "Turkey",
+      "countryCode": "TR",
+      "unlocode": "TRIZM",
+      "latitude": 38.43,
+      "longitude": 27.14,
+      "wpiNumber": "44750",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-trmer",
+      "canonicalName": "Mersin",
+      "aliases": [],
+      "city": "Mersin",
+      "country": "Turkey",
+      "countryCode": "TR",
+      "unlocode": "TRMER",
+      "latitude": 36.8,
+      "longitude": 34.64,
+      "wpiNumber": "44760",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-aedxb",
+      "canonicalName": "Dubai",
+      "aliases": [
+        "Port Rashid"
+      ],
+      "city": "Dubai",
+      "country": "United Arab Emirates",
+      "countryCode": "AE",
+      "unlocode": "AEDXB",
+      "latitude": 25.2697,
+      "longitude": 55.3094,
+      "wpiNumber": "38010",
+      "harborSize": "Medium",
+      "tier": "local",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-aejea",
+      "canonicalName": "Jebel Ali",
+      "aliases": [],
+      "city": "Jebel Ali",
+      "country": "United Arab Emirates",
+      "countryCode": "AE",
+      "unlocode": "AEJEA",
+      "latitude": 25.0118,
+      "longitude": 55.0697,
+      "wpiNumber": "38000",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-gbfxt",
+      "canonicalName": "Felixstowe",
+      "aliases": [],
+      "city": "Felixstowe",
+      "country": "United Kingdom",
+      "countryCode": "GB",
+      "unlocode": "GBFXT",
+      "latitude": 51.9542,
+      "longitude": 1.3503,
+      "wpiNumber": "31000",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-uslgb",
+      "canonicalName": "Long Beach",
+      "aliases": [],
+      "city": "Long Beach",
+      "country": "United States",
+      "countryCode": "US",
+      "unlocode": "USLGB",
+      "latitude": 33.754,
+      "longitude": -118.216,
+      "wpiNumber": "41010",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-uslax",
+      "canonicalName": "Los Angeles",
+      "aliases": [],
+      "city": "Los Angeles",
+      "country": "United States",
+      "countryCode": "US",
+      "unlocode": "USLAX",
+      "latitude": 33.74,
+      "longitude": -118.276,
+      "wpiNumber": "41000",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-usnyc",
+      "canonicalName": "New York",
+      "aliases": [
+        "New Jersey"
+      ],
+      "city": "New York",
+      "country": "United States",
+      "countryCode": "US",
+      "unlocode": "USNYC",
+      "latitude": 40.6681,
+      "longitude": -74.0451,
+      "wpiNumber": "40000",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI",
+        "UN_LOCODE"
+      ]
+    },
+    {
+      "id": "port-usewr",
+      "canonicalName": "Newark",
+      "aliases": [],
+      "city": "Newark",
+      "country": "United States",
+      "countryCode": "US",
+      "unlocode": "USEWR",
+      "latitude": 40.6895,
+      "longitude": -74.1745,
+      "wpiNumber": "40010",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-ussav",
+      "canonicalName": "Savannah",
+      "aliases": [],
+      "city": "Savannah",
+      "country": "United States",
+      "countryCode": "US",
+      "unlocode": "USSAV",
+      "latitude": 32.0809,
+      "longitude": -81.0912,
+      "wpiNumber": "51000",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI"
+      ]
+    },
+    {
+      "id": "port-vnsgn",
+      "canonicalName": "Ho Chi Minh City",
+      "aliases": [
+        "Saigon"
+      ],
+      "city": "Ho Chi Minh City",
+      "country": "Vietnam",
+      "countryCode": "VN",
+      "unlocode": "VNSGN",
+      "latitude": 10.7769,
+      "longitude": 106.7009,
+      "wpiNumber": "54000",
+      "harborSize": "Large",
+      "tier": "major",
+      "sources": [
+        "NGA_WPI"
+      ]
+    }
+  ]
+}

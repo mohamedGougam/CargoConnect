@@ -35,6 +35,8 @@ export interface PortMeta {
    * major → world view; secondary → regional; local → detailed.
    */
   tier?: "major" | "secondary" | "local";
+  /** Alternate names from WPI / UN/LOCODE (search only). */
+  aliases?: string[];
 }
 
 export interface PortSpecifications {

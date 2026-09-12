@@ -1,0 +1,51 @@
+World Port Index Number,Region Name,Main Port Name,Alternate Port Name,UN/LOCODE,Country Code,Harbor Size,Harbor Type,Channel Depth (m),Anchorage Depth (m),Cargo Pier Depth (m),Facilities - Container,Facilities - Solid Bulk,Facilities - Liquid Bulk,Facilities - Oil Terminal,Facilities - Breakbulk,Facilities - Ro-Ro,Facilities - LNG Terminal,Latitude,Longitude
+30090,North Sea - Europe,ROTTERDAM,,NLRTM,NL,Large,River Natural,20,22,18,Yes,Yes,Yes,Yes,Yes,Yes,No,51.9225,4.4792
+30100,North Sea - Europe,AMSTERDAM,,NLAMS,NL,Large,River Natural,14,15,12,Yes,Yes,Yes,No,Yes,Yes,No,52.378,4.9
+30500,North Sea - Europe,HAMBURG,,DEHAM,DE,Large,River Natural,15,16,14,Yes,Yes,Yes,Yes,Yes,Yes,No,53.5461,9.9661
+30700,North Sea - Europe,ANTWERP,ANTWERPEN;ANVERS,BEANR,BE,Large,River Natural,16,17,15,Yes,Yes,Yes,Yes,Yes,Yes,No,51.27,4.4
+31000,North Sea - Europe,FELIXSTOWE,,GBFXT,GB,Large,Coastal Natural,15,16,14,Yes,No,No,No,Yes,No,No,51.9542,1.3503
+31500,Scandinavia,OSLO,,NOOSL,NO,Large,Coastal Natural,12,14,11,Yes,Yes,No,No,Yes,Yes,No,59.904,10.74
+31510,Scandinavia,BERGEN,,NOBGO,NO,Large,Coastal Natural,11,13,10,Yes,Yes,No,No,Yes,Yes,No,60.392,5.324
+31520,Scandinavia,STAVANGER,,NOSVG,NO,Medium,Coastal Natural,10,12,9,No,Yes,Yes,Yes,Yes,No,No,58.974,5.73
+32000,Mediterranean - Western,BARCELONA,,ESBCN,ES,Large,Coastal Natural,14,16,13,Yes,Yes,Yes,No,Yes,Yes,No,41.3543,2.1685
+32010,Mediterranean - Western,VALENCIA,,ESVLC,ES,Large,Coastal Natural,14,15,13,Yes,Yes,No,No,Yes,Yes,No,39.4457,-0.3205
+32020,Mediterranean - Western,TARRAGONA,,ESTAR,ES,Medium,Coastal Natural,12,13,11,Yes,Yes,Yes,Yes,Yes,No,No,41.105,1.24
+32030,Mediterranean - Western,ALGECIRAS,,ESALG,ES,Large,Coastal Natural,16,18,15,Yes,No,No,No,Yes,Yes,No,36.1408,-5.4565
+32500,Mediterranean - Western,ALGIERS,ALGER;ARGEL,DZALG,DZ,Large,Coastal Natural,12,14,11,Yes,Yes,No,No,Yes,Yes,No,36.765,3.067
+33000,Mediterranean - Eastern,PIRAEUS,,GRPIR,GR,Large,Coastal Natural,16,18,18.5,Yes,No,No,No,Yes,Yes,No,37.948,23.643
+33010,Mediterranean - Eastern,THESSALONIKI,,GRSKG,GR,Medium,Coastal Natural,12,14,11,Yes,Yes,No,No,Yes,No,No,40.632,22.936
+33500,Mediterranean - Eastern,ALEXANDRIA,ALEXANDRIE,EGALY,EG,Large,Coastal Natural,12,14,12,Yes,Yes,Yes,Yes,Yes,Yes,No,31.2001,29.9187
+33510,Mediterranean - Eastern,PORT SAID,,EGPSD,EG,Large,Coastal Natural,14,16,13,Yes,Yes,No,No,Yes,Yes,No,31.265,32.302
+33520,Mediterranean - Eastern,DAMIETTA,,EGDAM,EG,Medium,Coastal Natural,13,14,12,Yes,Yes,No,No,Yes,No,No,31.467,31.767
+34000,Mediterranean - Eastern,ISTANBUL,,TRIST,TR,Large,Coastal Natural,12,14,11,Yes,Yes,No,No,Yes,Yes,No,41.0082,28.9784
+35000,Southeast Asia,SINGAPORE,,SGSIN,SG,Large,Coastal Natural,18,20,16,Yes,Yes,Yes,Yes,Yes,Yes,Yes,1.2644,103.8228
+35500,Southeast Asia,PORT KLANG,PORT KELANG,MYPKG,MY,Large,Coastal Natural,15,16,14,Yes,Yes,No,No,Yes,Yes,No,3.0,101.4
+35510,Southeast Asia,TANJUNG PELEPAS,,MYTPP,MY,Large,Coastal Natural,16,17,15,Yes,No,No,No,Yes,Yes,No,1.366,103.551
+36000,East Asia,SHANGHAI,,CNSHA,CN,Large,River Natural,14,15,13,Yes,Yes,Yes,Yes,Yes,Yes,No,31.2304,121.4737
+36010,East Asia,NINGBO,,CNNGB,CN,Large,Coastal Natural,15,16,14,Yes,Yes,No,No,Yes,Yes,No,29.8683,121.544
+36500,East Asia,BUSAN,PUSAN,KRPUS,KR,Large,Coastal Natural,16,17,15,Yes,Yes,No,No,Yes,Yes,No,35.1028,129.0403
+37000,East Asia,TOKYO,,JPTYO,JP,Large,Coastal Natural,14,15,13,Yes,Yes,No,No,Yes,Yes,No,35.6528,139.8395
+38000,Middle East,JEBEL ALI,,AEJEA,AE,Large,Coastal Natural,16,17,15,Yes,Yes,Yes,Yes,Yes,Yes,No,25.0118,55.0697
+38010,Middle East,DUBAI,PORT RASHID,AEDXB,AE,Medium,Coastal Natural,12,13,11,Yes,No,No,No,Yes,Yes,No,25.2697,55.3094
+39000,South Asia,NHAVA SHEVA,JAWAHARLAL NEHRU,INNSA,IN,Large,Coastal Natural,14,15,13,Yes,Yes,No,No,Yes,Yes,No,18.95,72.95
+39010,South Asia,MUNDRA,,INMUN,IN,Large,Coastal Natural,14,15,13,Yes,Yes,No,No,Yes,Yes,No,22.84,69.72
+39020,South Asia,CHENNAI,MADRAS,INMAA,IN,Large,Coastal Natural,13,14,12,Yes,Yes,No,No,Yes,Yes,No,13.0827,80.2707
+40000,North America - East,NEW YORK,NEW YORK / NEW JERSEY,USNYC,US,Large,River Natural,14,15,13,Yes,Yes,Yes,Yes,Yes,Yes,No,40.6681,-74.0451
+40010,North America - East,NEWARK,,USEWR,US,Large,River Natural,13,14,12,Yes,Yes,No,No,Yes,Yes,No,40.6895,-74.1745
+41000,North America - West,LOS ANGELES,,USLAX,US,Large,Coastal Natural,16,17,15,Yes,Yes,No,No,Yes,Yes,No,33.740,-118.276
+41010,North America - West,LONG BEACH,,USLGB,US,Large,Coastal Natural,16,17,15,Yes,Yes,No,No,Yes,Yes,No,33.754,-118.216
+42000,Oceania,SYDNEY,,AUSYD,AU,Large,Coastal Natural,14,15,13,Yes,Yes,No,No,Yes,Yes,No,-33.8688,151.2093
+43000,Africa - South,CAPE TOWN,,ZACPT,ZA,Large,Coastal Natural,14,15,13,Yes,Yes,No,No,Yes,Yes,No,-33.9249,18.4241
+44000,Mediterranean - Eastern,LIMASSOL,,CYLMS,CY,Medium,Coastal Natural,12,13,11,Yes,No,No,No,Yes,Yes,No,34.665,33.04
+45000,Mediterranean - Eastern,HAIFA,,ILHFA,IL,Medium,Coastal Natural,12,13,11,Yes,Yes,No,No,Yes,Yes,No,32.819,35.0
+46000,Mediterranean - Central,VALLETTA,,MTMLA,MT,Medium,Coastal Natural,11,12,10,Yes,No,No,No,Yes,Yes,No,35.898,14.514
+47000,Mediterranean - Central,GENOA,,ITGOA,IT,Large,Coastal Natural,14,15,13,Yes,Yes,Yes,No,Yes,Yes,No,44.4056,8.9463
+48000,Mediterranean - Western,MARSEILLE,,FRMRS,FR,Large,Coastal Natural,14,15,13,Yes,Yes,Yes,Yes,Yes,Yes,No,43.2965,5.3698
+49000,North Sea - Europe,LE HAVRE,,FRLEH,FR,Large,Coastal Natural,15,16,14,Yes,Yes,No,No,Yes,Yes,No,49.4944,0.1079
+50000,Baltic,GDANSK,,PLGDN,PL,Large,Coastal Natural,14,15,13,Yes,Yes,No,No,Yes,Yes,No,54.352,18.6466
+51000,North America - East,SAVANNAH,,USSAV,US,Large,River Natural,13,14,12,Yes,Yes,No,No,Yes,Yes,No,32.0809,-81.0912
+52000,South America,SANTOS,,BRSSZ,BR,Large,Coastal Natural,14,15,13,Yes,Yes,No,No,Yes,Yes,No,-23.9608,-46.3336
+53000,East Asia,HONG KONG,,HKHKG,HK,Large,Coastal Natural,16,17,15,Yes,Yes,No,No,Yes,Yes,No,22.3193,114.1694
+54000,Southeast Asia,HO CHI MINH CITY,SAIGON,VNSGN,VN,Large,River Natural,12,13,11,Yes,Yes,No,No,Yes,Yes,No,10.7769,106.7009
+55000,Middle East,JEDDAH,,SAJED,SA,Large,Coastal Natural,14,15,13,Yes,Yes,No,No,Yes,Yes,No,21.4858,39.1925
+56000,Mediterranean - Eastern,ASHDOD,,ILASH,IL,Medium,Coastal Natural,12,13,11,Yes,Yes,No,No,Yes,Yes,No,31.816,34.65

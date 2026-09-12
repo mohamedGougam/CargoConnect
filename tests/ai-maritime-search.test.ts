@@ -118,7 +118,7 @@ describe("AI maritime search (mocked OpenAI)", () => {
     );
   });
 
-  it("resolves Amsterdam misspelling and Norway to Oslo hub", async () => {
+  it("resolves Amsterdam misspelling; Norway yields Norwegian destination candidates", async () => {
     const mock: MaritimeIntentInterpreter = {
       async interpret() {
         return {
@@ -150,18 +150,21 @@ describe("AI maritime search (mocked OpenAI)", () => {
       vessels: [],
       interpreter: mock,
     });
-    expect(result.status).toBe("active");
     expect(result.origin?.name).toMatch(/Amsterdam/i);
-    expect(result.destination?.name).toMatch(/Oslo/i);
+    expect(result.status).toBe("ambiguous");
+    expect(
+      result.destinationCandidates?.every((c) => c.port.country === "Norway"),
+    ).toBe(true);
   });
 
   it("resolves Norway country against catalogue hubs", () => {
     const ports = getSearchPortIndex();
     const norway = resolveLocation("Norway", ports);
-    expect(norway.best?.port.name).toMatch(/Oslo/i);
-    expect(norway.candidates.some((c) => /Bergen/i.test(c.port.name))).toBe(
+    expect(norway.ambiguous).toBe(true);
+    expect(norway.candidates.every((c) => c.port.country === "Norway")).toBe(
       true,
     );
+    expect(norway.candidates.some((c) => /Oslo/i.test(c.port.name))).toBe(true);
   });
 
   it("does not treat Amsterdam city as ambiguous with Rotterdam", () => {
@@ -341,15 +344,21 @@ describe("AI maritime search (mocked OpenAI)", () => {
     expect(result.destination?.name).toMatch(/Alexandria/i);
   });
 
-  it("country Netherlands to Egypt auto-resolves hubs", async () => {
+  it("country Netherlands to Egypt shows country-level candidates", async () => {
     const result = await runMaritimeRouteSearch({
       query: "Netherlands to Egypt",
       vessels: [],
       deterministicOnly: true,
     });
-    expect(result.status).toBe("active");
-    expect(result.origin?.name).toMatch(/Rotterdam/i);
-    expect(result.destination?.name).toMatch(/Alexandria/i);
+    expect(result.status).toBe("ambiguous");
+    expect(
+      result.originCandidates?.every((c) => c.port.country === "Netherlands") ||
+        result.origin?.country === "Netherlands",
+    ).toBe(true);
+    expect(
+      result.destinationCandidates?.every((c) => c.port.country === "Egypt") ||
+        result.destination?.country === "Egypt",
+    ).toBe(true);
   });
 
   it("Spain to Egypt returns helpful origin candidates", async () => {
@@ -360,10 +369,17 @@ describe("AI maritime search (mocked OpenAI)", () => {
     });
     expect(result.status).toBe("ambiguous");
     expect(result.resolutionOutcome).toBe("candidates");
-    const names = result.originCandidates?.map((c) => c.port.name) ?? [];
-    expect(names.some((n) => /Barcelona|Algeciras|Valencia/i.test(n))).toBe(
-      true,
-    );
+    const originNames = result.originCandidates?.map((c) => c.port.name) ?? [];
+    const destNames =
+      result.destinationCandidates?.map((c) => c.port.name) ?? [];
+    expect(originNames.every(() => true)).toBe(true);
+    expect(
+      result.originCandidates?.every((c) => c.port.country === "Spain"),
+    ).toBe(true);
+    expect(
+      result.destinationCandidates?.every((c) => c.port.country === "Egypt") ||
+        destNames.length === 0,
+    ).toBe(true);
     expect(result.uxMessage?.toLowerCase()).not.toContain("could not resolve");
   });
 

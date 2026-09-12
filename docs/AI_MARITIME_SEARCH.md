@@ -3,6 +3,8 @@
 CargoConnect uses OpenAI as a **language and intent interpretation layer** only.
 Maritime facts always come from CargoConnect data and AIS.
 
+Port resolution uses the global **WPI + UN/LOCODE** search index — see [PORT_SEARCH_CATALOGUE.md](./PORT_SEARCH_CATALOGUE.md).
+
 ## Separation of concerns (fundamental)
 
 | Layer | Responsibility |

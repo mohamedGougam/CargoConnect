@@ -26,6 +26,8 @@ export interface PortResolution {
   port: Port;
   score: number;
   matchReason: string;
+  /** Catalogue confidence — independent of OpenAI. */
+  confidence: "HIGH" | "MEDIUM" | "LOW";
 }
 
 export interface LocationResolutionResult {

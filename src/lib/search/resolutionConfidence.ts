@@ -1,9 +1,14 @@
+import type { Port } from "@/domain/models";
 import type { LocationResolutionResult } from "@/domain/search/types";
 import type { PortResolutionOutcome } from "@/domain/search/intent";
 
 /**
- * Deterministic resolution confidence AFTER model interpretation.
+ * Deterministic resolution confidence AFTER catalogue matching.
  * OpenAI confidence alone must not decide auto-resolve vs candidates.
+ *
+ * HIGH  = exact port / city / UNLOCODE
+ * MEDIUM = nearby/serving-port mapping
+ * LOW   = country/region ambiguity
  */
 export function classifyLocationResolution(
   res: LocationResolutionResult,
@@ -21,11 +26,14 @@ export function classifyLocationResolution(
     return res.candidates.length > 0 ? "candidates" : "clarification";
   }
 
-  if (best.score >= 90) return "auto";
-  if (best.score >= 70) return "auto";
-  if (best.score >= 55 && !res.ambiguous) return "auto";
-  if (res.candidates.length > 1) return "candidates";
-  return "clarification";
+  if (best.confidence === "LOW") {
+    return res.candidates.length > 1 ? "candidates" : "auto";
+  }
+  if (best.confidence === "MEDIUM") {
+    return "auto";
+  }
+  // HIGH
+  return "auto";
 }
 
 export function mergeResolutionOutcomes(

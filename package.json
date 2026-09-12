@@ -13,6 +13,8 @@
     "format:check": "prettier --check .",
     "postinstall": "node scripts/copy-maplibre-worker.mjs",
     "import:ports": "node scripts/import-ports.mjs",
+    "ports:build-index": "node scripts/build-port-search-index.mjs",
+    "ports:coverage": "node scripts/port-coverage-diagnostic.mjs",
     "maritime:status": "node scripts/maritime-status.mjs",
     "maritime:preflight": "node scripts/maritime-preflight.mjs",
     "db:migrate": "node scripts/db-migrate.mjs",

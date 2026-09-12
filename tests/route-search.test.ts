@@ -66,11 +66,18 @@ describe("port resolution", () => {
     expect(resolveLocation("Istanbul", ports).best?.port.name).toMatch(/Istanbul/i);
   });
 
-  it("resolves Greece → primary hub and Egypt → primary hub", () => {
+  it("resolves Greece and Egypt as same-country candidates", () => {
     const greece = resolveLocation("Greece", ports);
     const egypt = resolveLocation("Egypt", ports);
-    expect(greece.best?.port.name).toMatch(/Piraeus/i);
-    expect(egypt.best?.port.name).toMatch(/Alexandria/i);
+    expect(greece.candidates.every((c) => c.port.country === "Greece")).toBe(
+      true,
+    );
+    expect(egypt.candidates.every((c) => c.port.country === "Egypt")).toBe(
+      true,
+    );
+    expect(egypt.candidates.some((c) => /Alexandria/i.test(c.port.name))).toBe(
+      true,
+    );
   });
 });
 
