@@ -68,6 +68,56 @@ describe("AI maritime search (mocked OpenAI)", () => {
     process.env.OPENAI_SEARCH_ENABLED = "false";
   });
 
+  it("resolves OpenAI 'Port of Algiers' / 'Port of Rotterdam' hints", async () => {
+    const mock: MaritimeIntentInterpreter = {
+      async interpret() {
+        return {
+          source: "openai",
+          latencyMs: 20,
+          intent: baseIntent({
+            detectedLanguage: "en",
+            origin: place({
+              rawText: "capital of Algeria",
+              interpretedName: "Port of Algiers",
+              city: null,
+              country: "Algeria",
+              portHint: "Port of Algiers",
+            }),
+            destination: place({
+              rawText: "biggest port in the Netherlands",
+              interpretedName: "Port of Rotterdam",
+              city: null,
+              country: "Netherlands",
+              portHint: "Port of Rotterdam",
+            }),
+            cargo: { description: "steel", normalizedType: "steel" },
+          }),
+        };
+      },
+    };
+    const result = await runMaritimeRouteSearch({
+      query:
+        "I want to ship steel from the capital of Algeria to the biggest port in the Netherlands",
+      vessels: [],
+      interpreter: mock,
+    });
+    expect(result.status).toBe("active");
+    expect(result.origin?.name).toMatch(/Algiers/i);
+    expect(result.destination?.name).toMatch(/Rotterdam/i);
+    expect(result.interpreterUsed).toBe("openai");
+    expect(result.cargo?.description?.toLowerCase()).toMatch(/steel/);
+  });
+
+  it("resolves Port of Algiers string via catalogue strip", () => {
+    const ports = getSearchPortIndex();
+    expect(resolveLocation("Port of Algiers", ports).best?.port.name).toMatch(
+      /Algiers/i,
+    );
+    expect(resolveLocation("Port of Rotterdam", ports).best?.port.name).toMatch(
+      /Rotterdam/i,
+    );
+  });
+
   it("resolves Barcelona to Algiers via catalogue (deterministic fast path)", async () => {
     const result = await runMaritimeRouteSearch({
       query: "Barcelona to Algiers",

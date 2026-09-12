@@ -3,7 +3,7 @@ import type { LocationResolutionResult, PortResolution } from "@/domain/search/t
 
 /** Canonical name keys → accepted aliases (normalized). */
 const NAME_ALIASES: Record<string, string[]> = {
-  rotterdam: ["rotterdam", "rdam", "r dam", "روتردام"],
+  rotterdam: ["rotterdam", "rdam", "r dam", "روتردام", "port of rotterdam"],
   alexandria: [
     "alexandria",
     "alexandrie",
@@ -36,7 +36,14 @@ const NAME_ALIASES: Record<string, string[]> = {
   busan: ["busan", "pusan"],
   "cape town": ["cape town"],
   barcelona: ["barcelona", "barcelone", "barcalona"],
-  algiers: ["algiers", "alger", "argel", "algirs", "algiers port"],
+  algiers: [
+    "algiers",
+    "alger",
+    "argel",
+    "algirs",
+    "algiers port",
+    "port of algiers",
+  ],
   tarragona: ["tarragona"],
   valencia: ["valencia", "valence"],
   amsterdam: ["amsterdam"],
@@ -152,7 +159,7 @@ export function resolveLocation(
     return { queryText: queryText ?? "", candidates: [], ambiguous: false };
   }
 
-  const q = normalize(queryText);
+  const q = stripPortNoise(normalize(queryText));
   const region = REGION_ALIASES[q];
   if (region) {
     return resolveRegion(queryText, ports, region);
@@ -344,6 +351,17 @@ function normalize(value: string): string {
     .replace(/['’]/g, "")
     .replace(/[^a-z0-9\s\u0600-\u06FF\u0370-\u03FF]/g, " ")
     .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Strip "port of / port / haven …" noise OpenAI often adds to portHint. */
+function stripPortNoise(value: string): string {
+  return value
+    .replace(
+      /^(port of|port|haven|hafen|puerto|porto|λιμανι)\s+/i,
+      "",
+    )
+    .replace(/\s+(port|haven|hafen)$/i, "")
     .trim();
 }
 

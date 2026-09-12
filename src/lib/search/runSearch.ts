@@ -18,6 +18,7 @@ import {
   mergeResolutionOutcomes,
 } from "./resolutionConfidence";
 import { resolveLocation } from "./resolvePorts";
+import { resolvePlaceIntent } from "./resolvePlaceIntent";
 import {
   ambiguousBothMessage,
   ambiguousNearMessage,
@@ -93,8 +94,15 @@ export async function runMaritimeRouteSearch(
         input.query,
         aiResult.source === "openai" ? "llm" : "deterministic",
       );
-      const aiOrigin = resolveLocation(aiParsed.originText, ports);
-      const aiDest = resolveLocation(aiParsed.destinationText, ports);
+      // Prefer multi-field catalogue resolution from structured intent
+      const aiOrigin =
+        aiResult.source === "openai"
+          ? resolvePlaceIntent(aiResult.intent.origin, ports)
+          : resolveLocation(aiParsed.originText, ports);
+      const aiDest =
+        aiResult.source === "openai"
+          ? resolvePlaceIntent(aiResult.intent.destination, ports)
+          : resolveLocation(aiParsed.destinationText, ports);
       const aiOriginOutcome = classifyLocationResolution(aiOrigin);
       const aiDestOutcome = classifyLocationResolution(aiDest);
 

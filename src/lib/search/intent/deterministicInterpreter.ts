@@ -89,31 +89,31 @@ export function intentToParsedQuery(
   };
 }
 
-/** Prefer port hint → city → interpreted name → country → region for catalogue lookup. */
+/** Prefer city → cleaned port hint → interpreted name → country → region. */
 export function placeToResolverText(
   place: MaritimeSearchIntent["origin"],
 ): string | undefined {
-  const parts = [
-    place.portHint,
-    place.city,
-    place.interpretedName,
-    place.country,
-    place.region,
-    place.rawText,
-  ]
-    .map((p) => p?.trim())
-    .filter(Boolean) as string[];
-  if (!parts.length) return undefined;
-  // Prefer the most specific single token for resolution
+  const cleanedHint = cleanPlaceLabel(place.portHint);
+  const cleanedInterpreted = cleanPlaceLabel(place.interpretedName);
   return (
-    place.portHint?.trim() ||
     place.city?.trim() ||
-    place.interpretedName?.trim() ||
+    cleanedHint ||
+    cleanedInterpreted ||
     place.country?.trim() ||
     place.region?.trim() ||
     place.rawText?.trim() ||
     undefined
   );
+}
+
+function cleanPlaceLabel(value: string | null | undefined): string | undefined {
+  if (!value?.trim()) return undefined;
+  const cleaned = value
+    .trim()
+    .replace(/^(port of|port|haven|hafen|puerto|porto)\s+/i, "")
+    .replace(/\s+(port|haven|hafen)$/i, "")
+    .trim();
+  return cleaned || undefined;
 }
 
 function intentToCargo(intent: MaritimeSearchIntent): SearchCargoInfo | undefined {
@@ -156,15 +156,11 @@ export function buildInterpretationSummary(
   intent: MaritimeSearchIntent,
 ): string | undefined {
   const o =
-    intent.origin.portHint ||
-    intent.origin.city ||
-    intent.origin.interpretedName ||
+    place.cityOrHint(intent.origin) ||
     intent.origin.country ||
     intent.origin.region;
   const d =
-    intent.destination.portHint ||
-    intent.destination.city ||
-    intent.destination.interpretedName ||
+    place.cityOrHint(intent.destination) ||
     intent.destination.country ||
     intent.destination.region;
   if (!o || !d) return undefined;
@@ -181,3 +177,14 @@ export function buildInterpretationSummary(
   }
   return bits.join(" · ");
 }
+
+const place = {
+  cityOrHint(p: MaritimeSearchIntent["origin"]): string | undefined {
+    return (
+      p.city?.trim() ||
+      cleanPlaceLabel(p.portHint) ||
+      cleanPlaceLabel(p.interpretedName) ||
+      undefined
+    );
+  },
+};
