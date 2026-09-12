@@ -34,8 +34,8 @@ beforeEach(async () => {
   resetSendRateLimitsForTests();
 });
 
-function readyQuote(userId: string, id = "req_verify_1"): CommercialRequest {
-  const search = runMaritimeRouteSearch({
+async function readyQuote(userId: string, id = "req_verify_1"): Promise<CommercialRequest> {
+  const search = await runMaritimeRouteSearch({
     query: "2,000 tons of steel from Rotterdam to Alexandria",
     vessels: [],
   });
@@ -213,7 +213,7 @@ describe("email verification", () => {
       fullName: "Live Block",
       emailVerifiedAt: null,
     });
-    await saveRequest(readyQuote(user.id));
+    await saveRequest(await readyQuote(user.id));
 
     const result = await sendCommercialRequest({
       requestId: "req_verify_1",
@@ -239,7 +239,7 @@ describe("email verification", () => {
       fullName: "Log Ok",
       emailVerifiedAt: null,
     });
-    await saveRequest(readyQuote(user.id, "req_log_ok"));
+    await saveRequest(await readyQuote(user.id, "req_log_ok"));
     const result = await sendCommercialRequest({
       requestId: "req_log_ok",
       user: publicUser(user),
@@ -261,7 +261,7 @@ describe("email verification", () => {
       fullName: "After Verify",
       emailVerifiedAt: null,
     });
-    await saveRequest(readyQuote(user.id, "req_after"));
+    await saveRequest(await readyQuote(user.id, "req_after"));
 
     // Attempt while unverified
     const blocked = await sendCommercialRequest({

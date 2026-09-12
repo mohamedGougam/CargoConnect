@@ -85,7 +85,7 @@ async function seedArrived() {
     fullName: "Other",
     emailVerifiedAt: new Date().toISOString(),
   });
-  const search = runMaritimeRouteSearch({
+  const search = await runMaritimeRouteSearch({
     query: "2,000 tons of steel from Rotterdam to Alexandria",
     vessels: [],
   });

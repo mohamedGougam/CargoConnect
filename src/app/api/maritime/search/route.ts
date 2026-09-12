@@ -38,10 +38,17 @@ export async function POST(request: Request) {
   }
 
   const vessels = Array.isArray(body.vessels) ? body.vessels.slice(0, 2500) : [];
-  const search = runMaritimeRouteSearch({ query, vessels });
+  const search = await runMaritimeRouteSearch({ query, vessels });
 
   return NextResponse.json({
     search,
+    /** Safe interpreter diagnostics — no secrets, no raw prompts. */
+    interpreter: {
+      used: search.interpreterUsed ?? "deterministic",
+      fallbackUsed: Boolean(search.interpreterFallbackUsed),
+      errorCode: search.interpreterErrorCode ?? null,
+      resolution: search.resolutionOutcome ?? null,
+    },
     disclaimer:
       "Highlighted vessels are corridor-relevant detections, not commercially available offers.",
   });

@@ -76,8 +76,8 @@ describe("auth basics", () => {
 });
 
 describe("RouteSearchState → CommercialRequestDraft", () => {
-  it("preserves search context without reparsing", () => {
-    const search = runMaritimeRouteSearch({
+  it("preserves search context without reparsing", async () => {
+    const search = await runMaritimeRouteSearch({
       query: "2,000 tons of steel from Rotterdam to Alexandria",
       vessels: [],
     });
@@ -109,8 +109,8 @@ describe("RouteSearchState → CommercialRequestDraft", () => {
     expect(draft.searchContext).toBe(search);
   });
 
-  it("prefills reservation draft the same way", () => {
-    const search = runMaritimeRouteSearch({
+  it("prefills reservation draft the same way", async () => {
+    const search = await runMaritimeRouteSearch({
       query: "Rotterdam to Alexandria",
       vessels: [],
     });
@@ -208,7 +208,7 @@ describe("commercial message generation", () => {
 
 describe("request status lifecycle + intent preservation", () => {
   it("stores intent and request with search context", async () => {
-    const search = runMaritimeRouteSearch({
+    const search = await runMaritimeRouteSearch({
       query: "2,000 tons of steel from Rotterdam to Alexandria",
       vessels: [],
     });

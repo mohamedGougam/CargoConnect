@@ -11,8 +11,8 @@ describe("demo experience polish", () => {
     await resetCommercialStoreForTests();
   });
 
-  it("parses the flagship Rotterdam → Alexandria steel query", () => {
-    const result = runMaritimeRouteSearch({
+  it("parses the flagship Rotterdam → Alexandria steel query", async () => {
+    const result = await runMaritimeRouteSearch({
       query: "2,000 MT steel from Rotterdam to Alexandria",
       vessels: [],
     });

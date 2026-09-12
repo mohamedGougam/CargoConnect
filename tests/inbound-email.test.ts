@@ -63,7 +63,7 @@ async function makeSentRequest(overrides: Partial<CommercialRequest> = {}) {
     emailVerifiedAt: new Date().toISOString(),
   });
   const replyToken = generateReplyToken();
-  const search = runMaritimeRouteSearch({
+  const search = await runMaritimeRouteSearch({
     query: "2,000 tons of steel from Rotterdam to Alexandria",
     vessels: [],
   });

@@ -538,6 +538,111 @@
       }
     },
     {
+      "id": "port-barcelona",
+      "name": "Barcelona",
+      "country": "Spain",
+      "locationLabel": "Barcelona, Spain",
+      "type": "seaport",
+      "position": {
+        "latitude": 41.3543,
+        "longitude": 2.1685
+      },
+      "unlocode": "ESBCN",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port-valencia",
+      "name": "Valencia",
+      "country": "Spain",
+      "locationLabel": "Valencia, Spain",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 39.4457,
+        "longitude": -0.3205
+      },
+      "unlocode": "ESVLC",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port-tarragona",
+      "name": "Tarragona",
+      "country": "Spain",
+      "locationLabel": "Tarragona, Spain",
+      "type": "seaport",
+      "position": {
+        "latitude": 41.105,
+        "longitude": 1.24
+      },
+      "unlocode": "ESTAR",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "M"
+      }
+    },
+    {
+      "id": "port-algiers",
+      "name": "Algiers",
+      "country": "Algeria",
+      "locationLabel": "Algiers, Algeria",
+      "type": "seaport",
+      "position": {
+        "latitude": 36.765,
+        "longitude": 3.067
+      },
+      "unlocode": "DZALG",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port-amsterdam",
+      "name": "Amsterdam",
+      "country": "Netherlands",
+      "locationLabel": "Amsterdam, Netherlands",
+      "type": "seaport",
+      "position": {
+        "latitude": 52.378,
+        "longitude": 4.9
+      },
+      "unlocode": "NLAMS",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
       "id": "port-istanbul",
       "name": "Istanbul",
       "country": "Turkey",

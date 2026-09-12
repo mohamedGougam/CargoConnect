@@ -2,6 +2,7 @@
 
 import type { RouteSearchState } from "@/domain/search/types";
 import { formatVesselType } from "@/lib/format";
+import { understoodAsPrefix } from "@/lib/search/uxMessages";
 import type { VesselType } from "@/domain/models";
 
 interface RouteSearchSummaryProps {
@@ -29,16 +30,27 @@ export function RouteSearchSummary({ search, onClear }: RouteSearchSummaryProps)
   }
 
   if (search.status === "error" || search.status === "ambiguous") {
+    const title =
+      search.status === "ambiguous"
+        ? search.resolutionOutcome === "clarification"
+          ? "One more detail"
+          : "A few matching ports"
+        : "We couldn't resolve that route";
+
     return (
       <div className="pointer-events-auto absolute inset-x-0 top-[7.25rem] z-20 flex justify-center px-3 sm:top-[7.75rem]">
         <div className="flex max-w-lg items-start gap-3 rounded-2xl border border-amber-300/25 bg-[rgba(8,16,28,0.92)] px-4 py-3 text-[11px] text-amber-50 shadow-[0_8px_24px_rgba(0,0,0,0.28)] backdrop-blur-md">
           <div className="min-w-0 flex-1">
-            <p className="font-medium text-amber-100/95">
-              {search.status === "ambiguous"
-                ? "Ambiguous ports"
-                : "We couldn't resolve that route"}
+            <p className="font-medium text-amber-100/95">{title}</p>
+            <p className="mt-0.5 text-amber-100/70">
+              {search.uxMessage ?? search.errorMessage}
             </p>
-            <p className="mt-0.5 text-amber-100/70">{search.errorMessage}</p>
+            {search.parsed?.interpretationSummary ? (
+              <p className="mt-1 text-[10px] text-amber-100/50">
+                {understoodAsPrefix(search.parsed.detectedLanguage)}{" "}
+                {search.parsed.interpretationSummary}
+              </p>
+            ) : null}
             {search.status === "ambiguous" ? (
               <AmbiguousHints search={search} />
             ) : null}
@@ -117,14 +129,29 @@ export function RouteSearchSummary({ search, onClear }: RouteSearchSummaryProps)
 }
 
 function AmbiguousHints({ search }: { search: RouteSearchState }) {
-  const originNames = search.originCandidates?.slice(0, 3).map((c) => c.port.name) ?? [];
+  const originNames =
+    search.originCandidates?.slice(0, 4).map((c) => c.port.name) ?? [];
   const destNames =
-    search.destinationCandidates?.slice(0, 3).map((c) => c.port.name) ?? [];
+    search.destinationCandidates?.slice(0, 4).map((c) => c.port.name) ?? [];
   if (!originNames.length && !destNames.length) return null;
   return (
-    <div className="mt-1.5 space-y-0.5 text-[10px] text-amber-100/55">
-      {originNames.length ? <p>Origin candidates: {originNames.join(", ")}</p> : null}
-      {destNames.length ? <p>Destination candidates: {destNames.join(", ")}</p> : null}
+    <div className="mt-2 flex flex-wrap gap-1.5">
+      {originNames.map((name) => (
+        <span
+          key={`o-${name}`}
+          className="rounded-full border border-amber-200/25 bg-amber-100/10 px-2 py-0.5 text-[10px] text-amber-50/90"
+        >
+          {name}
+        </span>
+      ))}
+      {destNames.map((name) => (
+        <span
+          key={`d-${name}`}
+          className="rounded-full border border-sky-200/25 bg-sky-100/10 px-2 py-0.5 text-[10px] text-sky-50/90"
+        >
+          {name}
+        </span>
+      ))}
     </div>
   );
 }

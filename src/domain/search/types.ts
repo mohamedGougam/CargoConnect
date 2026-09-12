@@ -16,6 +16,10 @@ export interface ParsedMaritimeQuery {
   vesselType?: VesselType;
   /** How the query was interpreted. */
   interpreter: "deterministic" | "llm";
+  /** BCP-47-ish language code from interpretation (UX only). */
+  detectedLanguage?: string;
+  /** Subtle human summary, e.g. "Rotterdam → Alexandria · 2,000 MT · steel". */
+  interpretationSummary?: string;
 }
 
 export interface PortResolution {
@@ -69,6 +73,16 @@ export interface RouteSearchState {
   relevantHits: RelevantVesselHit[];
   vesselTypeCounts: Partial<Record<VesselType | string, number>>;
   errorMessage?: string;
+  /** Search-specific UX hint (language-aware where practical). */
+  uxMessage?: string;
+  /** Which interpreter produced the structured intent. */
+  interpreterUsed?: "deterministic" | "openai";
+  /** Catalogue resolution path (not model confidence). */
+  resolutionOutcome?: "auto" | "candidates" | "clarification";
+  /** True when OpenAI was attempted but deterministic fallback was used. */
+  interpreterFallbackUsed?: boolean;
+  /** Safe error code when OpenAI failed (never includes secrets or raw keys). */
+  interpreterErrorCode?: string;
   createdAt: string;
   updatedAt: string;
 }

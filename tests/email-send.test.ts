@@ -46,11 +46,8 @@ function sessionOf(user: Awaited<ReturnType<typeof makeUser>>) {
   };
 }
 
-function baseRequest(
-  userId: string,
-  overrides: Partial<CommercialRequest> = {},
-): CommercialRequest {
-  const search = runMaritimeRouteSearch({
+async function baseRequest(userId: string, overrides: Partial<CommercialRequest> = {}): Promise<CommercialRequest> {
+  const search = await runMaritimeRouteSearch({
     query: "2,000 tons of steel from Rotterdam to Alexandria",
     vessels: [],
   });
@@ -92,7 +89,7 @@ function baseRequest(
 describe("commercial email send", () => {
   it("sends READY_TO_SEND in log mode as DELIVERY_SIMULATED", async () => {
     const user = await makeUser();
-    await saveRequest(baseRequest(user.id));
+    await saveRequest(await baseRequest(user.id));
 
     const result = await sendCommercialRequest({
       requestId: "req_send_1",
@@ -119,7 +116,7 @@ describe("commercial email send", () => {
 
   it("rejects DRAFT status", async () => {
     const user = await makeUser();
-    await saveRequest(baseRequest(user.id, { status: "DRAFT" }));
+    await saveRequest(await baseRequest(user.id, { status: "DRAFT" }));
     const result = await sendCommercialRequest({
       requestId: "req_send_1",
       user: sessionOf(user),
@@ -131,7 +128,7 @@ describe("commercial email send", () => {
 
   it("does not resend after simulated delivery", async () => {
     const user = await makeUser();
-    await saveRequest(baseRequest(user.id));
+    await saveRequest(await baseRequest(user.id));
     const session = sessionOf(user);
     const first = await sendCommercialRequest({ requestId: "req_send_1", user: session });
     expect(first.ok).toBe(true);
@@ -146,7 +143,7 @@ describe("commercial email send", () => {
   it("rejects arbitrary recipient injection", async () => {
     const user = await makeUser();
     await saveRequest(
-      baseRequest(user.id, {
+      await baseRequest(user.id, {
         recipient: {
           contactId: "not-a-real-contact",
           organizationName: "Evil Co",
@@ -170,7 +167,7 @@ describe("commercial email send", () => {
   it("rejects contacts without email", async () => {
     const user = await makeUser();
     await saveRequest(
-      baseRequest(user.id, {
+      await baseRequest(user.id, {
         recipient: {
           contactId: "cc-hamburg-placeholder",
           organizationName: "Port of Hamburg — commercial inquiry",
@@ -192,7 +189,7 @@ describe("commercial email send", () => {
 
   it("blocks another user from sending", async () => {
     const user = await makeUser();
-    await saveRequest(baseRequest(user.id));
+    await saveRequest(await baseRequest(user.id));
     const result = await sendCommercialRequest({
       requestId: "req_send_1",
       user: {
@@ -213,7 +210,7 @@ describe("commercial email send", () => {
     const user = await makeUser();
     const verifiedAt = new Date().toISOString();
     await getRepositories().users.markEmailVerified(user.id, verifiedAt);
-    await saveRequest(baseRequest(user.id));
+    await saveRequest(await baseRequest(user.id));
     const result = await sendCommercialRequest({
       requestId: "req_send_1",
       user: { ...sessionOf(user), emailVerifiedAt: verifiedAt },
@@ -229,7 +226,7 @@ describe("commercial email send", () => {
   it("resolves recipient email from directory not browser snapshot", async () => {
     const user = await makeUser();
     await saveRequest(
-      baseRequest(user.id, {
+      await baseRequest(user.id, {
         recipient: {
           contactId: "cc-alexandria-falcon",
           organizationName: "Falcon Freight Group",
@@ -260,8 +257,8 @@ describe("request repository ownership", () => {
       passwordHash: await hashPassword("securepass1"),
       fullName: "Other",
     });
-    await saveRequest(baseRequest(user.id, { id: "req_a" }));
-    await saveRequest(baseRequest("user_other", { id: "req_b" }));
+    await saveRequest(await baseRequest(user.id, { id: "req_a" }));
+    await saveRequest(await baseRequest("user_other", { id: "req_b" }));
     const mine = await getRepositories().requests.listForUser(user.id);
     expect(mine.every((r) => r.userId === user.id)).toBe(true);
     expect(mine.some((r) => r.id === "req_b")).toBe(false);

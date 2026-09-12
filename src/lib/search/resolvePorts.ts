@@ -1,14 +1,29 @@
 import type { Port } from "@/domain/models";
 import type { LocationResolutionResult, PortResolution } from "@/domain/search/types";
 
+/** Canonical name keys → accepted aliases (normalized). */
 const NAME_ALIASES: Record<string, string[]> = {
-  rotterdam: ["rotterdam"],
-  alexandria: ["alexandria"],
-  piraeus: ["piraeus", "peiraeus", "pireaus"],
+  rotterdam: ["rotterdam", "rdam", "r dam", "روتردام"],
+  alexandria: [
+    "alexandria",
+    "alexandrie",
+    "αλεξανδρεια",
+    "الإسكندرية",
+    "الاسكندرية",
+  ],
+  piraeus: [
+    "piraeus",
+    "peiraeus",
+    "pireaus",
+    "pireas",
+    "πειραιας",
+    "πειραια",
+    "πειραιάς",
+  ],
   istanbul: ["istanbul", "constantinople"],
   "port said": ["port said", "portsaid"],
   hamburg: ["hamburg"],
-  antwerp: ["antwerp", "antwerpen"],
+  antwerp: ["antwerp", "antwerpen", "anvers"],
   thessaloniki: ["thessaloniki", "salonika"],
   heraklion: ["heraklion", "iraklion", "heraklio"],
   singapore: ["singapore"],
@@ -20,30 +35,113 @@ const NAME_ALIASES: Record<string, string[]> = {
   "port klang": ["port klang", "port kelang"],
   busan: ["busan", "pusan"],
   "cape town": ["cape town"],
+  barcelona: ["barcelona", "barcelone", "barcalona"],
+  algiers: ["algiers", "alger", "argel", "algirs", "algiers port"],
+  tarragona: ["tarragona"],
+  valencia: ["valencia", "valence"],
+  amsterdam: ["amsterdam"],
 };
 
-const REGION_ALIASES: Record<string, { country?: string; preferNames?: string[] }> = {
+/** City / colloquial → catalogue port name (normalized). */
+const CITY_TO_PORT: Record<string, string[]> = {
+  athens: ["piraeus"],
+  athina: ["piraeus"],
+  athènes: ["piraeus"],
+  athen: ["piraeus"],
+  barcelona: ["barcelona"],
+  algiers: ["algiers"],
+  alger: ["algiers"],
+  argel: ["algiers"],
+  dubai: ["jebel ali", "dubai"],
+  "new york": ["new york"],
+  shanghai: ["shanghai"],
+  amsterdam: ["amsterdam", "rotterdam"],
+  "r'dam": ["rotterdam"],
+  rdam: ["rotterdam"],
+};
+
+const REGION_ALIASES: Record<
+  string,
+  {
+    country?: string;
+    preferNames?: string[];
+    /** When true, return candidates instead of auto-picking a hub. */
+    multiCandidate?: boolean;
+  }
+> = {
   greece: { country: "Greece", preferNames: ["Piraeus", "Thessaloniki"] },
-  egypt: { country: "Egypt", preferNames: ["Alexandria", "Port Said", "Damietta"] },
+  egypt: {
+    country: "Egypt",
+    preferNames: ["Alexandria", "Port Said", "Damietta"],
+  },
   turkey: { country: "Turkey", preferNames: ["Istanbul", "Izmir", "Mersin"] },
   türkiye: { country: "Türkiye", preferNames: ["Istanbul"] },
-  netherlands: { country: "Netherlands", preferNames: ["Rotterdam"] },
-  holland: { country: "Netherlands", preferNames: ["Rotterdam"] },
+  netherlands: {
+    country: "Netherlands",
+    preferNames: ["Rotterdam", "Amsterdam"],
+  },
+  holland: { country: "Netherlands", preferNames: ["Rotterdam", "Amsterdam"] },
+  nederland: {
+    country: "Netherlands",
+    preferNames: ["Rotterdam", "Amsterdam"],
+  },
   germany: { country: "Germany", preferNames: ["Hamburg"] },
+  deutschland: { country: "Germany", preferNames: ["Hamburg"] },
+  "northern germany": {
+    country: "Germany",
+    preferNames: ["Hamburg"],
+  },
+  norddeutschland: { country: "Germany", preferNames: ["Hamburg"] },
   belgium: { country: "Belgium", preferNames: ["Antwerp"] },
+  belgie: { country: "Belgium", preferNames: ["Antwerp"] },
+  belgië: { country: "Belgium", preferNames: ["Antwerp"] },
   cyprus: { country: "Cyprus", preferNames: ["Limassol"] },
   israel: { country: "Israel", preferNames: ["Haifa", "Ashdod"] },
   italy: { country: "Italy", preferNames: ["Palermo", "Catania", "Augusta"] },
   malta: { country: "Malta", preferNames: ["Valletta"] },
   singapore: { country: "Singapore", preferNames: ["Singapore"] },
   china: { country: "China", preferNames: ["Shanghai", "Ningbo"] },
-  "united arab emirates": { country: "United Arab Emirates", preferNames: ["Jebel Ali", "Dubai"] },
-  uae: { country: "United Arab Emirates", preferNames: ["Jebel Ali", "Dubai"] },
-  "united states": { country: "United States", preferNames: ["Los Angeles", "New York"] },
-  usa: { country: "United States", preferNames: ["Los Angeles", "New York"] },
+  "united arab emirates": {
+    country: "United Arab Emirates",
+    preferNames: ["Jebel Ali", "Dubai"],
+  },
+  uae: {
+    country: "United Arab Emirates",
+    preferNames: ["Jebel Ali", "Dubai"],
+  },
+  "united states": {
+    country: "United States",
+    preferNames: ["Los Angeles", "New York"],
+  },
+  usa: {
+    country: "United States",
+    preferNames: ["Los Angeles", "New York"],
+  },
   malaysia: { country: "Malaysia", preferNames: ["Port Klang"] },
   japan: { country: "Japan", preferNames: ["Tokyo"] },
   australia: { country: "Australia", preferNames: ["Sydney"] },
+  spain: {
+    country: "Spain",
+    preferNames: ["Barcelona", "Algeciras", "Valencia"],
+    multiCandidate: true,
+  },
+  espana: {
+    country: "Spain",
+    preferNames: ["Barcelona", "Algeciras", "Valencia"],
+    multiCandidate: true,
+  },
+  españa: {
+    country: "Spain",
+    preferNames: ["Barcelona", "Algeciras", "Valencia"],
+    multiCandidate: true,
+  },
+  algeria: { country: "Algeria", preferNames: ["Algiers"] },
+  algerie: { country: "Algeria", preferNames: ["Algiers"] },
+  algérie: { country: "Algeria", preferNames: ["Algiers"] },
+  egypte: { country: "Egypt", preferNames: ["Alexandria", "Port Said"] },
+  ägypten: { country: "Egypt", preferNames: ["Alexandria", "Port Said"] },
+  aegypten: { country: "Egypt", preferNames: ["Alexandria", "Port Said"] },
+  "northern europe": { multiCandidate: true, preferNames: [] },
 };
 
 export function resolveLocation(
@@ -60,6 +158,38 @@ export function resolveLocation(
     return resolveRegion(queryText, ports, region);
   }
 
+  // City → serving port(s)
+  const cityPorts = CITY_TO_PORT[q];
+  if (cityPorts?.length) {
+    const preferred: PortResolution[] = [];
+    for (const name of cityPorts) {
+      const hit = ports.find((p) => normalize(p.name) === normalize(name));
+      if (hit) {
+        preferred.push({
+          port: hit,
+          score: 94,
+          matchReason: "city_to_port",
+        });
+      }
+    }
+    if (preferred.length === 1) {
+      return {
+        queryText,
+        best: preferred[0],
+        candidates: preferred,
+        ambiguous: false,
+      };
+    }
+    if (preferred.length > 1) {
+      return {
+        queryText,
+        best: preferred[0].score >= preferred[1].score + 10 ? preferred[0] : undefined,
+        candidates: preferred.slice(0, 5),
+        ambiguous: preferred[0].score < preferred[1].score + 10,
+      };
+    }
+  }
+
   const scored: PortResolution[] = [];
   for (const port of ports) {
     const score = scorePortMatch(q, port);
@@ -67,42 +197,66 @@ export function resolveLocation(
     scored.push({
       port,
       score,
-      matchReason: score >= 90 ? "exact_name" : score >= 70 ? "alias_or_prefix" : "fuzzy",
+      matchReason:
+        score >= 90 ? "exact_name" : score >= 70 ? "alias_or_prefix" : "fuzzy",
     });
   }
 
-  scored.sort((a, b) => b.score - a.score || a.port.name.localeCompare(b.port.name));
+  scored.sort(
+    (a, b) => b.score - a.score || a.port.name.localeCompare(b.port.name),
+  );
   const top = scored.slice(0, 5);
   const best = top[0];
   const ambiguous =
-    top.length >= 2 && best && top[1].score >= best.score - 8 && top[1].score >= 60;
+    top.length >= 2 &&
+    best &&
+    top[1].score >= best.score - 8 &&
+    top[1].score >= 60;
 
   return {
     queryText,
     best: ambiguous ? undefined : best?.score >= 55 ? best : undefined,
     candidates: top,
-    ambiguous: Boolean(ambiguous || (!best && top.length > 0) || (best && best.score < 55)),
+    ambiguous: Boolean(
+      ambiguous || (!best && top.length > 0) || (best && best.score < 55),
+    ),
   };
 }
 
 function resolveRegion(
   queryText: string,
   ports: Port[],
-  region: { country?: string; preferNames?: string[] },
+  region: {
+    country?: string;
+    preferNames?: string[];
+    multiCandidate?: boolean;
+  },
 ): LocationResolutionResult {
-  const countryPorts = ports.filter((p) =>
-    region.country
-      ? normalize(p.country) === normalize(region.country) ||
+  if (!region.country && !(region.preferNames?.length)) {
+    return {
+      queryText,
+      candidates: [],
+      ambiguous: true,
+    };
+  }
+
+  const countryPorts = region.country
+    ? ports.filter((p) =>
+        normalize(p.country) === normalize(region.country!) ||
         normalize(p.country).includes(normalize(region.country!)) ||
-        (region.country === "Turkey" && /t[uü]rkiye|turkey/i.test(p.country))
-      : false,
-  );
+        (region.country === "Turkey" && /t[uü]rkiye|turkey/i.test(p.country)),
+      )
+    : [];
 
   const preferred: PortResolution[] = [];
   for (const name of region.preferNames ?? []) {
     const hit = countryPorts.find((p) => normalize(p.name) === normalize(name));
     if (hit) {
-      preferred.push({ port: hit, score: 95, matchReason: "region_primary_port" });
+      preferred.push({
+        port: hit,
+        score: 95,
+        matchReason: "region_primary_port",
+      });
     }
   }
 
@@ -114,7 +268,16 @@ function resolveRegion(
     });
   }
 
-  // Region → single primary hub (not ambiguous list) for MVP corridor search
+  if (region.multiCandidate && preferred.length >= 2) {
+    return {
+      queryText,
+      best: undefined,
+      candidates: preferred.slice(0, 5),
+      ambiguous: true,
+    };
+  }
+
+  // Single primary hub for MVP corridor search (Greece → Piraeus, etc.)
   return {
     queryText,
     best: preferred[0],
@@ -139,17 +302,36 @@ function scorePortMatch(q: string, port: Port): number {
     if (aliases.includes(q) && name.includes(canonical)) return 92;
   }
 
+  // Multilingual Alexandria / Piraeus via includes after normalize
+  if (
+    (q.includes("alexandr") || q === "alexandrie") &&
+    name.includes("alexandria")
+  ) {
+    return 94;
+  }
+  if ((q.includes("peirai") || q.includes("pire")) && name.includes("piraeus")) {
+    return 90;
+  }
+
   if (name.startsWith(q) && q.length >= 3) return 85;
   if (q.startsWith(name) && name.length >= 3) return 82;
   if (name.includes(q) && q.length >= 4) return 72;
   if (label.includes(q) && q.length >= 4) return 60;
   if (country === q) return 50;
 
-  // Token overlap
   const qTokens = q.split(" ").filter(Boolean);
   const nameTokens = name.split(" ").filter(Boolean);
-  const overlap = qTokens.filter((t) => nameTokens.some((n) => n.startsWith(t) || t.startsWith(n)));
+  const overlap = qTokens.filter((t) =>
+    nameTokens.some((n) => n.startsWith(t) || t.startsWith(n)),
+  );
   if (overlap.length && overlap.length === qTokens.length) return 68;
+
+  // Light edit-distance for short misspellings (e.g. Algirs / Barcalona)
+  if (q.length >= 5 && name.length >= 5) {
+    const dist = levenshtein(q, name);
+    if (dist === 1) return 88;
+    if (dist === 2 && q.length >= 6) return 78;
+  }
 
   return 0;
 }
@@ -159,7 +341,28 @@ function normalize(value: string): string {
     .toLowerCase()
     .normalize("NFD")
     .replace(/\p{M}/gu, "")
-    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/['’]/g, "")
+    .replace(/[^a-z0-9\s\u0600-\u06FF\u0370-\u03FF]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function levenshtein(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  if (Math.abs(m - n) > 2) return 99;
+  const dp = Array.from({ length: m + 1 }, () => new Array<number>(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + cost,
+      );
+    }
+  }
+  return dp[m][n];
 }

@@ -232,8 +232,8 @@ describe("long-distance visual corridors", () => {
     expect(lons.some((lon) => lon > 30 && lon < 110)).toBe(true);
   });
 
-  it("keeps Rotterdam → Alexandria flagship corridor", () => {
-    const result = runMaritimeRouteSearch({
+  it("keeps Rotterdam → Alexandria flagship corridor", async () => {
+    const result = await runMaritimeRouteSearch({
       query: "2,000 MT steel from Rotterdam to Alexandria",
       vessels: [],
     });

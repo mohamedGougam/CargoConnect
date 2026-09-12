@@ -124,8 +124,8 @@ describe("runMaritimeRouteSearch", () => {
     },
   ];
 
-  it("returns active search for Rotterdam → Alexandria", () => {
-    const result = runMaritimeRouteSearch({
+  it("returns active search for Rotterdam → Alexandria", async () => {
+    const result = await runMaritimeRouteSearch({
       query: "Rotterdam to Alexandria",
       vessels: sampleVessels,
     });
