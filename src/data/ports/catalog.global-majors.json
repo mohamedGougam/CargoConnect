@@ -1,0 +1,562 @@
+{
+  "version": 1,
+  "generatedAt": "2026-09-12T00:00:00.000Z",
+  "bbox": {
+    "minLat": -90,
+    "maxLat": 90,
+    "minLon": -180,
+    "maxLon": 180
+  },
+  "sources": [
+    "CURATED_MAJOR"
+  ],
+  "disclaimer": "Curated major seaports for global search and map density. Coordinates from public port references. Not for navigation. Does not imply CargoConnect commercial coverage.",
+  "ports": [
+    {
+      "id": "port-rotterdam",
+      "name": "Rotterdam",
+      "country": "Netherlands",
+      "locationLabel": "Rotterdam, Netherlands",
+      "type": "seaport",
+      "position": {
+        "latitude": 51.9225,
+        "longitude": 4.4792
+      },
+      "unlocode": "NLRTM",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port-hamburg",
+      "name": "Hamburg",
+      "country": "Germany",
+      "locationLabel": "Hamburg, Germany",
+      "type": "seaport",
+      "position": {
+        "latitude": 53.5461,
+        "longitude": 9.9661
+      },
+      "unlocode": "DEHAM",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port:GBFXT",
+      "name": "Felixstowe",
+      "country": "United Kingdom",
+      "locationLabel": "Felixstowe, United Kingdom",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 51.9542,
+        "longitude": 1.3503
+      },
+      "unlocode": "GBFXT",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port-piraeus",
+      "name": "Piraeus",
+      "country": "Greece",
+      "locationLabel": "Piraeus, Greece",
+      "type": "seaport",
+      "position": {
+        "latitude": 37.9485,
+        "longitude": 23.6408
+      },
+      "unlocode": "GRPIR",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port-alexandria",
+      "name": "Alexandria",
+      "country": "Egypt",
+      "locationLabel": "Alexandria, Egypt",
+      "type": "seaport",
+      "position": {
+        "latitude": 31.2001,
+        "longitude": 29.9187
+      },
+      "unlocode": "EGALY",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port-said",
+      "name": "Port Said",
+      "country": "Egypt",
+      "locationLabel": "Port Said, Egypt",
+      "type": "seaport",
+      "position": {
+        "latitude": 31.2653,
+        "longitude": 32.3019
+      },
+      "unlocode": "EGPSD",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port-jebel-ali",
+      "name": "Jebel Ali",
+      "country": "United Arab Emirates",
+      "locationLabel": "Jebel Ali, United Arab Emirates",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 25.0118,
+        "longitude": 55.0617
+      },
+      "unlocode": "AEJEA",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port:AEDXB",
+      "name": "Dubai",
+      "country": "United Arab Emirates",
+      "locationLabel": "Dubai, United Arab Emirates",
+      "type": "seaport",
+      "position": {
+        "latitude": 25.2697,
+        "longitude": 55.3094
+      },
+      "unlocode": "AEDXB",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port-singapore",
+      "name": "Singapore",
+      "country": "Singapore",
+      "locationLabel": "Singapore",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 1.2644,
+        "longitude": 103.8224
+      },
+      "unlocode": "SGSIN",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port:MYPKG",
+      "name": "Port Klang",
+      "country": "Malaysia",
+      "locationLabel": "Port Klang, Malaysia",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 2.999,
+        "longitude": 101.392
+      },
+      "unlocode": "MYPKG",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port-shanghai",
+      "name": "Shanghai",
+      "country": "China",
+      "locationLabel": "Shanghai, China",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 31.2304,
+        "longitude": 121.4737
+      },
+      "unlocode": "CNSHA",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port:CNNGB",
+      "name": "Ningbo",
+      "country": "China",
+      "locationLabel": "Ningbo, China",
+      "type": "seaport",
+      "position": {
+        "latitude": 29.8683,
+        "longitude": 121.544
+      },
+      "unlocode": "CNNGB",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port:KRPUS",
+      "name": "Busan",
+      "country": "South Korea",
+      "locationLabel": "Busan, South Korea",
+      "type": "seaport",
+      "position": {
+        "latitude": 35.1028,
+        "longitude": 129.0403
+      },
+      "unlocode": "KRPUS",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port:JPTYO",
+      "name": "Tokyo",
+      "country": "Japan",
+      "locationLabel": "Tokyo, Japan",
+      "type": "seaport",
+      "position": {
+        "latitude": 35.6528,
+        "longitude": 139.8395
+      },
+      "unlocode": "JPTYO",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port:AUSYD",
+      "name": "Sydney",
+      "country": "Australia",
+      "locationLabel": "Sydney, Australia",
+      "type": "seaport",
+      "position": {
+        "latitude": -33.8688,
+        "longitude": 151.2093
+      },
+      "unlocode": "AUSYD",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port-los-angeles",
+      "name": "Los Angeles",
+      "country": "United States",
+      "locationLabel": "Los Angeles, United States",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 33.7405,
+        "longitude": -118.2712
+      },
+      "unlocode": "USLAX",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port:USLGB",
+      "name": "Long Beach",
+      "country": "United States",
+      "locationLabel": "Long Beach, United States",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 33.7542,
+        "longitude": -118.2165
+      },
+      "unlocode": "USLGB",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port:USNYC",
+      "name": "New York",
+      "country": "United States",
+      "locationLabel": "New York, United States",
+      "type": "seaport",
+      "position": {
+        "latitude": 40.684,
+        "longitude": -74.006
+      },
+      "unlocode": "USNYC",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port:USNYJ",
+      "name": "Newark",
+      "country": "United States",
+      "locationLabel": "Newark, United States",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 40.6895,
+        "longitude": -74.1528
+      },
+      "unlocode": "USNYJ",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port:PAPTY",
+      "name": "Balboa",
+      "country": "Panama",
+      "locationLabel": "Balboa, Panama",
+      "type": "seaport",
+      "position": {
+        "latitude": 8.953,
+        "longitude": -79.566
+      },
+      "unlocode": "PAPTY",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "M"
+      }
+    },
+    {
+      "id": "port:ZACPT",
+      "name": "Cape Town",
+      "country": "South Africa",
+      "locationLabel": "Cape Town, South Africa",
+      "type": "seaport",
+      "position": {
+        "latitude": -33.9249,
+        "longitude": 18.4241
+      },
+      "unlocode": "ZACPT",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port:BRSSZ",
+      "name": "Santos",
+      "country": "Brazil",
+      "locationLabel": "Santos, Brazil",
+      "type": "seaport",
+      "position": {
+        "latitude": -23.9608,
+        "longitude": -46.3336
+      },
+      "unlocode": "BRSSZ",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port:INMAA",
+      "name": "Chennai",
+      "country": "India",
+      "locationLabel": "Chennai, India",
+      "type": "seaport",
+      "position": {
+        "latitude": 13.0827,
+        "longitude": 80.2707
+      },
+      "unlocode": "INMAA",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "secondary"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port:INNSA",
+      "name": "Nhava Sheva",
+      "country": "India",
+      "locationLabel": "Nhava Sheva, India",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 18.95,
+        "longitude": 72.95
+      },
+      "unlocode": "INNSA",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port-algeciras",
+      "name": "Algeciras",
+      "country": "Spain",
+      "locationLabel": "Algeciras, Spain",
+      "type": "container_terminal",
+      "position": {
+        "latitude": 36.1408,
+        "longitude": -5.4565
+      },
+      "unlocode": "ESALG",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port-istanbul",
+      "name": "Istanbul",
+      "country": "Turkey",
+      "locationLabel": "Istanbul, Turkey",
+      "type": "seaport",
+      "position": {
+        "latitude": 41.0082,
+        "longitude": 28.9784
+      },
+      "unlocode": "TRIST",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    }
+  ]
+}

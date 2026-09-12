@@ -8,15 +8,28 @@ export const runtime = "nodejs";
 
 /**
  * GET /api/maritime/ports
- * Static catalog (WPI + UN/LOCODE) for live/composite; sample ports otherwise.
+ * Global catalog (WPI/UNLOCODE eastern-med + curated majors) for live/composite.
+ * Supports bbox + zoom density filtering.
  */
 export async function GET(request: Request) {
   const config = getMaritimeServerConfig();
   const url = new URL(request.url);
-  const minLat = optionalNumber(url.searchParams.get("minLat"));
-  const maxLat = optionalNumber(url.searchParams.get("maxLat"));
-  const minLon = optionalNumber(url.searchParams.get("minLon"));
-  const maxLon = optionalNumber(url.searchParams.get("maxLon"));
+  const bboxParam = url.searchParams.get("bbox");
+  let minLat = optionalNumber(url.searchParams.get("minLat"));
+  let maxLat = optionalNumber(url.searchParams.get("maxLat"));
+  let minLon = optionalNumber(url.searchParams.get("minLon"));
+  let maxLon = optionalNumber(url.searchParams.get("maxLon"));
+  const zoom = optionalNumber(url.searchParams.get("zoom"));
+
+  if (bboxParam) {
+    const parts = bboxParam.split(",").map((p) => Number(p.trim()));
+    if (parts.length === 4 && parts.every((n) => Number.isFinite(n))) {
+      minLon = parts[0];
+      minLat = parts[1];
+      maxLon = parts[2];
+      maxLat = parts[3];
+    }
+  }
 
   const useCatalog =
     config.mode === "live" ||
@@ -37,15 +50,16 @@ export async function GET(request: Request) {
     maxLat,
     minLon,
     maxLon,
+    zoom: zoom ?? undefined,
   });
 
   return NextResponse.json({
     mode: config.mode,
     ports,
     count: ports.length,
-    source: "NGA_WPI+UN_LOCODE",
+    source: "NGA_WPI+UN_LOCODE+CURATED_MAJOR",
     disclaimer:
-      "Not for navigation. Port data from NGA World Port Index and UN/LOCODE.",
+      "Not for navigation. Port data from NGA World Port Index, UN/LOCODE, and curated major hubs. Not commercial marketplace coverage.",
   });
 }
 

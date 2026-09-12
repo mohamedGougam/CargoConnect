@@ -14,10 +14,22 @@ export function normalizeAisShipType(code: number | undefined | null): VesselTyp
 
   if (n === 30) return "fishing";
   if (n === 31 || n === 32 || n === 52) return "tug_service";
+  // 33 — vessel engaged in dredging / underwater ops
+  if (n === 33) return "other";
+  // 34 — diving; 35 — military
+  if (n === 34 || n === 35) return "other";
+  // 36 — sailing; 37 — pleasure craft
   if (n === 36 || n === 37) return "pleasure";
+  // 40–49 high-speed craft
+  if (n >= 40 && n <= 49) return "other";
+  // 50 — pilot; 51 — SAR; 53–55 special
+  if (n === 50 || n === 51 || (n >= 53 && n <= 55)) return "other";
   if (n >= 60 && n <= 69) return "passenger";
+  // AIS 70–79 cargo — do not invent container vs bulk without more signal
   if (n >= 70 && n <= 79) return "general_cargo";
   if (n >= 80 && n <= 89) return "tanker";
+  // 90–99 other / no additional info
+  if (n >= 90 && n <= 99) return "other";
   if (n === 0) return "unknown";
   return "other";
 }
@@ -132,11 +144,27 @@ const MID_FLAG: Record<string, string> = {
   "367": "United States",
   "368": "United States",
   "369": "United States",
+  "412": "China",
+  "413": "China",
+  "414": "China",
+  "416": "Taiwan",
+  "431": "Japan",
+  "432": "Japan",
+  "440": "South Korea",
+  "441": "South Korea",
+  "470": "United Arab Emirates",
+  "471": "United Arab Emirates",
   "477": "Hong Kong",
+  "503": "Australia",
+  "525": "Indonesia",
+  "533": "Malaysia",
+  "538": "Marshall Islands",
   "563": "Singapore",
   "564": "Singapore",
   "565": "Singapore",
   "566": "Singapore",
+  "636": "Liberia",
+  "657": "India",
 };
 
 export function flagFromMmsi(mmsi: string | undefined): string | undefined {

@@ -40,7 +40,7 @@ export function LandingExperience() {
 }
 
 function LandingExperienceInner() {
-  const { vessels, ports, routes, statusLabel, isDemonstrationData, isLoading, error } =
+  const { vessels, ports, routes, statusLabel, isDemonstrationData, isLoading, error, setMapViewport } =
     useMaritimeData();
   const {
     search,
@@ -201,6 +201,7 @@ function LandingExperienceInner() {
           onVesselClick={selectVessel}
           onPortClick={selectPort}
           onMapClick={clearSelection}
+          onViewportChange={setMapViewport}
         />
       ) : null}
 

@@ -9,11 +9,15 @@ export interface BoundingBox {
   ne: [number, number];
 }
 
-/** Default: Eastern Mediterranean / Aegean focus (Greece–Egypt corridor). */
+/** Default seed boxes when AISSTREAM_BBOXES unset — Eastern Med + North Sea for demo warm-start. */
 export const DEFAULT_AIS_BBOXES: BoundingBox[] = [
   {
     sw: [30.0, 22.0],
     ne: [41.5, 37.0],
+  },
+  {
+    sw: [51.0, -2.0],
+    ne: [58.5, 9.0],
   },
 ];
 

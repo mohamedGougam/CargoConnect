@@ -26,7 +26,12 @@ const VESSELS_SOURCE = "cc-vessels";
 const PORTS_SOURCE = "cc-ports";
 const ROUTES_SOURCE = "cc-routes";
 const CORRIDOR_SOURCE = "cc-corridor";
-const INTERACTIVE_LAYERS = ["cc-vessels-symbol", "cc-vessels-dot", "cc-ports-hit"];
+const INTERACTIVE_LAYERS = [
+  "cc-vessels-symbol",
+  "cc-vessels-dot",
+  "cc-vessels-cluster",
+  "cc-ports-hit",
+];
 
 /** Idle vessel motion cadence — NOT every paint frame (setData is expensive). */
 const VESSEL_ANIM_INTERVAL_MS = 200;
@@ -55,6 +60,14 @@ interface MaritimeMapProps {
   onVesselClick: (id: string) => void;
   onPortClick: (id: string) => void;
   onMapClick: () => void;
+  /** Debounced by parent — reports camera bounds for viewport AIS. */
+  onViewportChange?: (viewport: {
+    west: number;
+    south: number;
+    east: number;
+    north: number;
+    zoom: number;
+  }) => void;
 }
 
 /**
@@ -77,6 +90,7 @@ export const MaritimeMap = memo(function MaritimeMap({
   onVesselClick,
   onPortClick,
   onMapClick,
+  onViewportChange,
 }: MaritimeMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -108,6 +122,7 @@ export const MaritimeMap = memo(function MaritimeMap({
     onVesselClick,
     onPortClick,
     onMapClick,
+    onViewportChange,
   });
 
   useEffect(() => {
@@ -117,8 +132,9 @@ export const MaritimeMap = memo(function MaritimeMap({
       onVesselClick,
       onPortClick,
       onMapClick,
+      onViewportChange,
     };
-  }, [onVesselHover, onPortHover, onVesselClick, onPortClick, onMapClick]);
+  }, [onVesselHover, onPortHover, onVesselClick, onPortClick, onMapClick, onViewportChange]);
 
   useEffect(() => {
     vesselMotionRef.current = vessels;
@@ -270,8 +286,21 @@ export const MaritimeMap = memo(function MaritimeMap({
       handlersRef.current.onVesselHover(null, 0, 0);
       handlersRef.current.onPortHover(null, 0, 0);
     };
+
+    const reportViewport = (m: MapLibreMap) => {
+      const b = m.getBounds();
+      handlersRef.current.onViewportChange?.({
+        west: b.getWest(),
+        south: b.getSouth(),
+        east: b.getEast(),
+        north: b.getNorth(),
+        zoom: m.getZoom(),
+      });
+    };
+
     const endInteraction = () => {
       interactingRef.current = false;
+      reportViewport(map);
     };
 
     map.on("movestart", beginInteraction);
@@ -283,6 +312,9 @@ export const MaritimeMap = memo(function MaritimeMap({
     map.on("rotateend", endInteraction);
     map.on("pitchend", endInteraction);
 
+    // Initial viewport after load
+    map.once("idle", () => reportViewport(map));
+
     map.on("click", (e) => {
       const layers = INTERACTIVE_LAYERS.filter((id) => Boolean(map.getLayer(id)));
       const features = layers.length
@@ -293,6 +325,22 @@ export const MaritimeMap = memo(function MaritimeMap({
         return;
       }
       const feature = features[0];
+      if (feature.layer.id === "cc-vessels-cluster") {
+        const clusterId = feature.properties?.cluster_id;
+        const source = map.getSource(VESSELS_SOURCE) as GeoJSONSource | undefined;
+        if (source && typeof clusterId === "number") {
+          source.getClusterExpansionZoom(clusterId)
+            .then((zoom) => {
+              const coords = (feature.geometry as GeoJSON.Point).coordinates as [
+                number,
+                number,
+              ];
+              map.easeTo({ center: coords, zoom });
+            })
+            .catch(() => undefined);
+        }
+        return;
+      }
       const id = String(feature.properties?.id ?? "");
       if (!id) return;
       if (
@@ -489,6 +537,8 @@ function addLayers(map: MapLibreMap) {
     "cc-vessels-dot",
     "cc-vessels-halo",
     "cc-vessels-relevant-halo",
+    "cc-vessels-cluster",
+    "cc-vessels-cluster-count",
     "cc-ports-label",
     "cc-ports-hit",
     "cc-ports-core",
@@ -520,6 +570,9 @@ function addLayers(map: MapLibreMap) {
   map.addSource(VESSELS_SOURCE, {
     type: "geojson",
     data: vesselsToGeoJSON([]),
+    cluster: true,
+    clusterMaxZoom: 5,
+    clusterRadius: 42,
   });
 
   map.addLayer({
@@ -722,9 +775,48 @@ function addLayers(map: MapLibreMap) {
   });
 
   map.addLayer({
+    id: "cc-vessels-cluster",
+    type: "circle",
+    source: VESSELS_SOURCE,
+    filter: ["has", "point_count"],
+    paint: {
+      "circle-color": "#5eead4",
+      "circle-radius": [
+        "step",
+        ["get", "point_count"],
+        14,
+        25,
+        18,
+        100,
+        24,
+      ],
+      "circle-opacity": 0.55,
+      "circle-stroke-width": 1.5,
+      "circle-stroke-color": "#042f2e",
+    },
+  });
+
+  map.addLayer({
+    id: "cc-vessels-cluster-count",
+    type: "symbol",
+    source: VESSELS_SOURCE,
+    filter: ["has", "point_count"],
+    layout: {
+      "text-field": ["get", "point_count_abbreviated"],
+      "text-size": 11,
+      "text-font": ["Noto Sans Regular"],
+      "text-allow-overlap": true,
+    },
+    paint: {
+      "text-color": "#ecfdf5",
+    },
+  });
+
+  map.addLayer({
     id: "cc-vessels-halo",
     type: "circle",
     source: VESSELS_SOURCE,
+    filter: ["!", ["has", "point_count"]],
     paint: {
       "circle-radius": ["interpolate", ["linear"], ["zoom"], 2, 10, 4, 11, 6, 13],
       "circle-color": "#5eead4",
@@ -758,7 +850,11 @@ function addLayers(map: MapLibreMap) {
     id: "cc-vessels-relevant-halo",
     type: "circle",
     source: VESSELS_SOURCE,
-    filter: ["==", ["get", "relevant"], 1],
+    filter: [
+      "all",
+      ["!", ["has", "point_count"]],
+      ["==", ["get", "relevant"], 1],
+    ],
     paint: {
       "circle-radius": ["interpolate", ["linear"], ["zoom"], 2, 14, 5, 18, 7, 22],
       "circle-color": "#fbbf24",
@@ -770,6 +866,7 @@ function addLayers(map: MapLibreMap) {
     id: "cc-vessels-dot",
     type: "circle",
     source: VESSELS_SOURCE,
+    filter: ["!", ["has", "point_count"]],
     paint: {
       "circle-radius": [
         "interpolate",
@@ -805,6 +902,7 @@ function addLayers(map: MapLibreMap) {
     id: "cc-vessels-symbol",
     type: "symbol",
     source: VESSELS_SOURCE,
+    filter: ["!", ["has", "point_count"]],
     layout: {
       "icon-image": ["get", "icon"],
       "icon-size": [

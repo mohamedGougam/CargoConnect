@@ -1,5 +1,5 @@
 import type { MaritimeRoute, Port, Vessel } from "@/domain/models";
-import type { MaritimeDataProvider } from "../types";
+import type { MaritimeDataProvider, MaritimeViewportQuery } from "../types";
 import { SAMPLE_PORTS } from "./sample-ports";
 import { SAMPLE_ROUTES, SAMPLE_VESSELS } from "./sample-vessels";
 import { SAMPLE_STATUS_LABEL } from "../types";
@@ -13,11 +13,13 @@ export class SampleMaritimeProvider implements MaritimeDataProvider {
   readonly isDemonstrationData = true;
   readonly statusLabel = SAMPLE_STATUS_LABEL;
 
-  async getVessels(): Promise<Vessel[]> {
+  async getVessels(options?: MaritimeViewportQuery): Promise<Vessel[]> {
+    void options;
     return structuredClone(SAMPLE_VESSELS);
   }
 
-  async getPorts(): Promise<Port[]> {
+  async getPorts(options?: MaritimeViewportQuery): Promise<Port[]> {
+    void options;
     return structuredClone(SAMPLE_PORTS);
   }
 

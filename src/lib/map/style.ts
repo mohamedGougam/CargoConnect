@@ -112,14 +112,21 @@ export const INITIAL_MAP_VIEW = {
 };
 
 /**
- * Default live/composite camera for the Eastern Mediterranean AIS bbox
- * (≈ Greece, Aegean, Crete, western Turkey, Cyprus approaches).
- * Lon/lat center near the Cyclades / central Aegean.
+ * Default live/composite camera — Eastern Med keeps the flagship demo warm,
+ * while free pan/zoom drives viewport AIS globally.
  */
 export const EASTERN_MED_MAP_VIEW = {
   center: [25.2, 37.2] as [number, number],
   zoom: 5.4,
-  minZoom: 1.5,
+  minZoom: 1.2,
+  maxZoom: 12,
+};
+
+/** Optional wider opening camera for global exploration demos. */
+export const GLOBAL_MAP_VIEW = {
+  center: [20, 22] as [number, number],
+  zoom: 2.4,
+  minZoom: 1.2,
   maxZoom: 12,
 };
 

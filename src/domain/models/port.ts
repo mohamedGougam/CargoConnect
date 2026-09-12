@@ -30,6 +30,11 @@ export interface Port {
 export interface PortMeta {
   sources: DataSourceKind[];
   importedAt?: string;
+  /**
+   * Map density hint for zoom-dependent rendering.
+   * major → world view; secondary → regional; local → detailed.
+   */
+  tier?: "major" | "secondary" | "local";
 }
 
 export interface PortSpecifications {

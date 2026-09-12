@@ -20,6 +20,9 @@ const MAX_BACKOFF_MS = 60_000;
 /**
  * Server-only AISStream WebSocket client.
  * Never instantiate from browser / React code.
+ *
+ * Subscription updates: AISStream accepts a new subscription JSON on the same
+ * socket (replace, not merge). Prefer updateSubscription() over reconnecting.
  */
 export class AISStreamClient {
   private socket: WebSocket | null = null;
@@ -28,13 +31,24 @@ export class AISStreamClient {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private stopped = false;
   private readonly maxReconnectAttempts: number;
+  private bboxes: BoundingBox[];
+  private subscriptionRevision = 0;
 
   constructor(private readonly options: AISStreamClientOptions) {
     this.maxReconnectAttempts = options.maxReconnectAttempts ?? 0;
+    this.bboxes = options.bboxes;
   }
 
   getConnectionState(): AisFeedConnectionState {
     return this.state;
+  }
+
+  getActiveBboxes(): BoundingBox[] {
+    return this.bboxes;
+  }
+
+  getSubscriptionRevision(): number {
+    return this.subscriptionRevision;
   }
 
   start(): void {
@@ -57,6 +71,43 @@ export class AISStreamClient {
     this.setState("disconnected", "stopped");
   }
 
+  /**
+   * Replace active BoundingBoxes on the open socket (AISStream swap-and-replace).
+   * No-op when socket not ready — next reconnect will use latest boxes.
+   */
+  updateSubscription(bboxes: BoundingBox[]): boolean {
+    if (!bboxes.length) return false;
+    this.bboxes = bboxes;
+    this.subscriptionRevision += 1;
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+      return false;
+    }
+    try {
+      this.socket.send(JSON.stringify(this.buildSubscriptionPayload()));
+      return true;
+    } catch (err) {
+      console.warn(
+        "[AISStream] subscription update failed",
+        err instanceof Error ? err.message : err,
+      );
+      return false;
+    }
+  }
+
+  private buildSubscriptionPayload(): Record<string, unknown> {
+    return {
+      APIKey: this.options.apiKey,
+      BoundingBoxes: this.bboxes.map(bboxToAisStreamCorners),
+      FilterMessageTypes: this.options.filterMessageTypes ?? [
+        "PositionReport",
+        "ShipStaticData",
+        "StandardClassBPositionReport",
+        "ExtendedClassBPositionReport",
+        "StaticDataReport",
+      ],
+    };
+  }
+
   private open(): void {
     if (this.stopped) return;
     this.clearReconnect();
@@ -77,18 +128,7 @@ export class AISStreamClient {
     socket.on("open", () => {
       if (this.stopped) return;
       try {
-        const subscription = {
-          APIKey: this.options.apiKey,
-          BoundingBoxes: this.options.bboxes.map(bboxToAisStreamCorners),
-          FilterMessageTypes: this.options.filterMessageTypes ?? [
-            "PositionReport",
-            "ShipStaticData",
-            "StandardClassBPositionReport",
-            "ExtendedClassBPositionReport",
-            "StaticDataReport",
-          ],
-        };
-        socket.send(JSON.stringify(subscription));
+        socket.send(JSON.stringify(this.buildSubscriptionPayload()));
         this.reconnectAttempts = 0;
         this.setState("connected");
       } catch (err) {
@@ -128,7 +168,6 @@ export class AISStreamClient {
     socket.on("error", (err) => {
       console.warn("[AISStream] socket error", err.message);
       this.setState("error", err.message);
-      // close handler will reconnect
     });
   }
 

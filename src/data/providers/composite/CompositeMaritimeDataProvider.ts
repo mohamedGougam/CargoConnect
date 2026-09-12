@@ -1,5 +1,5 @@
 import type { MaritimeRoute, Port, Vessel } from "@/domain/models";
-import type { MaritimeDataProvider } from "../types";
+import type { MaritimeDataProvider, MaritimeViewportQuery } from "../types";
 import { COMPOSITE_STATUS_LABEL } from "../types";
 import { LiveAISMaritimeDataProvider } from "../live/LiveAISMaritimeDataProvider";
 import { SampleMaritimeProvider } from "../sample/SampleMaritimeProvider";
@@ -16,26 +16,25 @@ export class CompositeMaritimeDataProvider implements MaritimeDataProvider {
   private readonly live = new LiveAISMaritimeDataProvider();
   private readonly sample = new SampleMaritimeProvider();
 
-  async getVessels(): Promise<Vessel[]> {
+  async getVessels(options?: MaritimeViewportQuery): Promise<Vessel[]> {
     try {
-      return await this.live.getVessels();
+      return await this.live.getVessels(options);
     } catch {
-      return this.sample.getVessels();
+      return this.sample.getVessels(options);
     }
   }
 
-  async getPorts(): Promise<Port[]> {
+  async getPorts(options?: MaritimeViewportQuery): Promise<Port[]> {
     try {
-      const ports = await this.live.getPorts();
+      const ports = await this.live.getPorts(options);
       if (ports.length > 0) return ports;
     } catch {
       /* use sample */
     }
-    return this.sample.getPorts();
+    return this.sample.getPorts(options);
   }
 
   async getRoutes(): Promise<MaritimeRoute[]> {
-    // Prefer empty live routes; sample routes only when vessels fell back.
     try {
       const vessels = await this.live.getVessels();
       if (vessels.length > 0) return [];

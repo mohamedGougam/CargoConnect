@@ -1,5 +1,5 @@
 import type { MaritimeRoute, Port, Vessel } from "@/domain/models";
-import type { MaritimeDataProvider } from "../types";
+import type { MaritimeDataProvider, MaritimeViewportQuery } from "../types";
 import { LIVE_PROTOTYPE_STATUS_LABEL } from "../types";
 
 interface VesselsApiResponse {
@@ -16,6 +16,7 @@ interface PortsApiResponse {
 /**
  * Client provider that polls CargoConnect internal maritime APIs.
  * Does NOT connect to AISStream — ingestion is server-side only.
+ * Passes viewport bbox so the server can drive AIS subscriptions.
  */
 export class LiveAISMaritimeDataProvider implements MaritimeDataProvider {
   readonly id = "live_ais";
@@ -24,8 +25,9 @@ export class LiveAISMaritimeDataProvider implements MaritimeDataProvider {
 
   constructor(private readonly baseUrl = "") {}
 
-  async getVessels(): Promise<Vessel[]> {
-    const res = await fetch(`${this.baseUrl}/api/maritime/vessels`, {
+  async getVessels(options?: MaritimeViewportQuery): Promise<Vessel[]> {
+    const qs = buildViewportQuery(options);
+    const res = await fetch(`${this.baseUrl}/api/maritime/vessels${qs}`, {
       cache: "no-store",
     });
     if (!res.ok) {
@@ -38,8 +40,9 @@ export class LiveAISMaritimeDataProvider implements MaritimeDataProvider {
     return data.vessels ?? [];
   }
 
-  async getPorts(): Promise<Port[]> {
-    const res = await fetch(`${this.baseUrl}/api/maritime/ports`, {
+  async getPorts(options?: MaritimeViewportQuery): Promise<Port[]> {
+    const qs = buildViewportQuery(options);
+    const res = await fetch(`${this.baseUrl}/api/maritime/ports${qs}`, {
       cache: "no-store",
     });
     if (!res.ok) {
@@ -50,7 +53,6 @@ export class LiveAISMaritimeDataProvider implements MaritimeDataProvider {
   }
 
   async getRoutes(): Promise<MaritimeRoute[]> {
-    // Live prototype does not invent commercial routes from AIS.
     return [];
   }
 
@@ -63,4 +65,23 @@ export class LiveAISMaritimeDataProvider implements MaritimeDataProvider {
     const ports = await this.getPorts();
     return ports.find((p) => p.id === id) ?? null;
   }
+}
+
+function buildViewportQuery(options?: MaritimeViewportQuery): string {
+  if (!options) return "";
+  const params = new URLSearchParams();
+  if (
+    options.minLon !== undefined &&
+    options.minLat !== undefined &&
+    options.maxLon !== undefined &&
+    options.maxLat !== undefined
+  ) {
+    params.set(
+      "bbox",
+      `${options.minLon},${options.minLat},${options.maxLon},${options.maxLat}`,
+    );
+  }
+  if (options.zoom !== undefined) params.set("zoom", String(options.zoom));
+  const s = params.toString();
+  return s ? `?${s}` : "";
 }

@@ -4,6 +4,7 @@ export type DataSourceKind =
   | "AISSTREAM"
   | "NGA_WPI"
   | "UN_LOCODE"
+  | "CURATED_MAJOR"
   | "COMPOSITE";
 
 export type VesselFreshness = "live" | "stale" | "very_stale";

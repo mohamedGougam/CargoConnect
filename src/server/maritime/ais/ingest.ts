@@ -1,13 +1,19 @@
 import type { AisFeedConnectionState, Vessel } from "@/domain/models";
 import { getMaritimeServerConfig, type BoundingBox } from "../config";
 import {
-  shouldIncludeInSnapshot,
-} from "../normalize/freshness";
+  pointInBounds,
+  type LngLatBounds,
+} from "../geo/bbox";
+import { regionOverlapping } from "../geo/regions";
+import { shouldIncludeInSnapshot } from "../normalize/freshness";
 import { getVesselStateStore, type VesselStateStore } from "../store/VesselStateStore";
 import { AISStreamClient } from "./AISStreamClient";
 import { applyPositionUpdate, applyStaticUpdate } from "./mergeVesselState";
 import { parseAisStreamMessage } from "./parseMessage";
 import { vesselStateToUiVessel } from "./toUiVessel";
+import {
+  getViewportSubscriptionManager,
+} from "./ViewportSubscriptionManager";
 
 export interface AisIngestDiagnostics {
   connectionState: AisFeedConnectionState;
@@ -25,6 +31,10 @@ export interface AisIngestDiagnostics {
   startedAt: string | null;
   bboxes: BoundingBox[];
   regionNote: string;
+  subscription: ReturnType<
+    ReturnType<typeof getViewportSubscriptionManager>["getDiagnostics"]
+  >;
+  reconnectHint: string;
 }
 
 interface IngestRuntime {
@@ -64,7 +74,7 @@ function getRuntime(): IngestRuntime {
 
 /**
  * Start AISStream ingest once per process when configured.
- * Safe no-op when disabled / missing key / sample mode.
+ * Uses viewport subscription manager (seed regions + live viewports).
  */
 export async function ensureAisIngestStarted(): Promise<void> {
   const runtime = getRuntime();
@@ -82,10 +92,13 @@ export async function ensureAisIngestStarted(): Promise<void> {
     if (runtime.client) return;
 
     const store = getVesselStateStore();
+    const mgr = getViewportSubscriptionManager();
+    const initialBoxes = mgr.bootstrap();
+
     runtime.startedAt = new Date().toISOString();
     runtime.client = new AISStreamClient({
       apiKey: config.apiKey,
-      bboxes: config.bboxes,
+      bboxes: initialBoxes.length > 0 ? initialBoxes : config.bboxes,
       onStateChange: (state, detail) => {
         runtime.connectionState = state;
         if (state === "error" && detail) runtime.lastError = detail;
@@ -94,10 +107,29 @@ export async function ensureAisIngestStarted(): Promise<void> {
         handleIncomingMessage(store, runtime, data);
       },
     });
+
+    mgr.setApplyHandler((boxes) => {
+      runtime.client?.updateSubscription(boxes);
+    });
+
     runtime.client.start();
   });
 
   return runtime.ensurePromise;
+}
+
+/**
+ * Register a map viewport so AIS subscription follows exploration.
+ * Safe to call frequently — manager debounces.
+ */
+export function registerAisViewportInterest(input: {
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+  zoom: number;
+}): void {
+  getViewportSubscriptionManager().registerViewport(input);
 }
 
 function handleIncomingMessage(
@@ -136,11 +168,20 @@ function handleIncomingMessage(
 export function getAisIngestDiagnostics(): AisIngestDiagnostics {
   const runtime = getRuntime();
   const config = getMaritimeServerConfig();
-  const list = getVesselStateStore().list();
+  const store = getVesselStateStore();
+  store.prune?.();
+  const list = store.list();
   const withPosition = list.filter(
     (v) => v.latitude !== undefined && v.longitude !== undefined && v.lastPositionAt,
   );
   const withName = list.filter((v) => Boolean(v.name?.trim()));
+  const mgr = getViewportSubscriptionManager();
+  const sub = mgr.getDiagnostics();
+  const active = mgr.getActiveBoxes();
+  const regionLabels = active
+    .flatMap((b) => regionOverlapping(b).map((r) => r.label))
+    .filter((v, i, a) => a.indexOf(v) === i);
+
   return {
     connectionState: runtime.connectionState,
     enabled: config.canConnectAis,
@@ -155,9 +196,13 @@ export function getAisIngestDiagnostics(): AisIngestDiagnostics {
     lastMessageAt: runtime.lastMessageAt,
     lastError: runtime.lastError,
     startedAt: runtime.startedAt,
-    bboxes: config.bboxes,
+    bboxes: active,
     regionNote:
-      "Default bbox ≈ Eastern Mediterranean: Greece, Aegean, Crete, western Turkey, Cyprus approaches (lat 30–41.5, lon 22–37).",
+      regionLabels.length > 0
+        ? `Active coverage regions (development AIS): ${regionLabels.join(", ")}. Viewport-driven — not complete global AIS.`
+        : "Viewport-driven development AIS. Seed: Eastern Med + North Sea + Mediterranean. Not complete worldwide coverage.",
+    subscription: sub,
+    reconnectHint: "Exponential backoff on disconnect; subscription updates reuse the open socket.",
   };
 }
 
@@ -166,14 +211,40 @@ export interface VesselSnapshotQuery {
   minLon?: number;
   maxLat?: number;
   maxLon?: number;
+  zoom?: number;
   freshness?: "live" | "stale" | "very_stale" | "all";
   includeVeryStale?: boolean;
+  /** Hard cap for browser payloads. */
+  limit?: number;
 }
+
+const DEFAULT_VESSEL_LIMIT = 1_200;
+const WORLD_VIEW_LIMIT = 400;
 
 export function getVesselSnapshot(query: VesselSnapshotQuery = {}): Vessel[] {
   const now = Date.now();
   const store = getVesselStateStore();
   const vessels: Vessel[] = [];
+
+  const hasBbox =
+    query.minLat !== undefined &&
+    query.maxLat !== undefined &&
+    query.minLon !== undefined &&
+    query.maxLon !== undefined;
+
+  const bounds: LngLatBounds | null = hasBbox
+    ? {
+        west: query.minLon!,
+        south: query.minLat!,
+        east: query.maxLon!,
+        north: query.maxLat!,
+      }
+    : null;
+
+  const zoom = query.zoom ?? 5;
+  const limit =
+    query.limit ??
+    (zoom < 3.5 ? WORLD_VIEW_LIMIT : DEFAULT_VESSEL_LIMIT);
 
   for (const state of store.list()) {
     if (!query.includeVeryStale && !shouldIncludeInSnapshot(state.lastPositionAt, now)) {
@@ -186,24 +257,13 @@ export function getVesselSnapshot(query: VesselSnapshotQuery = {}): Vessel[] {
       if (ui.meta?.freshness !== query.freshness) continue;
     }
 
-    if (
-      query.minLat !== undefined &&
-      query.maxLat !== undefined &&
-      query.minLon !== undefined &&
-      query.maxLon !== undefined
-    ) {
+    if (bounds) {
       const { latitude, longitude } = ui.position;
-      if (
-        latitude < query.minLat ||
-        latitude > query.maxLat ||
-        longitude < query.minLon ||
-        longitude > query.maxLon
-      ) {
-        continue;
-      }
+      if (!pointInBounds(latitude, longitude, bounds)) continue;
     }
 
     vessels.push(ui);
+    if (vessels.length >= limit) break;
   }
 
   return vessels;

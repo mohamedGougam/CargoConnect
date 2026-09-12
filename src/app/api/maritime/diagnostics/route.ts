@@ -46,8 +46,10 @@ export async function GET() {
       startedAt: diag.startedAt,
       bboxes: diag.bboxes,
       regionNote: diag.regionNote,
+      subscription: diag.subscription,
+      reconnectHint: diag.reconnectHint,
     },
     licensingNote:
-      "AISStream is for DEVELOPMENT / PROTOTYPE use only until commercial/public-display rights are confirmed.",
+      "AISStream is for DEVELOPMENT / DEMO use only. Global maritime view does not mean complete worldwide AIS coverage or commercial licensing.",
   });
 }

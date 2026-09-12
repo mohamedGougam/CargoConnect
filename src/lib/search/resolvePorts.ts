@@ -1,7 +1,27 @@
 import type { Port } from "@/domain/models";
 import type { LocationResolutionResult, PortResolution } from "@/domain/search/types";
 
-/** Country / region aliases → preferred port name hints or country filter. */
+const NAME_ALIASES: Record<string, string[]> = {
+  rotterdam: ["rotterdam"],
+  alexandria: ["alexandria"],
+  piraeus: ["piraeus", "peiraeus", "pireaus"],
+  istanbul: ["istanbul", "constantinople"],
+  "port said": ["port said", "portsaid"],
+  hamburg: ["hamburg"],
+  antwerp: ["antwerp", "antwerpen"],
+  thessaloniki: ["thessaloniki", "salonika"],
+  heraklion: ["heraklion", "iraklion", "heraklio"],
+  singapore: ["singapore"],
+  shanghai: ["shanghai"],
+  "los angeles": ["los angeles", "la", "long beach"],
+  "new york": ["new york", "nyc", "new york / new jersey", "newark"],
+  "jebel ali": ["jebel ali", "jebe ali"],
+  dubai: ["dubai"],
+  "port klang": ["port klang", "port kelang"],
+  busan: ["busan", "pusan"],
+  "cape town": ["cape town"],
+};
+
 const REGION_ALIASES: Record<string, { country?: string; preferNames?: string[] }> = {
   greece: { country: "Greece", preferNames: ["Piraeus", "Thessaloniki"] },
   egypt: { country: "Egypt", preferNames: ["Alexandria", "Port Said", "Damietta"] },
@@ -15,18 +35,15 @@ const REGION_ALIASES: Record<string, { country?: string; preferNames?: string[] 
   israel: { country: "Israel", preferNames: ["Haifa", "Ashdod"] },
   italy: { country: "Italy", preferNames: ["Palermo", "Catania", "Augusta"] },
   malta: { country: "Malta", preferNames: ["Valletta"] },
-};
-
-const NAME_ALIASES: Record<string, string[]> = {
-  rotterdam: ["rotterdam"],
-  alexandria: ["alexandria"],
-  piraeus: ["piraeus", "peiraeus", "pireaus"],
-  istanbul: ["istanbul", "constantinople"],
-  "port said": ["port said", "portsaid"],
-  hamburg: ["hamburg"],
-  antwerp: ["antwerp", "antwerpen"],
-  thessaloniki: ["thessaloniki", "salonika"],
-  heraklion: ["heraklion", "iraklion", "heraklio"],
+  singapore: { country: "Singapore", preferNames: ["Singapore"] },
+  china: { country: "China", preferNames: ["Shanghai", "Ningbo"] },
+  "united arab emirates": { country: "United Arab Emirates", preferNames: ["Jebel Ali", "Dubai"] },
+  uae: { country: "United Arab Emirates", preferNames: ["Jebel Ali", "Dubai"] },
+  "united states": { country: "United States", preferNames: ["Los Angeles", "New York"] },
+  usa: { country: "United States", preferNames: ["Los Angeles", "New York"] },
+  malaysia: { country: "Malaysia", preferNames: ["Port Klang"] },
+  japan: { country: "Japan", preferNames: ["Tokyo"] },
+  australia: { country: "Australia", preferNames: ["Sydney"] },
 };
 
 export function resolveLocation(
