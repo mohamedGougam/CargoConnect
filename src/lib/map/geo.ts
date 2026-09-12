@@ -51,17 +51,34 @@ export function vesselsToGeoJSON(
 
 export function portsToGeoJSON(
   ports: Port[],
-  options?: { originId?: string; destinationId?: string },
+  options?: {
+    originId?: string;
+    destinationId?: string;
+    /** Alternate destination candidates (subtle markers). */
+    candidateIds?: string[];
+    /** Candidate currently highlighted from the switcher hover. */
+    highlightCandidateId?: string | null;
+  },
 ): FeatureCollection<
   Point,
   { id: string; name: string; major: boolean; role: string }
 > {
+  const candidates = new Set(options?.candidateIds ?? []);
   return {
     type: "FeatureCollection",
     features: ports.map((port) => {
       let role = "normal";
       if (options?.originId && port.id === options.originId) role = "origin";
-      if (options?.destinationId && port.id === options.destinationId) role = "destination";
+      else if (options?.destinationId && port.id === options.destinationId) {
+        role = "destination";
+      } else if (
+        options?.highlightCandidateId &&
+        port.id === options.highlightCandidateId
+      ) {
+        role = "candidate_hover";
+      } else if (candidates.has(port.id)) {
+        role = "candidate";
+      }
       return {
         type: "Feature" as const,
         id: port.id,

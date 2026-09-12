@@ -4,7 +4,6 @@ import {
   type RouteSearchState,
 } from "@/domain/search/types";
 import { logger } from "@/server/ops/logger";
-import { buildMaritimeCorridor } from "./buildCorridor";
 import { getDefaultMaritimeIntentInterpreter } from "./intent/createInterpreter";
 import {
   DeterministicInterpreter,
@@ -25,10 +24,9 @@ import {
   clarificationMessage,
 } from "./uxMessages";
 import {
-  applyDestinationTextBoost,
-  countVesselTypes,
-  scoreRelevantVessels,
-} from "./scoreVessels";
+  activateRouteSearch,
+  buildDestinationOptions,
+} from "./activateSearch";
 
 export interface RunSearchInput {
   query: string;
@@ -172,6 +170,42 @@ export async function runMaritimeRouteSearch(
     !originRes.best ||
     !destRes.best
   ) {
+    // Exact/auto origin + multiple destination candidates → auto-select nearest
+    if (
+      originOutcome === "auto" &&
+      originRes.best &&
+      destOutcome === "candidates" &&
+      destRes.candidates.length > 0
+    ) {
+      const origin = originRes.best.port;
+      const destinationOptions = buildDestinationOptions(
+        origin,
+        destRes.candidates,
+        input.vessels,
+      );
+      const nearest = destinationOptions[0];
+      if (nearest) {
+        return activateRouteSearch({
+          originalQuery: input.query,
+          parsed,
+          origin,
+          destination: nearest.port,
+          vessels: input.vessels,
+          cargo: parsed.cargo,
+          vesselType: parsed.vesselType,
+          originCandidates: originRes.candidates,
+          destinationCandidates: destRes.candidates,
+          destinationOptions,
+          requestedDestinationLabel: destRes.queryText || parsed.destinationText,
+          requestedOriginLabel: originRes.queryText || parsed.originText,
+          destinationSelectionReason: "shortest_maritime_distance",
+          ...interpretMeta,
+          resolutionOutcome: "candidates",
+          now,
+        });
+      }
+    }
+
     const ux =
       originOutcome === "auto" && destOutcome === "candidates" && destRes.queryText
         ? ambiguousNearMessage(destRes.queryText, language)
@@ -205,6 +239,14 @@ export async function runMaritimeRouteSearch(
       resolutionOutcome,
       uxMessage: ux,
       errorMessage: ux,
+      requestedDestinationLabel:
+        destOutcome === "candidates"
+          ? destRes.queryText || parsed.destinationText
+          : undefined,
+      requestedOriginLabel:
+        originOutcome === "candidates"
+          ? originRes.queryText || parsed.originText
+          : undefined,
       createdAt: now,
       updatedAt: now,
     };
@@ -212,45 +254,24 @@ export async function runMaritimeRouteSearch(
 
   const origin = originRes.best.port;
   const destination = destRes.best.port;
-  const corridor = buildMaritimeCorridor(origin, destination);
 
-  let hits = scoreRelevantVessels(input.vessels, {
-    corridor,
-    originLatLon: origin.position,
-    destinationLatLon: destination.position,
-    vesselType: parsed.vesselType,
-    cargo: parsed.cargo,
-  });
-
-  hits = applyDestinationTextBoost(
-    input.vessels,
-    hits,
-    destination.name,
-    origin.name,
-  );
-
-  const relevantVesselIds = hits.map((h) => h.vesselId);
-
-  return {
-    id: `search-${Date.now()}`,
-    status: "active",
+  return activateRouteSearch({
     originalQuery: input.query,
     parsed,
     origin,
     destination,
-    originCandidates: originRes.candidates,
-    destinationCandidates: destRes.candidates,
+    vessels: input.vessels,
     cargo: parsed.cargo,
     vesselType: parsed.vesselType,
-    corridor,
-    relevantVesselIds,
-    relevantHits: hits,
-    vesselTypeCounts: countVesselTypes(input.vessels, relevantVesselIds),
+    originCandidates: originRes.candidates,
+    destinationCandidates: destRes.candidates,
+    destinationSelectionReason: "exact",
+    requestedOriginLabel: parsed.originText,
+    requestedDestinationLabel: parsed.destinationText,
     ...interpretMeta,
     resolutionOutcome: "auto",
-    createdAt: now,
-    updatedAt: now,
-  };
+    now,
+  });
 }
 
 function scoreOutcome(

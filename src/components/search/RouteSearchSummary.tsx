@@ -16,13 +16,20 @@ interface RouteSearchSummaryProps {
 export function RouteSearchSummary({ search, onClear }: RouteSearchSummaryProps) {
   if (search.status === "idle") return null;
 
+  const hasSwitcher =
+    search.status === "active" &&
+    Boolean(search.destinationOptions && search.destinationOptions.length > 1);
+  const topClass = hasSwitcher
+    ? "top-[11.5rem] sm:top-[11.75rem]"
+    : "top-[7.25rem] sm:top-[7.75rem]";
+
   if (search.status === "loading") {
     return (
-      <div className="pointer-events-none absolute inset-x-0 top-[7.25rem] z-20 flex justify-center px-3 sm:top-[7.75rem]">
+      <div className={`pointer-events-none absolute inset-x-0 z-20 flex justify-center px-3 ${topClass}`}>
         <div className="rounded-2xl border border-teal-300/25 bg-[rgba(8,16,28,0.88)] px-4 py-2.5 text-[11px] text-teal-100/90 shadow-[0_8px_24px_rgba(0,0,0,0.28)] backdrop-blur-md">
           <p className="font-medium tracking-tight">Framing corridor…</p>
           <p className="mt-0.5 text-[10px] text-teal-100/55">
-            Resolving ports and highlighting corridor-relevant vessels
+            Resolving ports and comparing estimated maritime distance
           </p>
         </div>
       </div>
@@ -38,7 +45,7 @@ export function RouteSearchSummary({ search, onClear }: RouteSearchSummaryProps)
         : "We couldn't resolve that route";
 
     return (
-      <div className="pointer-events-auto absolute inset-x-0 top-[7.25rem] z-20 flex justify-center px-3 sm:top-[7.75rem]">
+      <div className={`pointer-events-auto absolute inset-x-0 z-20 flex justify-center px-3 ${topClass}`}>
         <div className="flex max-w-lg items-start gap-3 rounded-2xl border border-amber-300/25 bg-[rgba(8,16,28,0.92)] px-4 py-3 text-[11px] text-amber-50 shadow-[0_8px_24px_rgba(0,0,0,0.28)] backdrop-blur-md">
           <div className="min-w-0 flex-1">
             <p className="font-medium text-amber-100/95">{title}</p>
@@ -83,15 +90,26 @@ export function RouteSearchSummary({ search, onClear }: RouteSearchSummaryProps)
     search.cargo?.description,
   ].filter(Boolean);
   const cargoLine = cargoBits.length ? cargoBits.join(" · ") : null;
+  const intentDest =
+    search.requestedDestinationLabel &&
+    search.requestedDestinationLabel.toLowerCase() !==
+      search.destination.name.toLowerCase()
+      ? search.requestedDestinationLabel
+      : null;
 
   return (
-    <div className="pointer-events-auto absolute inset-x-0 top-[7.25rem] z-20 flex justify-center px-3 sm:top-[7.75rem]">
+    <div className={`pointer-events-auto absolute inset-x-0 z-20 flex justify-center px-3 ${topClass}`}>
       <div className="flex max-w-xl flex-col gap-1.5 rounded-2xl border border-teal-300/20 bg-[rgba(8,16,28,0.9)] px-3.5 py-2.5 shadow-[0_8px_28px_rgba(0,0,0,0.3)] backdrop-blur-md sm:px-4">
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
           <p className="text-[12px] font-medium tracking-tight text-white/95">
             <span className="text-emerald-200/95">{search.origin.name}</span>
             <span className="mx-1.5 text-teal-300/70">→</span>
             <span className="text-sky-200/95">{search.destination.name}</span>
+            {intentDest ? (
+              <span className="ml-1.5 text-[10px] font-normal text-slate-500">
+                ({intentDest})
+              </span>
+            ) : null}
           </p>
           {cargoLine ? (
             <>

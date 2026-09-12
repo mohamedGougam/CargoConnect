@@ -18,12 +18,16 @@ import {
   countVesselTypes,
   scoreRelevantVessels,
 } from "@/lib/search/scoreVessels";
+import { switchSearchDestination } from "@/lib/search/activateSearch";
+import { countAisDestinationVessels } from "@/lib/search/aisDestinationMatch";
 
 interface RouteSearchContextValue {
   search: RouteSearchState;
   isSearching: boolean;
   runQuery: (query: string, vessels: Vessel[]) => Promise<void>;
   clearSearch: () => void;
+  /** Switch destination among ranked options without a new OpenAI call. */
+  selectDestination: (portId: string, vessels: Vessel[]) => void;
   /** Recompute relevance when live vessel snapshot changes. */
   refreshRelevance: (vessels: Vessel[]) => void;
   relevantIdSet: Set<string>;
@@ -100,6 +104,18 @@ export function RouteSearchProvider({ children }: { children: ReactNode }) {
     [applyUrl],
   );
 
+  const selectDestination = useCallback(
+    (portId: string, vessels: Vessel[]) => {
+      setSearch((prev) => {
+        if (prev.status !== "active" || !prev.origin) return prev;
+        const next = switchSearchDestination(prev, portId, vessels);
+        applyUrl(next);
+        return next;
+      });
+    },
+    [applyUrl],
+  );
+
   const refreshRelevance = useCallback((vessels: Vessel[]) => {
     setSearch((prev) => {
       if (prev.status !== "active" || !prev.corridor || !prev.origin || !prev.destination) {
@@ -119,15 +135,33 @@ export function RouteSearchProvider({ children }: { children: ReactNode }) {
         prev.origin.name,
       );
       const relevantVesselIds = hits.map((h) => h.vesselId);
+
+      let destinationOptions = prev.destinationOptions;
+      if (destinationOptions?.length) {
+        destinationOptions = destinationOptions.map((o) => ({
+          ...o,
+          aisDestinationVesselCount: countAisDestinationVessels(vessels, o.port),
+        }));
+      }
+
       const sameIds =
         prev.relevantVesselIds.length === relevantVesselIds.length &&
         prev.relevantVesselIds.every((id, i) => id === relevantVesselIds[i]);
-      if (sameIds) return prev;
+      const sameAis =
+        !destinationOptions ||
+        (prev.destinationOptions?.every(
+          (o, i) =>
+            o.aisDestinationVesselCount ===
+            destinationOptions![i]?.aisDestinationVesselCount,
+        ) ??
+          true);
+      if (sameIds && sameAis) return prev;
       return {
         ...prev,
         relevantHits: hits,
         relevantVesselIds,
         vesselTypeCounts: countVesselTypes(vessels, relevantVesselIds),
+        destinationOptions,
         updatedAt: new Date().toISOString(),
       };
     });
@@ -147,10 +181,19 @@ export function RouteSearchProvider({ children }: { children: ReactNode }) {
       isSearching,
       runQuery,
       clearSearch,
+      selectDestination,
       refreshRelevance,
       relevantIdSet,
     }),
-    [search, isSearching, runQuery, clearSearch, refreshRelevance, relevantIdSet],
+    [
+      search,
+      isSearching,
+      runQuery,
+      clearSearch,
+      selectDestination,
+      refreshRelevance,
+      relevantIdSet,
+    ],
   );
 
   return (

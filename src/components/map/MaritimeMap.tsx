@@ -53,6 +53,9 @@ interface MaritimeMapProps {
   corridor?: MaritimeCorridor | null;
   originPortId?: string | null;
   destinationPortId?: string | null;
+  /** Alternate destination candidates to show as subtle markers. */
+  candidatePortIds?: string[];
+  highlightCandidatePortId?: string | null;
   relevantVesselIds?: string[];
   searchActive?: boolean;
   onVesselHover: (id: string | null, x: number, y: number) => void;
@@ -83,6 +86,8 @@ export const MaritimeMap = memo(function MaritimeMap({
   corridor = null,
   originPortId = null,
   destinationPortId = null,
+  candidatePortIds = [],
+  highlightCandidatePortId = null,
   relevantVesselIds = [],
   searchActive = false,
   onVesselHover,
@@ -103,6 +108,8 @@ export const MaritimeMap = memo(function MaritimeMap({
   const searchActiveRef = useRef(searchActive);
   const originPortIdRef = useRef(originPortId);
   const destinationPortIdRef = useRef(destinationPortId);
+  const candidatePortIdsRef = useRef(candidatePortIds);
+  const highlightCandidatePortIdRef = useRef(highlightCandidatePortId);
   const corridorRef = useRef(corridor);
   const layersAttachedRef = useRef(false);
   const interactingRef = useRef(false);
@@ -144,6 +151,8 @@ export const MaritimeMap = memo(function MaritimeMap({
     searchActiveRef.current = searchActive;
     originPortIdRef.current = originPortId;
     destinationPortIdRef.current = destinationPortId;
+    candidatePortIdsRef.current = candidatePortIds;
+    highlightCandidatePortIdRef.current = highlightCandidatePortId;
     corridorRef.current = corridor;
   }, [
     vessels,
@@ -153,6 +162,8 @@ export const MaritimeMap = memo(function MaritimeMap({
     searchActive,
     originPortId,
     destinationPortId,
+    candidatePortIds,
+    highlightCandidatePortId,
     corridor,
   ]);
 
@@ -219,6 +230,8 @@ export const MaritimeMap = memo(function MaritimeMap({
         portsToGeoJSON(portsRef.current, {
           originId: originPortIdRef.current ?? undefined,
           destinationId: destinationPortIdRef.current ?? undefined,
+          candidateIds: candidatePortIdsRef.current,
+          highlightCandidateId: highlightCandidatePortIdRef.current,
         }),
       );
       routesSource?.setData(
@@ -386,6 +399,8 @@ export const MaritimeMap = memo(function MaritimeMap({
       portsToGeoJSON(ports, {
         originId: originPortId ?? undefined,
         destinationId: destinationPortId ?? undefined,
+        candidateIds: candidatePortIds,
+        highlightCandidateId: highlightCandidatePortId,
       }),
     );
     // Hide demo routes while a search corridor is active
@@ -398,6 +413,8 @@ export const MaritimeMap = memo(function MaritimeMap({
     corridor,
     originPortId,
     destinationPortId,
+    candidatePortIds,
+    highlightCandidatePortId,
     searchActive,
   ]);
 
@@ -668,6 +685,10 @@ function addLayers(map: MapLibreMap) {
         "#34d399",
         ["==", ["get", "role"], "destination"],
         "#38bdf8",
+        ["==", ["get", "role"], "candidate_hover"],
+        "#7dd3fc",
+        ["==", ["get", "role"], "candidate"],
+        "#64748b",
         "#38bdf8",
       ],
       "circle-opacity": [
@@ -679,6 +700,8 @@ function addLayers(map: MapLibreMap) {
           "case",
           ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
           0.42,
+          ["in", ["get", "role"], ["literal", ["candidate", "candidate_hover"]]],
+          0.22,
           0.28,
         ],
         5,
@@ -686,6 +709,8 @@ function addLayers(map: MapLibreMap) {
           "case",
           ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
           0.42,
+          ["in", ["get", "role"], ["literal", ["candidate", "candidate_hover"]]],
+          0.28,
           0.2,
         ],
       ],
@@ -706,6 +731,10 @@ function addLayers(map: MapLibreMap) {
           "case",
           ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
           6,
+          ["==", ["get", "role"], "candidate_hover"],
+          5,
+          ["==", ["get", "role"], "candidate"],
+          3.5,
           4.5,
         ],
         4,
@@ -713,6 +742,10 @@ function addLayers(map: MapLibreMap) {
           "case",
           ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
           6.5,
+          ["==", ["get", "role"], "candidate_hover"],
+          5.5,
+          ["==", ["get", "role"], "candidate"],
+          4,
           5,
         ],
         6,
@@ -720,6 +753,10 @@ function addLayers(map: MapLibreMap) {
           "case",
           ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
           8,
+          ["==", ["get", "role"], "candidate_hover"],
+          6.5,
+          ["==", ["get", "role"], "candidate"],
+          5,
           6.2,
         ],
       ],
@@ -727,6 +764,10 @@ function addLayers(map: MapLibreMap) {
         "case",
         ["==", ["get", "role"], "origin"],
         "#d1fae5",
+        ["==", ["get", "role"], "candidate"],
+        "#94a3b8",
+        ["==", ["get", "role"], "candidate_hover"],
+        "#bae6fd",
         "#e0f2fe",
       ],
       "circle-stroke-color": [
@@ -735,10 +776,28 @@ function addLayers(map: MapLibreMap) {
         "#059669",
         ["==", ["get", "role"], "destination"],
         "#0284c7",
+        ["==", ["get", "role"], "candidate_hover"],
+        "#38bdf8",
+        ["==", ["get", "role"], "candidate"],
+        "#64748b",
         "#0284c7",
       ],
-      "circle-stroke-width": 1.6,
-      "circle-opacity": 1,
+      "circle-stroke-width": [
+        "case",
+        ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
+        1.6,
+        ["==", ["get", "role"], "candidate_hover"],
+        1.4,
+        ["==", ["get", "role"], "candidate"],
+        1,
+        1.6,
+      ],
+      "circle-opacity": [
+        "case",
+        ["==", ["get", "role"], "candidate"],
+        0.7,
+        1,
+      ],
     },
   });
 

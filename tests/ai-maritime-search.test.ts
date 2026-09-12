@@ -151,10 +151,14 @@ describe("AI maritime search (mocked OpenAI)", () => {
       interpreter: mock,
     });
     expect(result.origin?.name).toMatch(/Amsterdam/i);
-    expect(result.status).toBe("ambiguous");
+    expect(result.status).toBe("active");
+    expect(result.destinationSelectionReason).toBe(
+      "shortest_maritime_distance",
+    );
     expect(
-      result.destinationCandidates?.every((c) => c.port.country === "Norway"),
+      result.destinationOptions?.every((c) => c.port.country === "Norway"),
     ).toBe(true);
+    expect(result.destination?.country).toBe("Norway");
   });
 
   it("resolves Norway country against catalogue hubs", () => {

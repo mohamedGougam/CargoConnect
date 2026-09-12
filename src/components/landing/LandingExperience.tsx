@@ -1,10 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AiAssistantBar } from "@/components/ai/AiAssistantBar";
 import { PortDetailPanel } from "@/components/port/PortDetailPanel";
 import { RouteSearchSummary } from "@/components/search/RouteSearchSummary";
+import { DestinationPortSwitcher } from "@/components/search/DestinationPortSwitcher";
 import { PortHoverCard, VesselHoverCard } from "@/components/vessel/VesselHoverCard";
 import { VesselDetailPanel } from "@/components/vessel/VesselDetailPanel";
 import { DemoOperatorControls } from "@/components/demo/DemoOperatorControls";
@@ -47,6 +48,7 @@ function LandingExperienceInner() {
     isSearching,
     runQuery,
     clearSearch,
+    selectDestination,
     refreshRelevance,
     relevantIdSet,
   } = useRouteSearch();
@@ -71,15 +73,29 @@ function LandingExperienceInner() {
     for (const port of ports) byId.set(port.id, port);
     if (search.origin) byId.set(search.origin.id, search.origin);
     if (search.destination) byId.set(search.destination.id, search.destination);
+    for (const opt of search.destinationOptions ?? []) {
+      byId.set(opt.port.id, opt.port);
+    }
     return Array.from(byId.values());
-  }, [ports, search.origin, search.destination]);
+  }, [ports, search.origin, search.destination, search.destinationOptions]);
+
+  const searchActive = search.status === "active";
+
+  const candidatePortIds = useMemo(() => {
+    if (!searchActive || !search.destinationOptions?.length) return [];
+    return search.destinationOptions
+      .map((o) => o.port.id)
+      .filter((id) => id !== search.destination?.id);
+  }, [searchActive, search.destinationOptions, search.destination?.id]);
+
+  const [highlightCandidatePortId, setHighlightCandidatePortId] = useState<
+    string | null
+  >(null);
 
   const portsById = useMemo(() => {
     const map = new Map(mapPorts.map((p) => [p.id, p]));
     return map;
   }, [mapPorts]);
-
-  const searchActive = search.status === "active";
 
   const selectedVessel =
     selection.kind === "vessel" && selection.id
@@ -194,6 +210,8 @@ function LandingExperienceInner() {
           corridor={searchActive ? search.corridor : null}
           originPortId={searchActive ? search.origin?.id : null}
           destinationPortId={searchActive ? search.destination?.id : null}
+          candidatePortIds={candidatePortIds}
+          highlightCandidatePortId={highlightCandidatePortId}
           relevantVesselIds={searchActive ? search.relevantVesselIds : []}
           searchActive={searchActive}
           onVesselHover={onVesselHover}
@@ -225,6 +243,12 @@ function LandingExperienceInner() {
       <AiAssistantBar
         onSubmit={handleSearchSubmit}
         isSearching={isSearching}
+      />
+
+      <DestinationPortSwitcher
+        search={search}
+        onSelect={(portId) => selectDestination(portId, vessels)}
+        onHoverCandidate={setHighlightCandidatePortId}
       />
 
       <RouteSearchSummary search={search} onClear={clearSearch} />

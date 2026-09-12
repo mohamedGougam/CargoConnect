@@ -81,52 +81,46 @@ describe("route resolution regressions (catalogue)", () => {
     },
   );
 
-  it("Amsterdam → Norway: origin auto, destination Norwegian candidates only", async () => {
+  it("Amsterdam → Norway: origin auto, nearest Norwegian destination selected", async () => {
     const result = await runMaritimeRouteSearch({
       query: "Amsterdam to Norway",
       vessels: [],
       deterministicOnly: true,
     });
     expect(result.origin?.name).toMatch(/Amsterdam/i);
-    expect(result.status).toBe("ambiguous");
+    expect(result.status).toBe("active");
     expect(result.resolutionOutcome).toBe("candidates");
-    const dest = result.destinationCandidates ?? [];
+    const dest = result.destinationOptions ?? [];
     expect(dest.length).toBeGreaterThan(0);
     expect(dest.every((c) => c.port.country === "Norway")).toBe(true);
     expect(dest.some((c) => /Oslo/i.test(c.port.name))).toBe(true);
+    expect(result.destination?.id).toBe(dest[0].port.id);
   });
 
-  it("Athens → Egypt: Piraeus serving + Egyptian candidates", async () => {
+  it("Athens → Egypt: Piraeus serving + Egyptian destination auto-selected", async () => {
     const result = await runMaritimeRouteSearch({
       query: "Athens to Egypt",
       vessels: [],
       deterministicOnly: true,
     });
     expect(result.origin?.name).toMatch(/Piraeus/i);
+    expect(result.status).toBe("active");
+    expect(result.destination?.country).toBe("Egypt");
     expect(
-      result.originCandidates?.[0]?.confidence === "MEDIUM" ||
-        result.status === "ambiguous",
+      result.destinationOptions?.every((c) => c.port.country === "Egypt"),
     ).toBe(true);
-    // Destination should be Egypt-only candidates (or active if single)
-    if (result.status === "ambiguous") {
-      expect(
-        result.destinationCandidates?.every((c) => c.port.country === "Egypt"),
-      ).toBe(true);
-    } else {
-      expect(result.destination?.country).toBe("Egypt");
-    }
   });
 
-  it("Singapore → Malaysia: destination candidates stay in Malaysia", async () => {
+  it("Singapore → Malaysia: destination candidates stay in Malaysia and auto-select", async () => {
     const result = await runMaritimeRouteSearch({
       query: "Singapore to Malaysia",
       vessels: [],
       deterministicOnly: true,
     });
     expect(result.origin?.name).toMatch(/Singapore/i);
-    expect(result.status).toBe("ambiguous");
+    expect(result.status).toBe("active");
     expect(
-      result.destinationCandidates?.every((c) => c.port.country === "Malaysia"),
+      result.destinationOptions?.every((c) => c.port.country === "Malaysia"),
     ).toBe(true);
   });
 
@@ -140,10 +134,18 @@ describe("route resolution regressions (catalogue)", () => {
       vessels: [],
       deterministicOnly: true,
     });
-    expect(result.status).toBe("ambiguous");
-    expect(
-      result.destinationCandidates?.every((c) => c.port.country === "India"),
-    ).toBe(true);
+    // Dubai may resolve as serving-port candidates (ambiguous origin) or auto hub
+    if (result.status === "active") {
+      expect(
+        result.destinationOptions?.every((c) => c.port.country === "India") ||
+          result.destination?.country === "India",
+      ).toBe(true);
+    } else {
+      expect(result.status).toBe("ambiguous");
+      expect(
+        result.destinationCandidates?.every((c) => c.port.country === "India"),
+      ).toBe(true);
+    }
   });
 });
 

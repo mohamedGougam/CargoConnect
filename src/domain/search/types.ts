@@ -55,6 +55,16 @@ export interface RelevantVesselHit {
   reasons: string[];
 }
 
+/** Ranked destination (or source) candidate for smart auto-selection UX. */
+export interface SmartPortOption {
+  port: Port;
+  /** Estimated maritime distance from the fixed counterpart (nm). */
+  estimatedDistanceNm: number;
+  /** Fresh AIS observations reporting this port as destination. */
+  aisDestinationVesselCount: number;
+  confidence: "HIGH" | "MEDIUM" | "LOW";
+}
+
 /**
  * Canonical route-search state.
  * Designed so a later pricing/reservation flow can consume it unchanged.
@@ -85,6 +95,16 @@ export interface RouteSearchState {
   interpreterFallbackUsed?: boolean;
   /** Safe error code when OpenAI failed (never includes secrets or raw keys). */
   interpreterErrorCode?: string;
+  /**
+   * User intent geography (e.g. "Norway") when a country/region was requested.
+   * Preserved for UX and future search-history / demand signals.
+   */
+  requestedDestinationLabel?: string;
+  requestedOriginLabel?: string;
+  /** Ranked destination options when destination was country/region multi-match. */
+  destinationOptions?: SmartPortOption[];
+  /** Why the current destination was chosen. */
+  destinationSelectionReason?: "shortest_maritime_distance" | "exact" | "user_selected";
   createdAt: string;
   updatedAt: string;
 }

@@ -1,4 +1,3 @@
-import type { Port } from "@/domain/models";
 import type { LocationResolutionResult } from "@/domain/search/types";
 import type { PortResolutionOutcome } from "@/domain/search/intent";
 
