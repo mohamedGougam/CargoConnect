@@ -643,6 +643,69 @@
       }
     },
     {
+      "id": "port-oslo",
+      "name": "Oslo",
+      "country": "Norway",
+      "locationLabel": "Oslo, Norway",
+      "type": "seaport",
+      "position": {
+        "latitude": 59.904,
+        "longitude": 10.74
+      },
+      "unlocode": "NOOSL",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port-bergen",
+      "name": "Bergen",
+      "country": "Norway",
+      "locationLabel": "Bergen, Norway",
+      "type": "seaport",
+      "position": {
+        "latitude": 60.392,
+        "longitude": 5.324
+      },
+      "unlocode": "NOBGO",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "L"
+      }
+    },
+    {
+      "id": "port-stavanger",
+      "name": "Stavanger",
+      "country": "Norway",
+      "locationLabel": "Stavanger, Norway",
+      "type": "seaport",
+      "position": {
+        "latitude": 58.974,
+        "longitude": 5.73
+      },
+      "unlocode": "NOSVG",
+      "meta": {
+        "sources": [
+          "CURATED_MAJOR"
+        ],
+        "tier": "major"
+      },
+      "specifications": {
+        "harborSize": "M"
+      }
+    },
+    {
       "id": "port-istanbul",
       "name": "Istanbul",
       "country": "Turkey",

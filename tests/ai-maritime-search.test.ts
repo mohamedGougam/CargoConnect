@@ -118,6 +118,59 @@ describe("AI maritime search (mocked OpenAI)", () => {
     );
   });
 
+  it("resolves Amsterdam misspelling and Norway to Oslo hub", async () => {
+    const mock: MaritimeIntentInterpreter = {
+      async interpret() {
+        return {
+          source: "openai",
+          latencyMs: 15,
+          intent: baseIntent({
+            detectedLanguage: "en",
+            origin: place({
+              rawText: "Amesterdam",
+              city: "Amsterdam",
+              country: "Netherlands",
+              portHint: "Amsterdam",
+            }),
+            destination: place({
+              rawText: "destination port of norway",
+              city: null,
+              country: "Norway",
+              region: "Norway",
+              portHint: null,
+            }),
+            cargo: { description: "tulips", normalizedType: "tulips" },
+          }),
+        };
+      },
+    };
+    const result = await runMaritimeRouteSearch({
+      query:
+        "i want to ship tulips from Amesterdam to the destination port of norway",
+      vessels: [],
+      interpreter: mock,
+    });
+    expect(result.status).toBe("active");
+    expect(result.origin?.name).toMatch(/Amsterdam/i);
+    expect(result.destination?.name).toMatch(/Oslo/i);
+  });
+
+  it("resolves Norway country against catalogue hubs", () => {
+    const ports = getSearchPortIndex();
+    const norway = resolveLocation("Norway", ports);
+    expect(norway.best?.port.name).toMatch(/Oslo/i);
+    expect(norway.candidates.some((c) => /Bergen/i.test(c.port.name))).toBe(
+      true,
+    );
+  });
+
+  it("does not treat Amsterdam city as ambiguous with Rotterdam", () => {
+    const ports = getSearchPortIndex();
+    const r = resolveLocation("Amsterdam", ports);
+    expect(r.ambiguous).toBe(false);
+    expect(r.best?.port.name).toMatch(/Amsterdam/i);
+  });
+
   it("resolves Barcelona to Algiers via catalogue (deterministic fast path)", async () => {
     const result = await runMaritimeRouteSearch({
       query: "Barcelona to Algiers",

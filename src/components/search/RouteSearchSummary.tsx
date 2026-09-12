@@ -135,23 +135,41 @@ function AmbiguousHints({ search }: { search: RouteSearchState }) {
     search.destinationCandidates?.slice(0, 4).map((c) => c.port.name) ?? [];
   if (!originNames.length && !destNames.length) return null;
   return (
-    <div className="mt-2 flex flex-wrap gap-1.5">
-      {originNames.map((name) => (
-        <span
-          key={`o-${name}`}
-          className="rounded-full border border-amber-200/25 bg-amber-100/10 px-2 py-0.5 text-[10px] text-amber-50/90"
-        >
-          {name}
-        </span>
-      ))}
-      {destNames.map((name) => (
-        <span
-          key={`d-${name}`}
-          className="rounded-full border border-sky-200/25 bg-sky-100/10 px-2 py-0.5 text-[10px] text-sky-50/90"
-        >
-          {name}
-        </span>
-      ))}
+    <div className="mt-2 space-y-1.5">
+      {originNames.length ? (
+        <div>
+          <p className="mb-1 text-[9px] uppercase tracking-wide text-amber-100/45">
+            Origin
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {originNames.map((name) => (
+              <span
+                key={`o-${name}`}
+                className="rounded-full border border-amber-200/25 bg-amber-100/10 px-2 py-0.5 text-[10px] text-amber-50/90"
+              >
+                {name}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      {destNames.length ? (
+        <div>
+          <p className="mb-1 text-[9px] uppercase tracking-wide text-sky-100/45">
+            Destination
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {destNames.map((name) => (
+              <span
+                key={`d-${name}`}
+                className="rounded-full border border-sky-200/25 bg-sky-100/10 px-2 py-0.5 text-[10px] text-sky-50/90"
+              >
+                {name}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -46,7 +46,7 @@ const NAME_ALIASES: Record<string, string[]> = {
   ],
   tarragona: ["tarragona"],
   valencia: ["valencia", "valence"],
-  amsterdam: ["amsterdam"],
+  amsterdam: ["amsterdam", "amesterdam"],
 };
 
 /** City / colloquial → catalogue port name (normalized). */
@@ -62,7 +62,7 @@ const CITY_TO_PORT: Record<string, string[]> = {
   dubai: ["jebel ali", "dubai"],
   "new york": ["new york"],
   shanghai: ["shanghai"],
-  amsterdam: ["amsterdam", "rotterdam"],
+  amsterdam: ["amsterdam"],
   "r'dam": ["rotterdam"],
   rdam: ["rotterdam"],
 };
@@ -145,6 +145,8 @@ const REGION_ALIASES: Record<
   algeria: { country: "Algeria", preferNames: ["Algiers"] },
   algerie: { country: "Algeria", preferNames: ["Algiers"] },
   algérie: { country: "Algeria", preferNames: ["Algiers"] },
+  norway: { country: "Norway", preferNames: ["Oslo", "Bergen", "Stavanger"] },
+  norge: { country: "Norway", preferNames: ["Oslo", "Bergen", "Stavanger"] },
   egypte: { country: "Egypt", preferNames: ["Alexandria", "Port Said"] },
   ägypten: { country: "Egypt", preferNames: ["Alexandria", "Port Said"] },
   aegypten: { country: "Egypt", preferNames: ["Alexandria", "Port Said"] },

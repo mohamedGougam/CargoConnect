@@ -173,13 +173,19 @@ export async function runMaritimeRouteSearch(
     !destRes.best
   ) {
     const ux =
-      originOutcome === "candidates" && originRes.queryText
-        ? ambiguousNearMessage(originRes.queryText, language)
-        : destOutcome === "candidates" && destRes.queryText
-          ? ambiguousNearMessage(destRes.queryText, language)
-          : resolutionOutcome === "clarification"
-            ? clarificationMessage(null, language)
-            : ambiguousBothMessage(language);
+      originOutcome === "auto" && destOutcome === "candidates" && destRes.queryText
+        ? ambiguousNearMessage(destRes.queryText, language)
+        : destOutcome === "auto" &&
+            originOutcome === "candidates" &&
+            originRes.queryText
+          ? ambiguousNearMessage(originRes.queryText, language)
+          : originOutcome === "candidates" && originRes.queryText
+            ? ambiguousNearMessage(originRes.queryText, language)
+            : destOutcome === "candidates" && destRes.queryText
+              ? ambiguousNearMessage(destRes.queryText, language)
+              : resolutionOutcome === "clarification"
+                ? clarificationMessage(null, language)
+                : ambiguousBothMessage(language);
 
     return {
       ...createIdleSearchState(),
@@ -189,8 +195,10 @@ export async function runMaritimeRouteSearch(
       parsed,
       origin: originRes.best?.port,
       destination: destRes.best?.port,
-      originCandidates: originRes.candidates,
-      destinationCandidates: destRes.candidates,
+      originCandidates:
+        originOutcome === "auto" ? undefined : originRes.candidates,
+      destinationCandidates:
+        destOutcome === "auto" ? undefined : destRes.candidates,
       cargo: parsed.cargo,
       vesselType: parsed.vesselType,
       ...interpretMeta,
