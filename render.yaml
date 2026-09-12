@@ -37,6 +37,15 @@ services:
         value: "true"
       - key: COMMERCIAL_STORE
         value: memory
+      # Required for login/signup session cookies (generate a random ≥32 char secret)
+      - key: AUTH_SECRET
+        sync: false
+      - key: APP_BASE_URL
+        value: https://cargoconnect-avhp.onrender.com
+      - key: TRUSTED_ORIGINS
+        value: https://cargoconnect-avhp.onrender.com
+      - key: RATE_LIMIT_PROVIDER
+        value: memory
       # Demo malware bypass — PRE-PRODUCTION: switch to http scanner and remove ALLOW_NOOP
       - key: MALWARE_SCAN_PROVIDER
         value: noop

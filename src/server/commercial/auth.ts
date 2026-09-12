@@ -30,8 +30,10 @@ function sessionSecret(): Uint8Array {
   if (raw.length >= 32) {
     return new TextEncoder().encode(raw);
   }
-  // Dev fallback — production must set AUTH_SECRET
-  if (process.env.NODE_ENV === "production" && !raw) {
+  const demoMode =
+    (process.env.DEMO_MODE ?? "").trim().toLowerCase() === "true";
+  // Production requires AUTH_SECRET unless this is an explicit demo deploy.
+  if (process.env.NODE_ENV === "production" && !raw && !demoMode) {
     throw new Error("AUTH_SECRET must be set in production (min 32 characters)");
   }
   return new TextEncoder().encode(

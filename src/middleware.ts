@@ -9,7 +9,12 @@ function secret(): Uint8Array {
     process.env.AUTH_SECRET?.trim() ||
     process.env.NEXTAUTH_SECRET?.trim() ||
     "";
-  if (process.env.NODE_ENV === "production" && raw.length < 32) {
+  if (raw.length >= 32) {
+    return new TextEncoder().encode(raw);
+  }
+  const demoMode =
+    (process.env.DEMO_MODE ?? "").trim().toLowerCase() === "true";
+  if (process.env.NODE_ENV === "production" && raw.length < 32 && !demoMode) {
     return new TextEncoder().encode("__invalid_production_secret__");
   }
   return new TextEncoder().encode(

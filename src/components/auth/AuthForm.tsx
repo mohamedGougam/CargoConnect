@@ -54,9 +54,27 @@ export function AuthForm({
             : { action: "login", email, password },
         ),
       });
-      const data = (await res.json()) as { error?: string; user?: unknown };
+      const raw = await res.text();
+      let data: {
+        error?: string | { message?: string; code?: string };
+        user?: unknown;
+      } = {};
+      try {
+        data = raw ? (JSON.parse(raw) as typeof data) : {};
+      } catch {
+        setError(
+          res.ok
+            ? "Unexpected server response"
+            : `Authentication failed (${res.status})`,
+        );
+        return;
+      }
       if (!res.ok) {
-        setError(data.error ?? "Authentication failed");
+        const message =
+          typeof data.error === "string"
+            ? data.error
+            : data.error?.message || "Authentication failed";
+        setError(message);
         return;
       }
       if (mode === "signup") {
