@@ -47,7 +47,7 @@ function applySecurityHeaders(res: NextResponse, requestId: string): NextRespons
     "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
-    "font-src 'self' data:",
+    "font-src 'self' data: https://tiles.openfreemap.org",
     "connect-src 'self' https: wss: blob:",
     "worker-src 'self' blob:",
     "child-src 'self' blob:",

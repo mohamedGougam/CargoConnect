@@ -313,17 +313,14 @@ export const MaritimeMap = memo(function MaritimeMap({
     const onWindowResize = () => map.resize();
     window.addEventListener("resize", onWindowResize);
 
-    if (process.env.NODE_ENV === "development") {
-      (window as unknown as { __ccMap?: MapLibreMap }).__ccMap = map;
-    }
+    // Expose for demo diagnostics / visual probes (Render, local).
+    (window as unknown as { __ccMap?: MapLibreMap }).__ccMap = map;
 
     return () => {
       resizeObserver.disconnect();
       window.removeEventListener("resize", onWindowResize);
       layersAttachedRef.current = false;
-      if (process.env.NODE_ENV === "development") {
-        delete (window as unknown as { __ccMap?: MapLibreMap }).__ccMap;
-      }
+      delete (window as unknown as { __ccMap?: MapLibreMap }).__ccMap;
       map.remove();
       mapRef.current = null;
       setMapReady(false);
@@ -592,11 +589,25 @@ function addLayers(map: MapLibreMap) {
     type: "circle",
     source: PORTS_SOURCE,
     paint: {
+      // MapLibre allows only one top-level zoom interpolate/step per expression.
       "circle-radius": [
-        "case",
-        ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
-        ["interpolate", ["linear"], ["zoom"], 2, 14, 6, 22],
-        ["interpolate", ["linear"], ["zoom"], 2, 9, 6, 14],
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        2,
+        [
+          "case",
+          ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
+          14,
+          9,
+        ],
+        6,
+        [
+          "case",
+          ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
+          22,
+          14,
+        ],
       ],
       "circle-color": [
         "case",
@@ -607,10 +618,23 @@ function addLayers(map: MapLibreMap) {
         "#38bdf8",
       ],
       "circle-opacity": [
-        "case",
-        ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
-        0.42,
-        ["interpolate", ["linear"], ["zoom"], 2, 0.28, 5, 0.2],
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        2,
+        [
+          "case",
+          ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
+          0.42,
+          0.28,
+        ],
+        5,
+        [
+          "case",
+          ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
+          0.42,
+          0.2,
+        ],
       ],
     },
   });
@@ -621,10 +645,30 @@ function addLayers(map: MapLibreMap) {
     source: PORTS_SOURCE,
     paint: {
       "circle-radius": [
-        "case",
-        ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
-        ["interpolate", ["linear"], ["zoom"], 2, 6, 6, 8],
-        ["interpolate", ["linear"], ["zoom"], 2, 4.5, 4, 5, 6, 6.2],
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        2,
+        [
+          "case",
+          ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
+          6,
+          4.5,
+        ],
+        4,
+        [
+          "case",
+          ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
+          6.5,
+          5,
+        ],
+        6,
+        [
+          "case",
+          ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
+          8,
+          6.2,
+        ],
       ],
       "circle-color": [
         "case",
@@ -685,12 +729,27 @@ function addLayers(map: MapLibreMap) {
       "circle-radius": ["interpolate", ["linear"], ["zoom"], 2, 10, 4, 11, 6, 13],
       "circle-color": "#5eead4",
       "circle-opacity": [
-        "case",
-        ["==", ["get", "muted"], 1],
-        0.06,
-        ["==", ["get", "relevant"], 1],
-        0.08,
-        ["interpolate", ["linear"], ["zoom"], 2, 0.32, 5, 0.22],
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        2,
+        [
+          "case",
+          ["==", ["get", "muted"], 1],
+          0.06,
+          ["==", ["get", "relevant"], 1],
+          0.08,
+          0.32,
+        ],
+        5,
+        [
+          "case",
+          ["==", ["get", "muted"], 1],
+          0.06,
+          ["==", ["get", "relevant"], 1],
+          0.08,
+          0.22,
+        ],
       ],
     },
   });
@@ -713,10 +772,15 @@ function addLayers(map: MapLibreMap) {
     source: VESSELS_SOURCE,
     paint: {
       "circle-radius": [
-        "case",
-        ["==", ["get", "relevant"], 1],
-        ["interpolate", ["linear"], ["zoom"], 2, 5.5, 6, 7],
-        ["interpolate", ["linear"], ["zoom"], 2, 4.2, 4, 4.8, 6, 5.5],
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        2,
+        ["case", ["==", ["get", "relevant"], 1], 5.5, 4.2],
+        4,
+        ["case", ["==", ["get", "relevant"], 1], 6, 4.8],
+        6,
+        ["case", ["==", ["get", "relevant"], 1], 7, 5.5],
       ],
       "circle-color": [
         "case",
@@ -744,10 +808,17 @@ function addLayers(map: MapLibreMap) {
     layout: {
       "icon-image": ["get", "icon"],
       "icon-size": [
-        "case",
-        ["==", ["get", "relevant"], 1],
-        ["interpolate", ["linear"], ["zoom"], 2, 0.95, 5, 1.15, 7, 1.3],
-        ["interpolate", ["linear"], ["zoom"], 2, 0.82, 3.5, 0.88, 5, 0.95, 7, 1.1],
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        2,
+        ["case", ["==", ["get", "relevant"], 1], 0.95, 0.82],
+        3.5,
+        ["case", ["==", ["get", "relevant"], 1], 1.05, 0.88],
+        5,
+        ["case", ["==", ["get", "relevant"], 1], 1.15, 0.95],
+        7,
+        ["case", ["==", ["get", "relevant"], 1], 1.3, 1.1],
       ],
       "icon-rotate": ["get", "course"],
       "icon-rotation-alignment": "map",
