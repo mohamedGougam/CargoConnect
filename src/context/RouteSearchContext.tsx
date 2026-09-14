@@ -18,7 +18,7 @@ import {
   countVesselTypes,
   scoreRelevantVessels,
 } from "@/lib/search/scoreVessels";
-import { switchSearchDestination } from "@/lib/search/activateSearch";
+import { switchSearchDestination, switchSearchRoute } from "@/lib/search/activateSearch";
 import { countAisDestinationVessels } from "@/lib/search/aisDestinationMatch";
 
 interface RouteSearchContextValue {
@@ -28,6 +28,12 @@ interface RouteSearchContextValue {
   clearSearch: () => void;
   /** Switch destination among ranked options without a new OpenAI call. */
   selectDestination: (portId: string, vessels: Vessel[]) => void;
+  /** Switch origin→destination pair among alternative routes without re-search. */
+  selectRoute: (
+    originPortId: string,
+    destinationPortId: string,
+    vessels: Vessel[],
+  ) => void;
   /** Recompute relevance when live vessel snapshot changes. */
   refreshRelevance: (vessels: Vessel[]) => void;
   relevantIdSet: Set<string>;
@@ -116,6 +122,23 @@ export function RouteSearchProvider({ children }: { children: ReactNode }) {
     [applyUrl],
   );
 
+  const selectRoute = useCallback(
+    (originPortId: string, destinationPortId: string, vessels: Vessel[]) => {
+      setSearch((prev) => {
+        if (prev.status !== "active") return prev;
+        const next = switchSearchRoute(
+          prev,
+          originPortId,
+          destinationPortId,
+          vessels,
+        );
+        applyUrl(next);
+        return next;
+      });
+    },
+    [applyUrl],
+  );
+
   const refreshRelevance = useCallback((vessels: Vessel[]) => {
     setSearch((prev) => {
       if (prev.status !== "active" || !prev.corridor || !prev.origin || !prev.destination) {
@@ -182,6 +205,7 @@ export function RouteSearchProvider({ children }: { children: ReactNode }) {
       runQuery,
       clearSearch,
       selectDestination,
+      selectRoute,
       refreshRelevance,
       relevantIdSet,
     }),
@@ -191,6 +215,7 @@ export function RouteSearchProvider({ children }: { children: ReactNode }) {
       runQuery,
       clearSearch,
       selectDestination,
+      selectRoute,
       refreshRelevance,
       relevantIdSet,
     ],

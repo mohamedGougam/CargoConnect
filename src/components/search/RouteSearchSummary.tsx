@@ -1,8 +1,13 @@
 "use client";
 
+import { useEffect, useId, useRef, useState } from "react";
 import type { RouteSearchState } from "@/domain/search/types";
 import { formatVesselType } from "@/lib/format";
 import { understoodAsPrefix } from "@/lib/search/uxMessages";
+import {
+  listAlternativeRoutes,
+  type AlternativeRouteOption,
+} from "@/lib/search/activateSearch";
 import type { VesselType } from "@/domain/models";
 
 interface RouteSearchSummaryProps {
@@ -11,6 +16,8 @@ interface RouteSearchSummaryProps {
   /** Presentation-only; parent owns session persistence. */
   collapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
+  /** Switch among alternative origin→destination pairs. */
+  onSelectRoute?: (originPortId: string, destinationPortId: string) => void;
 }
 
 /**
@@ -21,15 +28,22 @@ export function RouteSearchSummary({
   onClear,
   collapsed = false,
   onCollapsedChange,
+  onSelectRoute,
 }: RouteSearchSummaryProps) {
   if (search.status === "idle") return null;
 
-  const hasSwitcher =
+  const hasDestSwitcher =
     search.status === "active" &&
     Boolean(search.destinationOptions && search.destinationOptions.length > 1);
-  const topClass = hasSwitcher
-    ? "top-[11.5rem] sm:top-[11.75rem]"
-    : "top-[7.25rem] sm:top-[7.75rem]";
+  const hasOriginSwitcher =
+    search.status === "active" &&
+    Boolean(search.originOptions && search.originOptions.length > 1);
+  const topClass =
+    hasOriginSwitcher && hasDestSwitcher
+      ? "top-[16.5rem] sm:top-[15.25rem]"
+      : hasDestSwitcher || hasOriginSwitcher
+        ? "top-[13.25rem] sm:top-[12.75rem]"
+        : "top-[7.25rem] sm:top-[7.75rem]";
 
   if (search.status === "loading") {
     return (
@@ -146,16 +160,11 @@ export function RouteSearchSummary({
           <span aria-hidden>▴</span>
         </button>
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-          <p className="text-[12px] font-medium tracking-tight text-white/95">
-            <span className="text-emerald-200/95">{search.origin.name}</span>
-            <span className="mx-1.5 text-teal-300/70">→</span>
-            <span className="text-sky-200/95">{search.destination.name}</span>
-            {intentDest ? (
-              <span className="ml-1.5 text-[10px] font-normal text-slate-500">
-                ({intentDest})
-              </span>
-            ) : null}
-          </p>
+          <RoutePairControl
+            search={search}
+            intentDest={intentDest}
+            onSelectRoute={onSelectRoute}
+          />
           {cargoLine ? (
             <>
               <span className="hidden h-3 w-px bg-white/15 sm:block" aria-hidden />
@@ -188,6 +197,147 @@ export function RouteSearchSummary({
         </p>
       </div>
     </div>
+  );
+}
+
+function RoutePairLabel({
+  originName,
+  destinationName,
+  intentDest,
+}: {
+  originName: string;
+  destinationName: string;
+  intentDest: string | null;
+}) {
+  return (
+    <>
+      <span className="text-emerald-200/95">{originName}</span>
+      <span className="mx-1.5 text-teal-300/70">→</span>
+      <span className="text-sky-200/95">{destinationName}</span>
+      {intentDest ? (
+        <span className="ml-1.5 text-[10px] font-normal text-slate-500">
+          ({intentDest})
+        </span>
+      ) : null}
+    </>
+  );
+}
+
+function RoutePairControl({
+  search,
+  intentDest,
+  onSelectRoute,
+}: {
+  search: RouteSearchState;
+  intentDest: string | null;
+  onSelectRoute?: (originPortId: string, destinationPortId: string) => void;
+}) {
+  const alternatives = listAlternativeRoutes(search);
+  const [open, setOpen] = useState(false);
+  const listId = useId();
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDoc(e: MouseEvent) {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [open]);
+
+  if (!search.origin || !search.destination) return null;
+
+  if (!onSelectRoute || alternatives.length <= 1) {
+    return (
+      <p className="text-[12px] font-medium tracking-tight text-white/95">
+        <RoutePairLabel
+          originName={search.origin.name}
+          destinationName={search.destination.name}
+          intentDest={intentDest}
+        />
+      </p>
+    );
+  }
+
+  return (
+    <div className="relative" ref={rootRef}>
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={listId}
+        onClick={() => setOpen((v) => !v)}
+        title="Alternative routes"
+        className="text-[12px] font-medium tracking-tight text-white/95 transition hover:opacity-90"
+      >
+        <RoutePairLabel
+          originName={search.origin.name}
+          destinationName={search.destination.name}
+          intentDest={intentDest}
+        />
+        <span className="ml-1 text-[10px] text-slate-500" aria-hidden>
+          ▾
+        </span>
+      </button>
+      {open ? (
+        <ul
+          id={listId}
+          role="listbox"
+          className="absolute top-[calc(100%+6px)] left-1/2 z-40 max-h-64 w-[min(20rem,calc(100vw-2rem))] -translate-x-1/2 overflow-auto rounded-2xl border border-white/12 bg-[rgba(8,14,24,0.97)] py-2 shadow-[0_16px_40px_rgba(0,0,0,0.45)] backdrop-blur-md"
+        >
+          <li className="px-3.5 pb-1.5 text-[9px] uppercase tracking-wide text-slate-500">
+            Alternative routes
+          </li>
+          {alternatives.map((route) => (
+            <AlternativeRouteItem
+              key={`${route.origin.id}:${route.destination.id}`}
+              route={route}
+              onSelect={() => {
+                onSelectRoute(route.origin.id, route.destination.id);
+                setOpen(false);
+              }}
+            />
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+function AlternativeRouteItem({
+  route,
+  onSelect,
+}: {
+  route: AlternativeRouteOption;
+  onSelect: () => void;
+}) {
+  return (
+    <li role="option" aria-selected={route.selected}>
+      <button
+        type="button"
+        onClick={onSelect}
+        className={`flex w-full items-start gap-2 px-3.5 py-2 text-left transition ${
+          route.selected
+            ? "bg-teal-400/10 text-white"
+            : "text-slate-200 hover:bg-white/[0.05]"
+        }`}
+      >
+        <span className="mt-0.5 w-3 shrink-0 text-[11px] text-teal-300/90">
+          {route.selected ? "✓" : ""}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[12px] font-medium text-white/95">
+            <span className="text-emerald-200/95">{route.origin.name}</span>
+            <span className="mx-1 text-teal-300/70">→</span>
+            <span className="text-sky-200/95">{route.destination.name}</span>
+          </span>
+          <span className="mt-0.5 block text-[10px] text-slate-400">
+            ~{Math.round(route.estimatedDistanceNm).toLocaleString()} nm
+          </span>
+        </span>
+      </button>
+    </li>
   );
 }
 

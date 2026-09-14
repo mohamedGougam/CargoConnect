@@ -84,6 +84,13 @@ interface MaritimeMapProps {
   visualTheme?: OverlayTheme;
   /** Visual-only map foundation (research / proof exploration). */
   mapFoundationId?: MapFoundationId;
+  /** One-shot camera focus on a port (token changes re-trigger). */
+  focusPort?: {
+    longitude: number;
+    latitude: number;
+    zoom?: number;
+    token: number;
+  } | null;
 }
 
 /**
@@ -111,6 +118,7 @@ export const MaritimeMap = memo(function MaritimeMap({
   onViewportChange,
   visualTheme = THEME_PREMIUM_MARITIME,
   mapFoundationId = DEFAULT_MAP_FOUNDATION_ID,
+  focusPort = null,
 }: MaritimeMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -470,6 +478,17 @@ export const MaritimeMap = memo(function MaritimeMap({
     ];
     map.fitBounds(bounds, { padding: 80, duration: 1200, maxZoom: 6.5 });
   }, [searchActive, corridor, mapReady]);
+
+  // Zoom to a specific port when the route switcher requests focus
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady || !focusPort) return;
+    map.easeTo({
+      center: [focusPort.longitude, focusPort.latitude],
+      zoom: focusPort.zoom ?? 7.2,
+      duration: 900,
+    });
+  }, [focusPort, mapReady]);
 
   // Subtle corridor glow pulse — paint only, never setData / never per-frame scoring
   useEffect(() => {

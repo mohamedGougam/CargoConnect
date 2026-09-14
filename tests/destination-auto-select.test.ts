@@ -7,7 +7,9 @@ import {
 import {
   buildDestinationOptions,
   buildOriginOptions,
+  listAlternativeRoutes,
   switchSearchDestination,
+  switchSearchRoute,
 } from "@/lib/search/activateSearch";
 import {
   clearMaritimeDistanceCacheForTests,
@@ -347,5 +349,30 @@ describe("smart destination auto-selection", () => {
         options[i - 1].estimatedDistanceNm,
       );
     }
+  });
+
+  it("listAlternativeRoutes exposes other Algeria→Singapore origins", async () => {
+    const result = await runMaritimeRouteSearch({
+      query: "Algeria to Singapore",
+      vessels: [],
+      deterministicOnly: true,
+    });
+    expect(result.status).toBe("active");
+    const alts = listAlternativeRoutes(result);
+    expect(alts.length).toBeGreaterThan(1);
+    expect(alts.some((r) => r.selected)).toBe(true);
+    expect(alts.every((r) => r.destination.name.match(/Singapore/i))).toBe(true);
+
+    const other = alts.find((r) => !r.selected);
+    expect(other).toBeTruthy();
+    const switched = switchSearchRoute(
+      result,
+      other!.origin.id,
+      other!.destination.id,
+      [],
+    );
+    expect(switched.origin?.id).toBe(other!.origin.id);
+    expect(switched.destination?.name).toMatch(/Singapore/i);
+    expect(switched.originSelectionReason).toBe("user_selected");
   });
 });

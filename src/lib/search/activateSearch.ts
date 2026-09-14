@@ -188,6 +188,19 @@ export function switchSearchDestination(
         )
       : undefined;
 
+  const originOptions = search.originOptions?.length
+    ? buildOriginOptions(
+        selected,
+        search.originOptions.map((o) => ({
+          port: o.port,
+          score: 80,
+          matchReason: "country_level_candidate",
+          confidence: o.confidence,
+        })),
+        vessels,
+      )
+    : search.originOptions;
+
   return activateRouteSearch({
     id: search.id,
     originalQuery: search.originalQuery,
@@ -200,11 +213,157 @@ export function switchSearchDestination(
     originCandidates: search.originCandidates,
     destinationCandidates: search.destinationCandidates,
     destinationOptions: refreshedOptions,
-    originOptions: search.originOptions,
+    originOptions,
     requestedDestinationLabel: search.requestedDestinationLabel,
     requestedOriginLabel: search.requestedOriginLabel,
     destinationSelectionReason: "user_selected",
     originSelectionReason: search.originSelectionReason,
+    interpreterUsed: search.interpreterUsed,
+    interpreterFallbackUsed: search.interpreterFallbackUsed,
+    interpreterErrorCode: search.interpreterErrorCode,
+    resolutionOutcome: search.resolutionOutcome,
+  });
+}
+
+export type AlternativeRouteOption = {
+  origin: Port;
+  destination: Port;
+  estimatedDistanceNm: number;
+  selected: boolean;
+};
+
+/**
+ * Alternative origin→destination pairs from stored multi-port options.
+ * Caps list length for a compact dropdown.
+ */
+export function listAlternativeRoutes(
+  search: RouteSearchState,
+  limit = 12,
+): AlternativeRouteOption[] {
+  if (search.status !== "active" || !search.origin || !search.destination) {
+    return [];
+  }
+
+  const origins =
+    search.originOptions && search.originOptions.length > 0
+      ? search.originOptions.map((o) => o.port)
+      : [search.origin];
+  const destinations =
+    search.destinationOptions && search.destinationOptions.length > 0
+      ? search.destinationOptions.map((o) => o.port)
+      : [search.destination];
+
+  if (origins.length === 1 && destinations.length === 1) {
+    return [];
+  }
+
+  const pairs: AlternativeRouteOption[] = [];
+  for (const origin of origins) {
+    for (const destination of destinations) {
+      pairs.push({
+        origin,
+        destination,
+        estimatedDistanceNm: estimateMaritimeDistanceNm(origin, destination)
+          .distanceNm,
+        selected:
+          origin.id === search.origin.id &&
+          destination.id === search.destination.id,
+      });
+    }
+  }
+
+  pairs.sort(
+    (a, b) =>
+      a.estimatedDistanceNm - b.estimatedDistanceNm ||
+      a.origin.name.localeCompare(b.origin.name) ||
+      a.destination.name.localeCompare(b.destination.name),
+  );
+
+  return pairs.slice(0, limit);
+}
+
+/**
+ * Switch to a specific origin+destination pair among alternative routes.
+ */
+export function switchSearchRoute(
+  search: RouteSearchState,
+  originPortId: string,
+  destinationPortId: string,
+  vessels: Vessel[],
+): RouteSearchState {
+  if (search.status !== "active") return search;
+
+  const origin =
+    search.originOptions?.find((o) => o.port.id === originPortId)?.port ??
+    search.originCandidates?.find((c) => c.port.id === originPortId)?.port ??
+    (search.origin?.id === originPortId ? search.origin : undefined);
+  const destination =
+    search.destinationOptions?.find((o) => o.port.id === destinationPortId)
+      ?.port ??
+    search.destinationCandidates?.find((c) => c.port.id === destinationPortId)
+      ?.port ??
+    (search.destination?.id === destinationPortId
+      ? search.destination
+      : undefined);
+
+  if (!origin || !destination) return search;
+  if (
+    origin.id === search.origin?.id &&
+    destination.id === search.destination?.id
+  ) {
+    return search;
+  }
+
+  const destinationOptions = search.destinationOptions?.length
+    ? buildDestinationOptions(
+        origin,
+        search.destinationOptions.map((o) => ({
+          port: o.port,
+          score: 80,
+          matchReason: "country_level_candidate",
+          confidence: o.confidence,
+        })),
+        vessels,
+      )
+    : search.destinationOptions;
+
+  const originOptions = search.originOptions?.length
+    ? buildOriginOptions(
+        destination,
+        search.originOptions.map((o) => ({
+          port: o.port,
+          score: 80,
+          matchReason: "country_level_candidate",
+          confidence: o.confidence,
+        })),
+        vessels,
+      )
+    : search.originOptions;
+
+  const originChanged = origin.id !== search.origin?.id;
+  const destChanged = destination.id !== search.destination?.id;
+
+  return activateRouteSearch({
+    id: search.id,
+    originalQuery: search.originalQuery,
+    parsed: search.parsed,
+    origin,
+    destination,
+    vessels,
+    cargo: search.cargo,
+    vesselType: search.vesselType,
+    originCandidates: search.originCandidates,
+    destinationCandidates: search.destinationCandidates,
+    destinationOptions,
+    originOptions,
+    requestedDestinationLabel: search.requestedDestinationLabel,
+    requestedOriginLabel: search.requestedOriginLabel,
+    destinationSelectionReason: destChanged
+      ? "user_selected"
+      : search.destinationSelectionReason,
+    originSelectionReason: originChanged
+      ? "user_selected"
+      : search.originSelectionReason,
     interpreterUsed: search.interpreterUsed,
     interpreterFallbackUsed: search.interpreterFallbackUsed,
     interpreterErrorCode: search.interpreterErrorCode,

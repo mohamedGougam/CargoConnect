@@ -17,6 +17,8 @@ const SUGGESTIONS = [
 interface AiAssistantBarProps {
   onSubmit?: (query: string) => void;
   isSearching?: boolean;
+  /** Hide prompt chips while an active route result is showing (avoids overlap). */
+  hideSuggestions?: boolean;
 }
 
 /**
@@ -25,6 +27,7 @@ interface AiAssistantBarProps {
 export function AiAssistantBar({
   onSubmit,
   isSearching = false,
+  hideSuggestions = false,
 }: AiAssistantBarProps) {
   const [value, setValue] = useState("");
   const [focused, setFocused] = useState(false);
@@ -146,20 +149,22 @@ export function AiAssistantBar({
           </button>
         </form>
 
-        <div className="mt-2 flex justify-center gap-1.5 overflow-hidden px-1">
-          {SUGGESTIONS.map((prompt) => (
-            <button
-              key={prompt}
-              type="button"
-              disabled={isSearching}
-              onClick={() => submitQuery(prompt)}
-              className="max-w-[42%] truncate rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] text-slate-300/80 transition hover:border-teal-300/30 hover:text-white disabled:opacity-50"
-              title={prompt}
-            >
-              {prompt}
-            </button>
-          ))}
-        </div>
+        {!hideSuggestions ? (
+          <div className="mt-2 flex justify-center gap-1.5 overflow-hidden px-1">
+            {SUGGESTIONS.map((prompt) => (
+              <button
+                key={prompt}
+                type="button"
+                disabled={isSearching}
+                onClick={() => submitQuery(prompt)}
+                className="max-w-[42%] truncate rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] text-slate-300/80 transition hover:border-teal-300/30 hover:text-white disabled:opacity-50"
+                title={prompt}
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
     </div>
   );

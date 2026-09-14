@@ -69,6 +69,7 @@ function LandingExperienceInner() {
     runQuery,
     clearSearch,
     selectDestination,
+    selectRoute,
     refreshRelevance,
     relevantIdSet,
   } = useRouteSearch();
@@ -115,6 +116,21 @@ function LandingExperienceInner() {
   const searchChromeVisible = isSearchChromeVisible(mapChrome);
   const { theme } = useVisualTheme();
   const { foundationId } = useMapFoundation();
+  const [focusPort, setFocusPort] = useState<{
+    longitude: number;
+    latitude: number;
+    zoom?: number;
+    token: number;
+  } | null>(null);
+
+  const focusMapOnPort = useCallback((port: Port) => {
+    setFocusPort({
+      longitude: port.position.longitude,
+      latitude: port.position.latitude,
+      zoom: 7.2,
+      token: Date.now(),
+    });
+  }, []);
 
   const portsById = useMemo(() => {
     const map = new Map(mapPorts.map((p) => [p.id, p]));
@@ -255,6 +271,7 @@ function LandingExperienceInner() {
           searchActive={searchActive}
           visualTheme={theme}
           mapFoundationId={foundationId}
+          focusPort={focusPort}
           onVesselHover={onVesselHover}
           onPortHover={onPortHover}
           onVesselClick={selectVessel}
@@ -297,12 +314,28 @@ function LandingExperienceInner() {
           <AiAssistantBar
             onSubmit={handleSearchSubmit}
             isSearching={isSearching}
+            hideSuggestions={searchActive}
           />
 
           <DestinationPortSwitcher
             search={search}
-            onSelect={(portId) => selectDestination(portId, vessels)}
+            onSelectDestination={(portId) => {
+              selectDestination(portId, vessels);
+              const port = search.destinationOptions?.find(
+                (o) => o.port.id === portId,
+              )?.port;
+              if (port) focusMapOnPort(port);
+            }}
+            onSelectOrigin={(portId) => {
+              if (!search.destination) return;
+              selectRoute(portId, search.destination.id, vessels);
+              const port = search.originOptions?.find(
+                (o) => o.port.id === portId,
+              )?.port;
+              if (port) focusMapOnPort(port);
+            }}
             onHoverCandidate={setHighlightCandidatePortId}
+            onFocusPort={focusMapOnPort}
           />
 
           <RouteSearchSummary
@@ -311,6 +344,9 @@ function LandingExperienceInner() {
             collapsed={mapChrome.summaryCollapsed}
             onCollapsedChange={(collapsed) =>
               setMapChrome((s) => setSummaryCollapsed(s, collapsed))
+            }
+            onSelectRoute={(originId, destinationId) =>
+              selectRoute(originId, destinationId, vessels)
             }
           />
         </>
