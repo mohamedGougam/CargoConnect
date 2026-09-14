@@ -18,9 +18,13 @@ import {
   routesToGeoJSON,
   vesselsToGeoJSON,
 } from "@/lib/map/geo";
-import { INITIAL_MAP_VIEW, resolveMapStyle } from "@/lib/map/style";
+import { INITIAL_MAP_VIEW, resolveMapStyleForTheme } from "@/lib/map/style";
 import { ensureMapLibreWorker } from "@/lib/map/setupWorker";
 import { registerVesselIcons } from "@/lib/map/vesselIcons";
+import {
+  THEME_PREMIUM_MARITIME,
+  type OverlayTheme,
+} from "@/lib/map/visualThemes";
 
 const VESSELS_SOURCE = "cc-vessels";
 const PORTS_SOURCE = "cc-ports";
@@ -71,6 +75,8 @@ interface MaritimeMapProps {
     north: number;
     zoom: number;
   }) => void;
+  /** Visual-only overlay/basemap theme (beautification exploration). */
+  visualTheme?: OverlayTheme;
 }
 
 /**
@@ -96,11 +102,14 @@ export const MaritimeMap = memo(function MaritimeMap({
   onPortClick,
   onMapClick,
   onViewportChange,
+  visualTheme = THEME_PREMIUM_MARITIME,
 }: MaritimeMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [styleFailed, setStyleFailed] = useState(false);
+  const themeRef = useRef(visualTheme);
+  themeRef.current = visualTheme;
   const vesselMotionRef = useRef<Vessel[]>(vessels);
   const routesRef = useRef(routes);
   const portsRef = useRef(ports);
@@ -172,7 +181,7 @@ export const MaritimeMap = memo(function MaritimeMap({
 
     ensureMapLibreWorker();
 
-    const style = resolveMapStyle(appConfig.mapStyleUrl);
+    const style = resolveMapStyleForTheme(appConfig.mapStyleUrl, themeRef.current);
 
     const camera = initialViewRef.current;
     const map = new MapLibreMap({
@@ -249,8 +258,8 @@ export const MaritimeMap = memo(function MaritimeMap({
     const attachOverlayLayers = () => {
       if (layersAttachedRef.current || !mapRef.current) return;
       try {
-        registerVesselIcons(map);
-        addLayers(map);
+        registerVesselIcons(map, themeRef.current);
+        addLayers(map, themeRef.current);
         seedOverlayData();
 
         // Worker may still be warming up on first paint — re-seed once.
@@ -435,19 +444,22 @@ export const MaritimeMap = memo(function MaritimeMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady || !searchActive) return;
+    const pulseBright = visualTheme.corridor.glowPulseBright;
+    const pulseDim = visualTheme.corridor.glowPulseDim;
+    const pulseRest = visualTheme.corridor.glowOpacity;
     let bright = false;
     const id = window.setInterval(() => {
       if (!map.getLayer("cc-corridor-glow") || interactingRef.current) return;
       bright = !bright;
-      map.setPaintProperty("cc-corridor-glow", "line-opacity", bright ? 0.24 : 0.14);
+      map.setPaintProperty("cc-corridor-glow", "line-opacity", bright ? pulseBright : pulseDim);
     }, 1100);
     return () => {
       window.clearInterval(id);
       if (map.getLayer("cc-corridor-glow")) {
-        map.setPaintProperty("cc-corridor-glow", "line-opacity", 0.18);
+        map.setPaintProperty("cc-corridor-glow", "line-opacity", pulseRest);
       }
     };
-  }, [searchActive, mapReady]);
+  }, [searchActive, mapReady, visualTheme]);
 
   // Static vessel positions when demo route animation is off (live AIS).
   useEffect(() => {
@@ -537,7 +549,7 @@ export const MaritimeMap = memo(function MaritimeMap({
   }, [styleFailed]);
 
   return (
-    <div className="absolute inset-0 z-0 bg-[#0b1520]">
+    <div className="absolute inset-0 z-0" style={{ background: "var(--background, #0b1520)" }}>
       <div ref={containerRef} className="cc-map-canvas absolute inset-0 h-full w-full" />
       {overlayMessage ? (
         <div className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 rounded-full border border-amber-300/30 bg-amber-950/70 px-4 py-2 text-xs text-amber-100">
@@ -548,7 +560,7 @@ export const MaritimeMap = memo(function MaritimeMap({
   );
 });
 
-function addLayers(map: MapLibreMap) {
+function addLayers(map: MapLibreMap, theme: OverlayTheme) {
   for (const id of [
     "cc-vessels-symbol",
     "cc-vessels-dot",
@@ -563,6 +575,7 @@ function addLayers(map: MapLibreMap) {
     "cc-routes-glow",
     "cc-routes-line",
     "cc-corridor-glow",
+    "cc-corridor-underlay",
     "cc-corridor-line",
     "cc-corridor-dash",
   ]) {
@@ -592,15 +605,21 @@ function addLayers(map: MapLibreMap) {
     clusterRadius: 42,
   });
 
+  const c = theme.corridor;
+  const p = theme.ports;
+  const v = theme.vessels;
+  const cl = theme.clusters;
+  const scale = v.iconScale;
+
   map.addLayer({
     id: "cc-routes-glow",
     type: "line",
     source: ROUTES_SOURCE,
     layout: { "line-cap": "round", "line-join": "round" },
     paint: {
-      "line-color": "#2dd4bf",
-      "line-width": ["interpolate", ["linear"], ["zoom"], 2, 3.5, 5, 5, 8, 6],
-      "line-opacity": ["interpolate", ["linear"], ["zoom"], 2, 0.22, 5, 0.14],
+      "line-color": theme.routes.glowColor,
+      "line-width": ["interpolate", ["linear"], ["zoom"], 2, 3, 5, 4.2, 8, 5],
+      "line-opacity": ["interpolate", ["linear"], ["zoom"], 2, 0.18, 5, 0.12],
     },
   });
 
@@ -610,9 +629,9 @@ function addLayers(map: MapLibreMap) {
     source: ROUTES_SOURCE,
     layout: { "line-cap": "round", "line-join": "round" },
     paint: {
-      "line-color": "#5eead4",
-      "line-width": ["interpolate", ["linear"], ["zoom"], 2, 1.45, 5, 1.9, 8, 2.4],
-      "line-opacity": ["interpolate", ["linear"], ["zoom"], 2, 0.62, 5, 0.5],
+      "line-color": theme.routes.lineColor,
+      "line-width": ["interpolate", ["linear"], ["zoom"], 2, 1.2, 5, 1.6, 8, 2],
+      "line-opacity": ["interpolate", ["linear"], ["zoom"], 2, 0.58, 5, 0.48],
       "line-dasharray": [1.5, 2.4],
     },
   });
@@ -623,9 +642,41 @@ function addLayers(map: MapLibreMap) {
     source: CORRIDOR_SOURCE,
     layout: { "line-cap": "round", "line-join": "round" },
     paint: {
-      "line-color": "#2dd4bf",
-      "line-width": ["interpolate", ["linear"], ["zoom"], 2, 10, 5, 14, 8, 18],
-      "line-opacity": 0.18,
+      "line-color": c.glowColor,
+      "line-width": [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        2,
+        c.glowWidth[0],
+        5,
+        c.glowWidth[1],
+        8,
+        c.glowWidth[2],
+      ],
+      "line-opacity": c.glowOpacity,
+    },
+  });
+
+  map.addLayer({
+    id: "cc-corridor-underlay",
+    type: "line",
+    source: CORRIDOR_SOURCE,
+    layout: { "line-cap": "round", "line-join": "round" },
+    paint: {
+      "line-color": c.underlayColor,
+      "line-width": [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        2,
+        c.underlayWidth[0],
+        5,
+        c.underlayWidth[1],
+        8,
+        c.underlayWidth[2],
+      ],
+      "line-opacity": c.underlayOpacity,
     },
   });
 
@@ -635,9 +686,19 @@ function addLayers(map: MapLibreMap) {
     source: CORRIDOR_SOURCE,
     layout: { "line-cap": "round", "line-join": "round" },
     paint: {
-      "line-color": "#99f6e4",
-      "line-width": ["interpolate", ["linear"], ["zoom"], 2, 2.2, 5, 3.2, 8, 4],
-      "line-opacity": 0.85,
+      "line-color": c.coreColor,
+      "line-width": [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        2,
+        c.coreWidth[0],
+        5,
+        c.coreWidth[1],
+        8,
+        c.coreWidth[2],
+      ],
+      "line-opacity": c.coreOpacity,
     },
   });
 
@@ -647,9 +708,17 @@ function addLayers(map: MapLibreMap) {
     source: CORRIDOR_SOURCE,
     layout: { "line-cap": "round", "line-join": "round" },
     paint: {
-      "line-color": "#ccfbf1",
-      "line-width": ["interpolate", ["linear"], ["zoom"], 2, 1.1, 5, 1.6],
-      "line-opacity": 0.55,
+      "line-color": c.dashColor,
+      "line-width": [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        2,
+        c.dashWidth[0],
+        5,
+        c.dashWidth[1],
+      ],
+      "line-opacity": c.dashOpacity,
       "line-dasharray": [0.5, 2.2],
     },
   });
@@ -659,7 +728,6 @@ function addLayers(map: MapLibreMap) {
     type: "circle",
     source: PORTS_SOURCE,
     paint: {
-      // MapLibre allows only one top-level zoom interpolate/step per expression.
       "circle-radius": [
         "interpolate",
         ["linear"],
@@ -668,28 +736,28 @@ function addLayers(map: MapLibreMap) {
         [
           "case",
           ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
-          14,
-          9,
+          12,
+          7.5,
         ],
         6,
         [
           "case",
           ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
-          22,
-          14,
+          18,
+          11,
         ],
       ],
       "circle-color": [
         "case",
         ["==", ["get", "role"], "origin"],
-        "#34d399",
+        p.originHalo,
         ["==", ["get", "role"], "destination"],
-        "#38bdf8",
+        p.destHalo,
         ["==", ["get", "role"], "candidate_hover"],
-        "#7dd3fc",
+        p.candidateHoverHalo,
         ["==", ["get", "role"], "candidate"],
-        "#64748b",
-        "#38bdf8",
+        p.candidateHalo,
+        p.defaultHalo,
       ],
       "circle-opacity": [
         "interpolate",
@@ -699,19 +767,19 @@ function addLayers(map: MapLibreMap) {
         [
           "case",
           ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
-          0.42,
+          0.38,
           ["in", ["get", "role"], ["literal", ["candidate", "candidate_hover"]]],
-          0.22,
-          0.28,
+          0.18,
+          0.24,
         ],
         5,
         [
           "case",
           ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
-          0.42,
+          0.38,
           ["in", ["get", "role"], ["literal", ["candidate", "candidate_hover"]]],
-          0.28,
-          0.2,
+          0.24,
+          0.18,
         ],
       ],
     },
@@ -730,72 +798,72 @@ function addLayers(map: MapLibreMap) {
         [
           "case",
           ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
-          6,
+          5.5,
           ["==", ["get", "role"], "candidate_hover"],
-          5,
-          ["==", ["get", "role"], "candidate"],
-          3.5,
           4.5,
+          ["==", ["get", "role"], "candidate"],
+          3.2,
+          4,
         ],
         4,
         [
           "case",
           ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
-          6.5,
+          6,
           ["==", ["get", "role"], "candidate_hover"],
-          5.5,
-          ["==", ["get", "role"], "candidate"],
-          4,
           5,
+          ["==", ["get", "role"], "candidate"],
+          3.6,
+          4.5,
         ],
         6,
         [
           "case",
           ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
-          8,
+          7.2,
           ["==", ["get", "role"], "candidate_hover"],
-          6.5,
+          5.8,
           ["==", ["get", "role"], "candidate"],
-          5,
-          6.2,
+          4.4,
+          5.5,
         ],
       ],
       "circle-color": [
         "case",
         ["==", ["get", "role"], "origin"],
-        "#d1fae5",
+        p.originCore,
         ["==", ["get", "role"], "candidate"],
-        "#94a3b8",
+        p.candidateCore,
         ["==", ["get", "role"], "candidate_hover"],
-        "#bae6fd",
-        "#e0f2fe",
+        p.candidateHoverCore,
+        p.destCore,
       ],
       "circle-stroke-color": [
         "case",
         ["==", ["get", "role"], "origin"],
-        "#059669",
+        p.originStroke,
         ["==", ["get", "role"], "destination"],
-        "#0284c7",
+        p.destStroke,
         ["==", ["get", "role"], "candidate_hover"],
-        "#38bdf8",
+        p.candidateHoverStroke,
         ["==", ["get", "role"], "candidate"],
-        "#64748b",
-        "#0284c7",
+        p.candidateStroke,
+        p.destStroke,
       ],
       "circle-stroke-width": [
         "case",
         ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
-        1.6,
+        1.5,
         ["==", ["get", "role"], "candidate_hover"],
-        1.4,
+        1.25,
         ["==", ["get", "role"], "candidate"],
         1,
-        1.6,
+        1.4,
       ],
       "circle-opacity": [
         "case",
         ["==", ["get", "role"], "candidate"],
-        0.7,
+        0.72,
         1,
       ],
     },
@@ -815,10 +883,29 @@ function addLayers(map: MapLibreMap) {
     id: "cc-ports-label",
     type: "symbol",
     source: PORTS_SOURCE,
-    minzoom: 2.8,
+    minzoom: p.labelMinZoom,
     layout: {
-      "text-field": ["get", "name"],
-      "text-size": ["interpolate", ["linear"], ["zoom"], 2.8, 10, 5, 11.5],
+      "text-field": [
+        "step",
+        ["zoom"],
+        [
+          "case",
+          ["in", ["get", "role"], ["literal", ["origin", "destination"]]],
+          ["get", "name"],
+          "",
+        ],
+        p.labelMinZoom + 0.8,
+        ["get", "name"],
+      ],
+      "text-size": [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        p.labelMinZoom,
+        9.5,
+        5,
+        11,
+      ],
       "text-offset": [0, 1.35],
       "text-anchor": "top",
       "text-optional": true,
@@ -826,10 +913,18 @@ function addLayers(map: MapLibreMap) {
       "text-font": ["Noto Sans Regular"],
     },
     paint: {
-      "text-color": "rgba(226, 232, 240, 0.92)",
-      "text-halo-color": "rgba(8, 16, 28, 0.85)",
-      "text-halo-width": 1.4,
-      "text-opacity": ["interpolate", ["linear"], ["zoom"], 2.8, 0.55, 3.6, 0.95],
+      "text-color": p.labelColor,
+      "text-halo-color": p.labelHalo,
+      "text-halo-width": 1.2,
+      "text-opacity": [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        p.labelMinZoom,
+        0.5,
+        p.labelMinZoom + 1,
+        0.92,
+      ],
     },
   });
 
@@ -839,19 +934,19 @@ function addLayers(map: MapLibreMap) {
     source: VESSELS_SOURCE,
     filter: ["has", "point_count"],
     paint: {
-      "circle-color": "#5eead4",
+      "circle-color": cl.fill,
       "circle-radius": [
         "step",
         ["get", "point_count"],
-        14,
+        cl.radii[0],
         25,
-        18,
+        cl.radii[1],
         100,
-        24,
+        cl.radii[2],
       ],
-      "circle-opacity": 0.55,
-      "circle-stroke-width": 1.5,
-      "circle-stroke-color": "#042f2e",
+      "circle-opacity": cl.opacity,
+      "circle-stroke-width": cl.strokeWidth,
+      "circle-stroke-color": cl.stroke,
     },
   });
 
@@ -862,12 +957,12 @@ function addLayers(map: MapLibreMap) {
     filter: ["has", "point_count"],
     layout: {
       "text-field": ["get", "point_count_abbreviated"],
-      "text-size": 11,
+      "text-size": cl.textSize,
       "text-font": ["Noto Sans Regular"],
       "text-allow-overlap": true,
     },
     paint: {
-      "text-color": "#ecfdf5",
+      "text-color": cl.textColor,
     },
   });
 
@@ -877,8 +972,8 @@ function addLayers(map: MapLibreMap) {
     source: VESSELS_SOURCE,
     filter: ["!", ["has", "point_count"]],
     paint: {
-      "circle-radius": ["interpolate", ["linear"], ["zoom"], 2, 10, 4, 11, 6, 13],
-      "circle-color": "#5eead4",
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 2, 7, 4, 8.5, 6, 10],
+      "circle-color": v.haloColor,
       "circle-opacity": [
         "interpolate",
         ["linear"],
@@ -887,19 +982,19 @@ function addLayers(map: MapLibreMap) {
         [
           "case",
           ["==", ["get", "muted"], 1],
-          0.06,
+          0.04,
           ["==", ["get", "relevant"], 1],
-          0.08,
-          0.32,
+          0.06,
+          0.2,
         ],
         5,
         [
           "case",
           ["==", ["get", "muted"], 1],
-          0.06,
+          0.04,
           ["==", ["get", "relevant"], 1],
-          0.08,
-          0.22,
+          0.06,
+          0.14,
         ],
       ],
     },
@@ -915,9 +1010,9 @@ function addLayers(map: MapLibreMap) {
       ["==", ["get", "relevant"], 1],
     ],
     paint: {
-      "circle-radius": ["interpolate", ["linear"], ["zoom"], 2, 14, 5, 18, 7, 22],
-      "circle-color": "#fbbf24",
-      "circle-opacity": 0.35,
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 2, 11, 5, 14, 7, 17],
+      "circle-color": v.relevantHaloColor,
+      "circle-opacity": v.relevantHaloOpacity,
     },
   });
 
@@ -932,27 +1027,27 @@ function addLayers(map: MapLibreMap) {
         ["linear"],
         ["zoom"],
         2,
-        ["case", ["==", ["get", "relevant"], 1], 5.5, 4.2],
+        ["case", ["==", ["get", "relevant"], 1], 4.2, 3.2],
         4,
-        ["case", ["==", ["get", "relevant"], 1], 6, 4.8],
+        ["case", ["==", ["get", "relevant"], 1], 4.8, 3.8],
         6,
-        ["case", ["==", ["get", "relevant"], 1], 7, 5.5],
+        ["case", ["==", ["get", "relevant"], 1], 5.6, 4.4],
       ],
       "circle-color": [
         "case",
         ["==", ["get", "relevant"], 1],
-        "#fde68a",
+        v.dotRelevant,
         ["==", ["get", "muted"], 1],
-        "#64748b",
-        "#ccfbf1",
+        v.dotMuted,
+        v.dotDefault,
       ],
       "circle-stroke-color": [
         "case",
         ["==", ["get", "relevant"], 1],
-        "#b45309",
-        "#042f2e",
+        v.strokeRelevant,
+        v.strokeDefault,
       ],
-      "circle-stroke-width": ["case", ["==", ["get", "relevant"], 1], 2, 1.3],
+      "circle-stroke-width": ["case", ["==", ["get", "relevant"], 1], 1.5, 1],
       "circle-opacity": ["case", ["==", ["get", "muted"], 1], 0.28, 1],
     },
   });
@@ -969,31 +1064,31 @@ function addLayers(map: MapLibreMap) {
         ["linear"],
         ["zoom"],
         2,
-        ["case", ["==", ["get", "relevant"], 1], 0.95, 0.82],
+        ["case", ["==", ["get", "relevant"], 1], 0.82 * scale, 0.7 * scale],
         3.5,
-        ["case", ["==", ["get", "relevant"], 1], 1.05, 0.88],
+        ["case", ["==", ["get", "relevant"], 1], 0.92 * scale, 0.78 * scale],
         5,
-        ["case", ["==", ["get", "relevant"], 1], 1.15, 0.95],
+        ["case", ["==", ["get", "relevant"], 1], 1.02 * scale, 0.86 * scale],
         7,
-        ["case", ["==", ["get", "relevant"], 1], 1.3, 1.1],
+        ["case", ["==", ["get", "relevant"], 1], 1.15 * scale, 0.98 * scale],
       ],
       "icon-rotate": ["get", "course"],
       "icon-rotation-alignment": "map",
       "icon-allow-overlap": true,
       "icon-ignore-placement": true,
       "icon-padding": 1,
-      "text-field": ["step", ["zoom"], "", 5.2, ["get", "name"]],
-      "text-size": 10,
-      "text-offset": [0, 1.75],
+      "text-field": ["step", ["zoom"], "", v.labelMinZoom, ["get", "name"]],
+      "text-size": 9.5,
+      "text-offset": [0, 1.65],
       "text-anchor": "top",
       "text-optional": true,
       "text-font": ["Noto Sans Regular"],
     },
     paint: {
-      "text-color": "#e2e8f0",
-      "text-halo-color": "rgba(8,16,28,0.85)",
-      "text-halo-width": 1.2,
-      "icon-opacity": ["case", ["==", ["get", "muted"], 1], 0.32, 1],
+      "text-color": v.labelColor,
+      "text-halo-color": v.labelHalo,
+      "text-halo-width": 1.1,
+      "icon-opacity": ["case", ["==", ["get", "muted"], 1], 0.3, 1],
     },
   });
 }

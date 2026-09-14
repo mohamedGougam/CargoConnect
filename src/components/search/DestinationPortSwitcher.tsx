@@ -129,7 +129,7 @@ export function DestinationPortSwitcher({
         <div className="relative">
           <button
             type="button"
-            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-teal-300/25 bg-[rgba(8,16,28,0.92)] px-3.5 py-2.5 text-left shadow-[0_8px_28px_rgba(0,0,0,0.28)] backdrop-blur-md transition hover:border-teal-300/40"
+            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-[color:color-mix(in_srgb,var(--cc-teal,#5eead4)_28%,transparent)] bg-[color:var(--cc-glass,rgba(8,16,28,0.92))] px-3.5 py-2.5 text-left shadow-[var(--cc-chrome-shadow,0_8px_28px_rgba(0,0,0,0.28))] backdrop-blur-[10px] transition hover:border-[color:color-mix(in_srgb,var(--cc-teal,#5eead4)_45%,transparent)]"
             aria-haspopup="listbox"
             aria-expanded={open}
             aria-controls={listId}

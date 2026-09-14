@@ -6,6 +6,9 @@
   --cc-teal: #5eead4;
   --cc-ocean: #0f766e;
   --cc-glass: rgba(12, 22, 34, 0.72);
+  --cc-chrome-border: rgba(255, 255, 255, 0.11);
+  --cc-chrome-shadow: 0 10px 32px rgba(0, 0, 0, 0.38);
+  --cc-vignette: rgba(7, 16, 24, 0.28);
 }
 
 @theme inline {
@@ -75,9 +78,9 @@ html.cc-drawer-open .maplibregl-ctrl-bottom-left {
 }
 
 .maplibregl-ctrl-group {
-  background: rgba(8, 16, 28, 0.82) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+  background: var(--cc-glass, rgba(8, 16, 28, 0.82)) !important;
+  border: 1px solid var(--cc-chrome-border, rgba(255, 255, 255, 0.1)) !important;
+  box-shadow: var(--cc-chrome-shadow, 0 8px 24px rgba(0, 0, 0, 0.35)) !important;
   overflow: hidden;
 }
 
@@ -101,7 +104,11 @@ html.cc-drawer-open .maplibregl-ctrl-bottom-left {
 }
 
 .maplibregl-ctrl-attrib a {
-  color: rgba(153, 246, 228, 0.9) !important;
+  color: color-mix(in srgb, var(--cc-teal, #99f6e4) 90%, white) !important;
+}
+
+.cc-map-canvas {
+  background: var(--background, #0b1520);
 }
 
 .cc-cursor {

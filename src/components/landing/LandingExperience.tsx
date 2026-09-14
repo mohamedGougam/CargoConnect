@@ -10,10 +10,12 @@ import { MapFullscreenControl } from "@/components/map/MapFullscreenControl";
 import { PortHoverCard, VesselHoverCard } from "@/components/vessel/VesselHoverCard";
 import { VesselDetailPanel } from "@/components/vessel/VesselDetailPanel";
 import { DemoOperatorControls } from "@/components/demo/DemoOperatorControls";
+import { VisualThemeToggle } from "@/components/map/VisualThemeToggle";
 import {
   RouteSearchProvider,
   useRouteSearch,
 } from "@/context/RouteSearchContext";
+import { VisualThemeProvider, useVisualTheme } from "@/context/VisualThemeContext";
 import { useMapInteraction } from "@/hooks/useMapInteraction";
 import { useMaritimeData } from "@/hooks/useMaritimeData";
 import { EASTERN_MED_MAP_VIEW } from "@/lib/map/style";
@@ -44,7 +46,9 @@ const MaritimeMap = dynamic(
 export function LandingExperience() {
   return (
     <RouteSearchProvider>
-      <LandingExperienceInner />
+      <VisualThemeProvider>
+        <LandingExperienceInner />
+      </VisualThemeProvider>
     </RouteSearchProvider>
   );
 }
@@ -102,6 +106,7 @@ function LandingExperienceInner() {
   >(null);
   const [mapChrome, setMapChrome] = useState(createMapChromeUiState);
   const searchChromeVisible = isSearchChromeVisible(mapChrome);
+  const { theme } = useVisualTheme();
 
   const portsById = useMemo(() => {
     const map = new Map(mapPorts.map((p) => [p.id, p]));
@@ -221,9 +226,13 @@ function LandingExperienceInner() {
   );
 
   return (
-    <div className="relative h-dvh w-full overflow-hidden bg-[#0b1520]">
+    <div
+      className="relative h-dvh w-full overflow-hidden"
+      style={{ background: theme.css.background }}
+    >
       {!isLoading && !error ? (
         <MaritimeMap
+          key={theme.id}
           vessels={vessels}
           ports={mapPorts}
           routes={routes}
@@ -236,6 +245,7 @@ function LandingExperienceInner() {
           highlightCandidatePortId={highlightCandidatePortId}
           relevantVesselIds={searchActive ? search.relevantVesselIds : []}
           searchActive={searchActive}
+          visualTheme={theme}
           onVesselHover={onVesselHover}
           onPortHover={onPortHover}
           onVesselClick={selectVessel}
@@ -260,7 +270,12 @@ function LandingExperienceInner() {
         </div>
       ) : null}
 
-      <div className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(7,16,24,0.28)_100%)]" />
+      <div
+        className="pointer-events-none absolute inset-0 z-[1]"
+        style={{
+          background: `radial-gradient(ellipse at center, transparent 55%, var(--cc-vignette, rgba(7,16,24,0.28)) 100%)`,
+        }}
+      />
 
       <MapFullscreenControl
         fullscreen={mapChrome.mapFullscreen}
@@ -363,6 +378,7 @@ function LandingExperienceInner() {
       />
 
       {searchChromeVisible ? <DemoOperatorControls variant="map" /> : null}
+      {searchChromeVisible ? <VisualThemeToggle /> : null}
     </div>
   );
 }

@@ -38,7 +38,7 @@ export function MapFullscreenControl({
         onClick={onEnter}
         aria-label="Enter full screen"
         title="Full screen"
-        className="pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full border border-white/12 bg-[rgba(8,16,28,0.82)] text-slate-200 shadow-[0_8px_24px_rgba(0,0,0,0.28)] backdrop-blur-md transition hover:border-teal-300/35 hover:text-white"
+          className="pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--cc-chrome-border,rgba(255,255,255,0.12))] bg-[color:var(--cc-glass,rgba(8,16,28,0.82))] text-slate-200 shadow-[var(--cc-chrome-shadow,0_8px_24px_rgba(0,0,0,0.28))] backdrop-blur-[10px] transition hover:border-[color:color-mix(in_srgb,var(--cc-teal,#5eead4)_35%,transparent)] hover:text-white"
       >
         <FullscreenEnterIcon />
       </button>

@@ -1,4 +1,5 @@
 import type { StyleSpecification } from "maplibre-gl";
+import type { OverlayTheme } from "@/lib/map/visualThemes";
 
 /**
  * Free MapLibre basemap — no paid API key.
@@ -154,4 +155,61 @@ export function resolveMapStyle(envStyleUrl?: string): string | StyleSpecificati
     default:
       return value;
   }
+}
+
+/**
+ * Visual-theme-aware style: same free Esri tiles, tuned raster paint only.
+ * Remote style URLs are returned unchanged (no paid provider switch).
+ */
+export function resolveMapStyleForTheme(
+  envStyleUrl: string | undefined,
+  theme: OverlayTheme,
+): string | StyleSpecification {
+  const value = (envStyleUrl ?? theme.basemapAlias).trim();
+  const alias =
+    value === "ocean" ||
+    value === "builtin" ||
+    value === "carto-dark-raster" ||
+    value === "dark" ||
+    value === "dark-gray"
+      ? theme.basemapAlias
+      : value;
+
+  if (alias === "ocean") {
+    return tuneBuiltinStyle(structuredClone(BUILTIN_OCEAN_STYLE), theme, "ocean");
+  }
+  if (alias === "dark") {
+    return tuneBuiltinStyle(structuredClone(BUILTIN_DARK_STYLE), theme, "dark");
+  }
+  return resolveMapStyle(envStyleUrl);
+}
+
+function tuneBuiltinStyle(
+  style: StyleSpecification,
+  theme: OverlayTheme,
+  kind: "ocean" | "dark",
+): StyleSpecification {
+  const baseId = kind === "ocean" ? "esri-ocean-base" : "esri-dark-base";
+  const labelsId = kind === "ocean" ? "esri-ocean-labels" : "esri-dark-labels";
+  const { raster } = theme;
+
+  for (const layer of style.layers ?? []) {
+    if (layer.id === baseId && layer.type === "raster") {
+      layer.paint = {
+        ...layer.paint,
+        "raster-opacity": 1,
+        "raster-saturation": raster.baseSaturation,
+        "raster-contrast": raster.baseContrast,
+        "raster-brightness-min": raster.baseBrightnessMin,
+        "raster-brightness-max": raster.baseBrightnessMax,
+      };
+    }
+    if (layer.id === labelsId && layer.type === "raster") {
+      layer.paint = {
+        ...layer.paint,
+        "raster-opacity": raster.labelsOpacity,
+      };
+    }
+  }
+  return style;
 }

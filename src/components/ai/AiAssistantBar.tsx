@@ -91,8 +91,10 @@ export function AiAssistantBar({
 
         <form
           onSubmit={handleSubmit}
-          className={`flex items-center gap-2 rounded-full border bg-[rgba(10,18,28,0.78)] px-2.5 py-1.5 shadow-[0_8px_28px_rgba(0,0,0,0.32)] backdrop-blur-md transition ${
-            focused || isSearching ? "border-teal-300/35" : "border-white/12"
+          className={`flex items-center gap-2 rounded-full border px-2.5 py-1.5 shadow-[var(--cc-chrome-shadow,0_10px_32px_rgba(0,0,0,0.38))] backdrop-blur-[10px] transition ${
+            focused || isSearching
+              ? "border-[color:color-mix(in_srgb,var(--cc-teal,#5eead4)_40%,transparent)] bg-[color:var(--cc-glass,rgba(10,18,28,0.82))]"
+              : "border-[color:var(--cc-chrome-border,rgba(255,255,255,0.12))] bg-[color:var(--cc-glass,rgba(10,18,28,0.78))]"
           }`}
         >
           <span
@@ -130,7 +132,7 @@ export function AiAssistantBar({
                   : ""
               }
               disabled={isSearching}
-              className="relative w-full bg-transparent text-[13px] text-white outline-none placeholder:text-slate-500 disabled:opacity-70"
+              className="relative w-full bg-transparent text-[13px] leading-snug text-white/95 outline-none placeholder:text-slate-500 disabled:opacity-70"
               autoComplete="off"
             />
           </div>

@@ -1,4 +1,6 @@
 import type { VesselType } from "@/domain/models";
+import type { OverlayTheme } from "@/lib/map/visualThemes";
+import { THEME_PREMIUM_MARITIME } from "@/lib/map/visualThemes";
 
 const ICON_SIZE = 96;
 
@@ -88,19 +90,27 @@ export function vesselIconId(type: VesselType): string {
   return SPECS[type].id;
 }
 
-export function registerVesselIcons(map: {
-  hasImage: (id: string) => boolean;
-  addImage: (id: string, image: ImageData, options?: { pixelRatio?: number }) => void;
-}): void {
+export function registerVesselIcons(
+  map: {
+    hasImage: (id: string) => boolean;
+    addImage: (id: string, image: ImageData, options?: { pixelRatio?: number }) => void;
+    removeImage?: (id: string) => void;
+  },
+  theme: OverlayTheme = THEME_PREMIUM_MARITIME,
+): void {
   (Object.keys(SPECS) as VesselType[]).forEach((type) => {
     const spec = SPECS[type];
-    if (map.hasImage(spec.id)) return;
-    const image = renderShipIcon(spec);
+    if (map.hasImage(spec.id) && map.removeImage) {
+      map.removeImage(spec.id);
+    } else if (map.hasImage(spec.id)) {
+      return;
+    }
+    const image = renderShipIcon(spec, theme);
     if (image) map.addImage(spec.id, image, { pixelRatio: 2 });
   });
 }
 
-function renderShipIcon(spec: IconSpec): ImageData | null {
+function renderShipIcon(spec: IconSpec, theme: OverlayTheme): ImageData | null {
   const canvas = document.createElement("canvas");
   canvas.width = ICON_SIZE;
   canvas.height = ICON_SIZE;
@@ -110,28 +120,28 @@ function renderShipIcon(spec: IconSpec): ImageData | null {
   ctx.clearRect(0, 0, ICON_SIZE, ICON_SIZE);
   ctx.translate(ICON_SIZE / 2, ICON_SIZE / 2);
 
-  // Soft glow so ships read against dark ocean
+  // Restrained glow — theme-tuned, less blur than prototype default
   ctx.beginPath();
-  ctx.ellipse(0, 2, 16, 22, 0, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(94, 234, 212, 0.18)";
+  ctx.ellipse(0, 2, 12, 18, 0, 0, Math.PI * 2);
+  ctx.fillStyle = theme.vessels.glowRgba;
   ctx.fill();
 
   ctx.fillStyle = spec.fill;
   ctx.strokeStyle = spec.accent;
-  ctx.lineWidth = 2.2;
+  ctx.lineWidth = theme.vessels.outlineWidth;
   ctx.lineJoin = "round";
 
   drawSilhouette(ctx, spec.silhouette);
   ctx.fill();
   ctx.stroke();
 
-  // Deck highlight
+  // Subtle deck highlight
   ctx.beginPath();
   ctx.moveTo(0, -18);
-  ctx.lineTo(3, -4);
-  ctx.lineTo(-3, -4);
+  ctx.lineTo(2.5, -4);
+  ctx.lineTo(-2.5, -4);
   ctx.closePath();
-  ctx.fillStyle = "rgba(255,255,255,0.35)";
+  ctx.fillStyle = "rgba(255,255,255,0.28)";
   ctx.fill();
 
   return ctx.getImageData(0, 0, ICON_SIZE, ICON_SIZE);
