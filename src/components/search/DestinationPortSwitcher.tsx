@@ -11,11 +11,13 @@ interface DestinationPortSwitcherProps {
   onHoverCandidate?: (portId: string | null) => void;
   /** Zoom map to a port (source or destination). */
   onFocusPort?: (port: Port) => void;
+  /** Compact inline row — no absolute positioning (parent owns layout). */
+  className?: string;
 }
 
 /**
- * Compact origin / destination selectors under the AI search bar.
- * Shown when either side was auto-picked among country/region candidates.
+ * Compact origin / destination selectors for an active route search.
+ * Dropdowns only when existing candidate options are present — no invented ports.
  */
 export function DestinationPortSwitcher({
   search,
@@ -23,105 +25,82 @@ export function DestinationPortSwitcher({
   onSelectOrigin,
   onHoverCandidate,
   onFocusPort,
+  className = "",
 }: DestinationPortSwitcherProps) {
-  const showOrigin =
-    search.status === "active" &&
-    Boolean(search.originOptions && search.originOptions.length > 1) &&
-    Boolean(search.origin);
-  const showDestination =
-    search.status === "active" &&
-    Boolean(search.destinationOptions && search.destinationOptions.length > 1) &&
-    Boolean(search.destination);
+  if (search.status !== "active" || !search.origin || !search.destination) {
+    return null;
+  }
 
-  if (!showOrigin && !showDestination) return null;
+  const originOptions = search.originOptions ?? [];
+  const destinationOptions = search.destinationOptions ?? [];
+  const hasOriginChoices = originOptions.length > 1;
+  const hasDestinationChoices = destinationOptions.length > 1;
+
+  const corridorNm =
+    destinationOptions.find((o) => o.port.id === search.destination!.id)
+      ?.estimatedDistanceNm ??
+    originOptions.find((o) => o.port.id === search.origin!.id)
+      ?.estimatedDistanceNm;
 
   const originRegion =
     search.requestedOriginLabel?.trim() ||
-    search.origin?.country ||
+    search.origin.country ||
     "origin";
   const destinationRegion =
     search.requestedDestinationLabel?.trim() ||
-    search.destination?.country ||
+    search.destination.country ||
     "destination";
 
   return (
-    <div className="pointer-events-auto absolute inset-x-0 top-[7.75rem] z-30 flex justify-center px-3 sm:top-[8.1rem]">
-      <div className="flex w-full max-w-xl flex-col gap-2">
-        <div className="flex flex-col items-center gap-1 px-1 text-center">
-          <p className="max-w-full text-[10px] leading-snug text-slate-400/90">
-            <span className="text-emerald-200/90">
-              {search.origin?.name ?? originRegion}
-            </span>
-            <span className="mx-1 text-teal-400/60">→</span>
-            <span className="text-sky-200/80">{destinationRegion}</span>
-          </p>
-          {search.destinationSelectionReason === "shortest_maritime_distance" ||
-          search.originSelectionReason === "shortest_maritime_distance" ? (
-            <span className="max-w-full truncate rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[9px] text-slate-400">
-              Nearest by estimated maritime distance
-            </span>
-          ) : null}
-        </div>
-
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
-          {showOrigin && search.originOptions && search.origin ? (
-            <PortOptionPicker
-              role="origin"
-              label="Origin"
-              region={originRegion}
-              options={search.originOptions}
-              selectedPortId={search.origin.id}
-              onSelect={onSelectOrigin}
-              onHoverCandidate={onHoverCandidate}
-              onOpen={() => onFocusPort?.(search.origin!)}
-            />
-          ) : search.origin ? (
-            <button
-              type="button"
-              onClick={() => onFocusPort?.(search.origin!)}
-              title="Zoom to origin port"
-              className="flex min-w-0 flex-1 items-center justify-between gap-3 overflow-hidden rounded-2xl border border-white/10 bg-[color:var(--cc-glass,rgba(8,16,28,0.92))] px-3.5 py-2.5 text-left shadow-[var(--cc-chrome-shadow,0_8px_28px_rgba(0,0,0,0.28))] backdrop-blur-[10px] transition hover:border-teal-300/30"
-            >
-              <div className="min-w-0 flex-1 overflow-hidden">
-                <p className="text-[9px] uppercase tracking-wide text-slate-500">
-                  Origin
-                </p>
-                <p className="truncate text-[12px] font-medium text-white/95">
-                  {search.origin.name}
-                </p>
-              </div>
-            </button>
-          ) : null}
-          {showDestination && search.destinationOptions && search.destination ? (
-            <PortOptionPicker
-              role="destination"
-              label="Destination"
-              region={destinationRegion}
-              options={search.destinationOptions}
-              selectedPortId={search.destination.id}
-              onSelect={onSelectDestination}
-              onHoverCandidate={onHoverCandidate}
-              onOpen={() => onFocusPort?.(search.destination!)}
-            />
-          ) : search.destination ? (
-            <button
-              type="button"
-              onClick={() => onFocusPort?.(search.destination!)}
-              title="Zoom to destination port"
-              className="flex min-w-0 flex-1 items-center justify-between gap-3 overflow-hidden rounded-2xl border border-white/10 bg-[color:var(--cc-glass,rgba(8,16,28,0.92))] px-3.5 py-2.5 text-left shadow-[var(--cc-chrome-shadow,0_8px_28px_rgba(0,0,0,0.28))] backdrop-blur-[10px] transition hover:border-teal-300/30"
-            >
-              <div className="min-w-0 flex-1 overflow-hidden">
-                <p className="text-[9px] uppercase tracking-wide text-slate-500">
-                  Destination
-                </p>
-                <p className="truncate text-[12px] font-medium text-white/95">
-                  {search.destination.name}
-                </p>
-              </div>
-            </button>
-          ) : null}
-        </div>
-      </div>
+    <div
+      className={`flex flex-col gap-1.5 sm:flex-row sm:items-stretch ${className}`.trim()}
+    >
+      <PortOptionPicker
+        role="origin"
+        label="Origin"
+        region={originRegion}
+        options={hasOriginChoices ? originOptions : undefined}
+        selectedPort={search.origin}
+        selectedDistanceNm={
+          hasOriginChoices
+            ? originOptions.find((o) => o.port.id === search.origin!.id)
+                ?.estimatedDistanceNm
+            : corridorNm
+        }
+        showAis={false}
+        language={search.parsed?.detectedLanguage}
+        onSelect={onSelectOrigin}
+        onHoverCandidate={onHoverCandidate}
+        onOpen={() => onFocusPort?.(search.origin!)}
+        onFocusOnly={() => onFocusPort?.(search.origin!)}
+      />
+      <PortOptionPicker
+        role="destination"
+        label="Destination"
+        region={destinationRegion}
+        options={hasDestinationChoices ? destinationOptions : undefined}
+        selectedPort={search.destination}
+        selectedDistanceNm={
+          hasDestinationChoices
+            ? destinationOptions.find(
+                (o) => o.port.id === search.destination!.id,
+              )?.estimatedDistanceNm
+            : corridorNm
+        }
+        showAis={hasDestinationChoices}
+        selectedAisCount={
+          hasDestinationChoices
+            ? destinationOptions.find(
+                (o) => o.port.id === search.destination!.id,
+              )?.aisDestinationVesselCount
+            : undefined
+        }
+        language={search.parsed?.detectedLanguage}
+        onSelect={onSelectDestination}
+        onHoverCandidate={onHoverCandidate}
+        onOpen={() => onFocusPort?.(search.destination!)}
+        onFocusOnly={() => onFocusPort?.(search.destination!)}
+      />
     </div>
   );
 }
@@ -131,31 +110,42 @@ function PortOptionPicker({
   label,
   region,
   options,
-  selectedPortId,
+  selectedPort,
+  selectedDistanceNm,
+  selectedAisCount,
+  showAis,
+  language,
   onSelect,
   onHoverCandidate,
   onOpen,
+  onFocusOnly,
 }: {
   role: "origin" | "destination";
   label: string;
   region: string;
-  options: SmartPortOption[];
-  selectedPortId: string;
+  options?: SmartPortOption[];
+  selectedPort: Port;
+  selectedDistanceNm?: number;
+  selectedAisCount?: number;
+  showAis: boolean;
+  language?: string;
   onSelect: (portId: string) => void;
   onHoverCandidate?: (portId: string | null) => void;
   onOpen?: () => void;
+  onFocusOnly?: () => void;
 }) {
+  const selectable = Boolean(options && options.length > 1);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
 
-  const selectedIndex = Math.max(
-    0,
-    options.findIndex((o) => o.port.id === selectedPortId),
-  );
-  const selected =
-    options.find((o) => o.port.id === selectedPortId) ?? options[0];
+  const selectedIndex = selectable
+    ? Math.max(
+        0,
+        options!.findIndex((o) => o.port.id === selectedPort.id),
+      )
+    : 0;
 
   useEffect(() => {
     if (!open) return;
@@ -170,6 +160,10 @@ function PortOptionPicker({
   }, [open, onHoverCandidate]);
 
   function openList() {
+    if (!selectable) {
+      onFocusOnly?.();
+      return;
+    }
     setActiveIndex(selectedIndex >= 0 ? selectedIndex : 0);
     setOpen(true);
     onOpen?.();
@@ -187,9 +181,10 @@ function PortOptionPicker({
   }
 
   function highlightIndex(next: number) {
+    if (!options) return;
     setActiveIndex(next);
     const opt = options[next];
-    if (opt && opt.port.id !== selectedPortId) {
+    if (opt && opt.port.id !== selectedPort.id) {
       onHoverCandidate?.(opt.port.id);
     } else {
       onHoverCandidate?.(null);
@@ -197,6 +192,13 @@ function PortOptionPicker({
   }
 
   function onKeyDown(e: KeyboardEvent) {
+    if (!selectable) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        onFocusOnly?.();
+      }
+      return;
+    }
     if (!open && (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ")) {
       e.preventDefault();
       openList();
@@ -210,83 +212,108 @@ function PortOptionPicker({
     }
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      highlightIndex(Math.min(activeIndex + 1, options.length - 1));
+      highlightIndex(Math.min(activeIndex + 1, (options?.length ?? 1) - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       highlightIndex(Math.max(activeIndex - 1, 0));
     } else if (e.key === "Enter") {
       e.preventDefault();
-      const opt = options[activeIndex];
+      const opt = options?.[activeIndex];
       if (opt) selectOption(opt);
     }
   }
+
+  const metaParts: string[] = [];
+  if (selectedDistanceNm != null && Number.isFinite(selectedDistanceNm)) {
+    metaParts.push(`${Math.round(selectedDistanceNm).toLocaleString("en-US")} nm`);
+  }
+  if (showAis && selectedAisCount != null) {
+    metaParts.push(formatAisCount(selectedAisCount));
+  }
+
+  const shellClass =
+    "flex w-full items-center justify-between gap-2 overflow-hidden rounded-lg border border-white/[0.09] bg-[color:color-mix(in_srgb,var(--cc-glass,rgba(8,16,28,0.92))_92%,transparent)] px-2.5 py-1.5 text-left shadow-[0_4px_14px_rgba(0,0,0,0.18)] backdrop-blur-[6px] transition hover:border-white/16";
 
   return (
     <div ref={rootRef} className="relative min-w-0 flex-1">
       <button
         type="button"
-        className="flex w-full items-center justify-between gap-3 overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--cc-teal,#5eead4)_28%,transparent)] bg-[color:var(--cc-glass,rgba(8,16,28,0.92))] px-3.5 py-2.5 text-left shadow-[var(--cc-chrome-shadow,0_8px_28px_rgba(0,0,0,0.28))] backdrop-blur-[10px] transition hover:border-[color:color-mix(in_srgb,var(--cc-teal,#5eead4)_45%,transparent)]"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-controls={listId}
+        className={`${shellClass} ${
+          selectable
+            ? "hover:border-[color:color-mix(in_srgb,var(--cc-teal,#5eead4)_35%,transparent)]"
+            : ""
+        }`}
+        aria-haspopup={selectable ? "listbox" : undefined}
+        aria-expanded={selectable ? open : undefined}
+        aria-controls={selectable ? listId : undefined}
+        title={
+          selectable
+            ? `Choose ${label.toLowerCase()} port`
+            : `Zoom to ${label.toLowerCase()} port`
+        }
         onClick={() => (open ? closeList() : openList())}
         onKeyDown={onKeyDown}
       >
         <div className="min-w-0 flex-1 overflow-hidden">
-          <p className="text-[9px] uppercase tracking-wide text-slate-500">
+          <p className="text-[8px] font-medium uppercase tracking-[0.08em] text-slate-500">
             {label}
           </p>
-          <p className="truncate text-[12px] font-medium text-white/95">
-            {selected.port.name}
-          </p>
-          <p className="truncate text-[10px] text-slate-400">
-            {selected.estimatedDistanceNm.toLocaleString("en-US")} nm
-            {role === "destination"
-              ? ` · ${formatAisCount(selected.aisDestinationVesselCount)}`
-              : ""}
-          </p>
+          <PortNameLines port={selectedPort} language={language} />
+          {metaParts.length > 0 ? (
+            <p className="truncate text-[10px] leading-tight text-slate-400/90">
+              {metaParts.join(" · ")}
+            </p>
+          ) : null}
         </div>
-        <span className="shrink-0 text-slate-400" aria-hidden>
+        <span
+          className={`shrink-0 text-[10px] ${
+            selectable ? "text-slate-400" : "text-slate-600/80"
+          }`}
+          aria-hidden
+        >
           {open ? "▴" : "▾"}
         </span>
       </button>
 
-      {open ? (
+      {open && selectable && options ? (
         <ul
           id={listId}
           role="listbox"
           aria-label={`${label} ports in ${region}`}
-          className="absolute inset-x-0 top-[calc(100%+6px)] z-40 max-h-64 overflow-auto rounded-2xl border border-white/12 bg-[rgba(8,14,24,0.97)] py-2 shadow-[0_16px_40px_rgba(0,0,0,0.45)] backdrop-blur-md"
+          className="absolute inset-x-0 top-[calc(100%+4px)] z-40 max-h-52 overflow-auto rounded-lg border border-white/12 bg-[rgba(8,14,24,0.97)] py-1 shadow-[0_12px_28px_rgba(0,0,0,0.4)] backdrop-blur-[6px]"
         >
-          <li className="truncate px-3.5 pb-1.5 text-[9px] uppercase tracking-wide text-slate-500">
-            {label} ports · {region}
+          <li className="truncate px-2.5 pb-1 pt-0.5 text-[8px] uppercase tracking-[0.08em] text-slate-500">
+            {label} · {region}
           </li>
           {options.map((option, index) => {
-            const isSelected = option.port.id === selectedPortId;
+            const isSelected = option.port.id === selectedPort.id;
             const isActive = index === activeIndex;
+            const rowMeta = [
+              `${Math.round(option.estimatedDistanceNm).toLocaleString("en-US")} nm`,
+              role === "destination"
+                ? formatAisCount(option.aisDestinationVesselCount)
+                : null,
+            ]
+              .filter(Boolean)
+              .join(" · ");
             return (
               <li key={option.port.id} role="option" aria-selected={isSelected}>
                 <button
                   type="button"
-                  className={`flex w-full items-start gap-2 px-3.5 py-2 text-left transition ${
+                  className={`flex w-full items-start gap-1.5 px-2.5 py-1.5 text-left transition ${
                     isActive ? "bg-white/[0.06]" : "hover:bg-white/[0.04]"
                   }`}
                   onMouseEnter={() => highlightIndex(index)}
                   onMouseLeave={() => onHoverCandidate?.(null)}
                   onClick={() => selectOption(option)}
                 >
-                  <span className="mt-0.5 w-3 shrink-0 text-[11px] text-teal-300/90">
+                  <span className="mt-0.5 w-2.5 shrink-0 text-[10px] text-teal-300/90">
                     {isSelected ? "✓" : ""}
                   </span>
                   <span className="min-w-0 flex-1 overflow-hidden">
-                    <span className="block truncate text-[12px] font-medium text-white/95">
-                      {option.port.name}
-                    </span>
+                    <PortNameLines port={option.port} language={language} />
                     <span className="mt-0.5 block truncate text-[10px] text-slate-400">
-                      {option.estimatedDistanceNm.toLocaleString("en-US")} nm
-                      {role === "destination"
-                        ? ` · ${formatAisCount(option.aisDestinationVesselCount)}`
-                        : ""}
+                      {rowMeta}
                     </span>
                   </span>
                 </button>
@@ -297,6 +324,43 @@ function PortOptionPicker({
       ) : null}
     </div>
   );
+}
+
+/** English catalogue name + optional distinct alias when search language ≠ en. */
+function PortNameLines({
+  port,
+  language,
+}: {
+  port: Port;
+  language?: string;
+}) {
+  const localized = pickLocalizedAlias(port, language);
+  return (
+    <>
+      <span className="block truncate text-[11px] font-medium leading-tight text-white/95">
+        {port.name}
+      </span>
+      {localized ? (
+        <span className="block truncate text-[9px] leading-tight text-slate-500">
+          {localized}
+        </span>
+      ) : null}
+    </>
+  );
+}
+
+function pickLocalizedAlias(port: Port, language?: string): string | null {
+  if (!language || language.toLowerCase().startsWith("en")) return null;
+  const aliases = port.meta?.aliases ?? [];
+  const nameNorm = port.name.trim().toLowerCase();
+  for (const alias of aliases) {
+    const t = alias?.trim();
+    if (!t) continue;
+    if (t.toLowerCase() === nameNorm) continue;
+    // Prefer non-Latin / clearly distinct labels over English spelling variants
+    if (/[^\u0000-\u007f]/.test(t) || t.length >= 3) return t;
+  }
+  return null;
 }
 
 function formatAisCount(n: number): string {

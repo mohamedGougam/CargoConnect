@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AiAssistantBar } from "@/components/ai/AiAssistantBar";
 import { PortDetailPanel } from "@/components/port/PortDetailPanel";
 import { RouteSearchSummary } from "@/components/search/RouteSearchSummary";
-import { DestinationPortSwitcher } from "@/components/search/DestinationPortSwitcher";
 import { MapFullscreenControl } from "@/components/map/MapFullscreenControl";
 import { PortHoverCard, VesselHoverCard } from "@/components/vessel/VesselHoverCard";
 import { VesselDetailPanel } from "@/components/vessel/VesselDetailPanel";
@@ -317,8 +316,16 @@ function LandingExperienceInner() {
             hideSuggestions={searchActive}
           />
 
-          <DestinationPortSwitcher
+          <RouteSearchSummary
             search={search}
+            onClear={clearSearch}
+            collapsed={mapChrome.summaryCollapsed}
+            onCollapsedChange={(collapsed) =>
+              setMapChrome((s) => setSummaryCollapsed(s, collapsed))
+            }
+            onSelectRoute={(originId, destinationId) =>
+              selectRoute(originId, destinationId, vessels)
+            }
             onSelectDestination={(portId) => {
               selectDestination(portId, vessels);
               const port = search.destinationOptions?.find(
@@ -336,18 +343,6 @@ function LandingExperienceInner() {
             }}
             onHoverCandidate={setHighlightCandidatePortId}
             onFocusPort={focusMapOnPort}
-          />
-
-          <RouteSearchSummary
-            search={search}
-            onClear={clearSearch}
-            collapsed={mapChrome.summaryCollapsed}
-            onCollapsedChange={(collapsed) =>
-              setMapChrome((s) => setSummaryCollapsed(s, collapsed))
-            }
-            onSelectRoute={(originId, destinationId) =>
-              selectRoute(originId, destinationId, vessels)
-            }
           />
         </>
       ) : null}

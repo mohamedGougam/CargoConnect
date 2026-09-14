@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import type { Port, VesselType } from "@/domain/models";
 import type { RouteSearchState } from "@/domain/search/types";
 import { formatVesselType } from "@/lib/format";
 import { understoodAsPrefix } from "@/lib/search/uxMessages";
@@ -8,7 +9,8 @@ import {
   listAlternativeRoutes,
   type AlternativeRouteOption,
 } from "@/lib/search/activateSearch";
-import type { VesselType } from "@/domain/models";
+import { estimateMaritimeDistanceNm } from "@/lib/search/maritimeDistance";
+import { DestinationPortSwitcher } from "@/components/search/DestinationPortSwitcher";
 
 interface RouteSearchSummaryProps {
   search: RouteSearchState;
@@ -18,10 +20,17 @@ interface RouteSearchSummaryProps {
   onCollapsedChange?: (collapsed: boolean) => void;
   /** Switch among alternative origin→destination pairs. */
   onSelectRoute?: (originPortId: string, destinationPortId: string) => void;
+  onSelectDestination?: (portId: string) => void;
+  onSelectOrigin?: (portId: string) => void;
+  onHoverCandidate?: (portId: string | null) => void;
+  onFocusPort?: (port: Port) => void;
 }
 
+const PANEL_TOP = "top-[6.85rem] sm:top-[7.15rem]";
+
 /**
- * Compact route-search context — map stays dominant.
+ * Single compact route-search panel — map stays dominant.
+ * Owns collapse, port selectors, clear, and disclaimer (no overlapping siblings).
  */
 export function RouteSearchSummary({
   search,
@@ -29,26 +38,19 @@ export function RouteSearchSummary({
   collapsed = false,
   onCollapsedChange,
   onSelectRoute,
+  onSelectDestination,
+  onSelectOrigin,
+  onHoverCandidate,
+  onFocusPort,
 }: RouteSearchSummaryProps) {
   if (search.status === "idle") return null;
 
-  const hasDestSwitcher =
-    search.status === "active" &&
-    Boolean(search.destinationOptions && search.destinationOptions.length > 1);
-  const hasOriginSwitcher =
-    search.status === "active" &&
-    Boolean(search.originOptions && search.originOptions.length > 1);
-  const topClass =
-    hasOriginSwitcher && hasDestSwitcher
-      ? "top-[16.5rem] sm:top-[15.25rem]"
-      : hasDestSwitcher || hasOriginSwitcher
-        ? "top-[13.25rem] sm:top-[12.75rem]"
-        : "top-[7.25rem] sm:top-[7.75rem]";
-
   if (search.status === "loading") {
     return (
-      <div className={`pointer-events-none absolute inset-x-0 z-20 flex justify-center px-3 ${topClass}`}>
-        <div className="rounded-2xl border border-teal-300/25 bg-[rgba(8,16,28,0.88)] px-4 py-2.5 text-[11px] text-teal-100/90 shadow-[0_8px_24px_rgba(0,0,0,0.28)] backdrop-blur-md">
+      <div
+        className={`pointer-events-none absolute inset-x-0 z-20 flex justify-center px-3 ${PANEL_TOP}`}
+      >
+        <div className="rounded-lg border border-teal-300/20 bg-[rgba(8,16,28,0.9)] px-3 py-2 text-[11px] text-teal-100/90 shadow-[0_6px_18px_rgba(0,0,0,0.25)] backdrop-blur-[6px]">
           <p className="font-medium tracking-tight">Framing corridor…</p>
           <p className="mt-0.5 text-[10px] text-teal-100/55">
             Resolving ports and comparing estimated maritime distance
@@ -69,8 +71,10 @@ export function RouteSearchSummary({
           : "We couldn't resolve that route";
 
     return (
-      <div className={`pointer-events-auto absolute inset-x-0 z-20 flex justify-center px-3 ${topClass}`}>
-        <div className="flex max-w-lg items-start gap-3 rounded-2xl border border-amber-300/25 bg-[rgba(8,16,28,0.92)] px-4 py-3 text-[11px] text-amber-50 shadow-[0_8px_24px_rgba(0,0,0,0.28)] backdrop-blur-md">
+      <div
+        className={`pointer-events-auto absolute inset-x-0 z-20 flex justify-center px-3 ${PANEL_TOP}`}
+      >
+        <div className="flex max-w-lg items-start gap-2.5 rounded-lg border border-amber-300/25 bg-[rgba(8,16,28,0.92)] px-3 py-2.5 text-[11px] text-amber-50 shadow-[0_6px_18px_rgba(0,0,0,0.25)] backdrop-blur-[6px]">
           <div className="min-w-0 flex-1">
             <p className="font-medium text-amber-100/95">{title}</p>
             <p className="mt-0.5 text-amber-100/70">
@@ -89,7 +93,7 @@ export function RouteSearchSummary({
           <button
             type="button"
             onClick={onClear}
-            className="shrink-0 rounded-full border border-white/15 px-2.5 py-1 text-[10px] text-slate-200 transition hover:border-white/30 hover:text-white"
+            className="shrink-0 rounded border border-white/12 px-2 py-0.5 text-[10px] text-slate-300 transition hover:border-white/25 hover:text-white"
           >
             Clear
           </button>
@@ -114,32 +118,39 @@ export function RouteSearchSummary({
     search.cargo?.description,
   ].filter(Boolean);
   const cargoLine = cargoBits.length ? cargoBits.join(" · ") : null;
-  const intentDest =
-    search.requestedDestinationLabel &&
-    search.requestedDestinationLabel.toLowerCase() !==
-      search.destination.name.toLowerCase()
-      ? search.requestedDestinationLabel
-      : null;
+  const distanceNm = resolveCorridorDistanceNm(search);
+  const showNearestBadge =
+    search.destinationSelectionReason === "shortest_maritime_distance" ||
+    search.originSelectionReason === "shortest_maritime_distance";
+  const showPortSwitchers = Boolean(onSelectDestination && onSelectOrigin);
 
   if (collapsed) {
     return (
-      <div className={`pointer-events-auto absolute inset-x-0 z-20 flex justify-center px-3 ${topClass}`}>
+      <div
+        className={`pointer-events-auto absolute inset-x-0 z-20 flex justify-center px-3 ${PANEL_TOP}`}
+      >
         <button
           type="button"
           onClick={() => onCollapsedChange?.(false)}
           aria-label="Expand route details"
           title="Expand route details"
-          className="flex max-w-xl items-center gap-2 rounded-2xl border border-teal-300/20 bg-[rgba(8,16,28,0.9)] px-3.5 py-1.5 text-left shadow-[0_8px_28px_rgba(0,0,0,0.3)] backdrop-blur-md transition hover:border-teal-300/35 sm:px-4"
+          className="flex max-w-md items-center gap-2 rounded-lg border border-white/10 bg-[rgba(8,16,28,0.92)] px-2.5 py-1.5 text-left shadow-[0_6px_18px_rgba(0,0,0,0.25)] backdrop-blur-[6px] transition hover:border-white/16"
         >
-          <p className="min-w-0 flex-1 truncate text-[12px] font-medium tracking-tight text-white/95">
+          <p className="min-w-0 flex-1 truncate text-[11px] font-medium tracking-tight text-white/95">
             <span className="text-emerald-200/95">{search.origin.name}</span>
-            <span className="mx-1.5 text-teal-300/70">→</span>
+            <span className="mx-1 text-teal-300/65">→</span>
             <span className="text-sky-200/95">{search.destination.name}</span>
-            <span className="ml-2 font-normal text-slate-400">
-              · {count} corridor-relevant vessel{count === 1 ? "" : "s"}
-            </span>
+            {distanceNm != null ? (
+              <span className="ml-1.5 font-normal text-slate-400">
+                · {Math.round(distanceNm).toLocaleString("en-US")} nm
+              </span>
+            ) : (
+              <span className="ml-1.5 font-normal text-slate-400">
+                · {count} vessel{count === 1 ? "" : "s"}
+              </span>
+            )}
           </p>
-          <span className="shrink-0 text-[11px] text-slate-400" aria-hidden>
+          <span className="shrink-0 text-[10px] text-slate-400" aria-hidden>
             ▾
           </span>
         </button>
@@ -148,50 +159,81 @@ export function RouteSearchSummary({
   }
 
   return (
-    <div className={`pointer-events-auto absolute inset-x-0 z-20 flex justify-center px-3 ${topClass}`}>
-      <div className="relative flex max-w-xl flex-col gap-1.5 rounded-2xl border border-teal-300/20 bg-[rgba(8,16,28,0.9)] px-3.5 py-2.5 pr-9 shadow-[0_8px_28px_rgba(0,0,0,0.3)] backdrop-blur-md sm:px-4 sm:pr-10">
-        <button
-          type="button"
-          onClick={() => onCollapsedChange?.(true)}
-          aria-label="Collapse route details"
-          title="Collapse route details"
-          className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full text-[11px] text-slate-400 transition hover:bg-white/[0.06] hover:text-slate-200"
-        >
-          <span aria-hidden>▴</span>
-        </button>
-        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-          <RoutePairControl
+    <div
+      className={`pointer-events-auto absolute inset-x-0 z-20 flex justify-center px-3 ${PANEL_TOP}`}
+    >
+      <div className="flex w-full max-w-md flex-col gap-1.5 rounded-lg border border-white/10 bg-[rgba(8,16,28,0.92)] px-2.5 py-2 shadow-[0_6px_18px_rgba(0,0,0,0.25)] backdrop-blur-[6px]">
+        {/* Header: route + collapse + clear */}
+        <div className="flex items-start gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+              <RoutePairControl
+                search={search}
+                onSelectRoute={onSelectRoute}
+              />
+            </div>
+            {showNearestBadge ? (
+              <p className="mt-0.5 truncate text-[9px] text-slate-500">
+                Nearest by estimated maritime distance
+              </p>
+            ) : null}
+          </div>
+          <div className="flex shrink-0 items-center gap-0.5">
+            <button
+              type="button"
+              onClick={onClear}
+              className="rounded px-1.5 py-0.5 text-[9px] text-slate-500 transition hover:bg-white/[0.04] hover:text-slate-300"
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              onClick={() => onCollapsedChange?.(true)}
+              aria-label="Collapse route details"
+              title="Collapse"
+              className="flex h-5 w-5 items-center justify-center rounded text-[10px] text-slate-400 transition hover:bg-white/[0.05] hover:text-slate-200"
+            >
+              <span aria-hidden>▴</span>
+            </button>
+          </div>
+        </div>
+
+        {showPortSwitchers ? (
+          <DestinationPortSwitcher
             search={search}
-            intentDest={intentDest}
-            onSelectRoute={onSelectRoute}
+            onSelectDestination={onSelectDestination!}
+            onSelectOrigin={onSelectOrigin!}
+            onHoverCandidate={onHoverCandidate}
+            onFocusPort={onFocusPort}
           />
+        ) : null}
+
+        {/* Optional metadata */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-slate-400/90">
+          <span>
+            {count} corridor-relevant vessel{count === 1 ? "" : "s"}
+          </span>
           {cargoLine ? (
             <>
-              <span className="hidden h-3 w-px bg-white/15 sm:block" aria-hidden />
-              <p className="text-[11px] text-slate-300/90">{cargoLine}</p>
+              <span className="text-white/15" aria-hidden>
+                ·
+              </span>
+              <span className="truncate text-slate-400/80">{cargoLine}</span>
             </>
           ) : null}
-          <span className="hidden h-3 w-px bg-white/15 sm:block" aria-hidden />
-          <p className="text-[11px] text-slate-300/90">
-            {count} corridor-relevant vessel{count === 1 ? "" : "s"}
-          </p>
           {typeLabels.length > 0 ? (
             <>
-              <span className="hidden h-3 w-px bg-white/15 md:block" aria-hidden />
-              <p className="hidden max-w-[12rem] truncate text-[10px] text-slate-400/90 md:block md:max-w-none">
+              <span className="hidden text-white/15 sm:inline" aria-hidden>
+                ·
+              </span>
+              <span className="hidden truncate sm:inline">
                 {typeLabels.join(" · ")}
-              </p>
+              </span>
             </>
           ) : null}
-          <button
-            type="button"
-            onClick={onClear}
-            className="rounded-full border border-white/12 bg-white/[0.04] px-2.5 py-0.5 text-[10px] font-medium text-slate-200 transition hover:border-teal-300/35 hover:text-white"
-          >
-            Clear search
-          </button>
         </div>
-        <p className="text-center text-[10px] leading-relaxed text-slate-500">
+
+        <p className="text-[8px] leading-snug text-slate-600">
           Relevance is based on route, vessel and AIS signals. Commercial
           availability requires confirmation.
         </p>
@@ -200,36 +242,25 @@ export function RouteSearchSummary({
   );
 }
 
-function RoutePairLabel({
-  originName,
-  destinationName,
-  intentDest,
-}: {
-  originName: string;
-  destinationName: string;
-  intentDest: string | null;
-}) {
-  return (
-    <>
-      <span className="text-emerald-200/95">{originName}</span>
-      <span className="mx-1.5 text-teal-300/70">→</span>
-      <span className="text-sky-200/95">{destinationName}</span>
-      {intentDest ? (
-        <span className="ml-1.5 text-[10px] font-normal text-slate-500">
-          ({intentDest})
-        </span>
-      ) : null}
-    </>
-  );
+function resolveCorridorDistanceNm(search: RouteSearchState): number | null {
+  if (!search.origin || !search.destination) return null;
+  const fromDest = search.destinationOptions?.find(
+    (o) => o.port.id === search.destination!.id,
+  )?.estimatedDistanceNm;
+  if (fromDest != null) return fromDest;
+  const fromOrigin = search.originOptions?.find(
+    (o) => o.port.id === search.origin!.id,
+  )?.estimatedDistanceNm;
+  if (fromOrigin != null) return fromOrigin;
+  return estimateMaritimeDistanceNm(search.origin, search.destination)
+    .distanceNm;
 }
 
 function RoutePairControl({
   search,
-  intentDest,
   onSelectRoute,
 }: {
   search: RouteSearchState;
-  intentDest: string | null;
   onSelectRoute?: (originPortId: string, destinationPortId: string) => void;
 }) {
   const alternatives = listAlternativeRoutes(search);
@@ -248,20 +279,24 @@ function RoutePairControl({
 
   if (!search.origin || !search.destination) return null;
 
+  const label = (
+    <>
+      <span className="text-emerald-200/95">{search.origin.name}</span>
+      <span className="mx-1 text-teal-300/65">→</span>
+      <span className="text-sky-200/95">{search.destination.name}</span>
+    </>
+  );
+
   if (!onSelectRoute || alternatives.length <= 1) {
     return (
-      <p className="text-[12px] font-medium tracking-tight text-white/95">
-        <RoutePairLabel
-          originName={search.origin.name}
-          destinationName={search.destination.name}
-          intentDest={intentDest}
-        />
+      <p className="truncate text-[12px] font-medium tracking-tight text-white/95">
+        {label}
       </p>
     );
   }
 
   return (
-    <div className="relative" ref={rootRef}>
+    <div className="relative min-w-0" ref={rootRef}>
       <button
         type="button"
         aria-haspopup="listbox"
@@ -269,14 +304,10 @@ function RoutePairControl({
         aria-controls={listId}
         onClick={() => setOpen((v) => !v)}
         title="Alternative routes"
-        className="text-[12px] font-medium tracking-tight text-white/95 transition hover:opacity-90"
+        className="truncate text-[12px] font-medium tracking-tight text-white/95 transition hover:opacity-90"
       >
-        <RoutePairLabel
-          originName={search.origin.name}
-          destinationName={search.destination.name}
-          intentDest={intentDest}
-        />
-        <span className="ml-1 text-[10px] text-slate-500" aria-hidden>
+        {label}
+        <span className="ml-1 text-[9px] text-slate-500" aria-hidden>
           ▾
         </span>
       </button>
@@ -284,9 +315,9 @@ function RoutePairControl({
         <ul
           id={listId}
           role="listbox"
-          className="absolute top-[calc(100%+6px)] left-1/2 z-40 max-h-64 w-[min(20rem,calc(100vw-2rem))] -translate-x-1/2 overflow-auto rounded-2xl border border-white/12 bg-[rgba(8,14,24,0.97)] py-2 shadow-[0_16px_40px_rgba(0,0,0,0.45)] backdrop-blur-md"
+          className="absolute top-[calc(100%+4px)] left-0 z-40 max-h-52 w-[min(18rem,calc(100vw-2rem))] overflow-auto rounded-lg border border-white/12 bg-[rgba(8,14,24,0.97)] py-1 shadow-[0_12px_28px_rgba(0,0,0,0.4)] backdrop-blur-[6px]"
         >
-          <li className="px-3.5 pb-1.5 text-[9px] uppercase tracking-wide text-slate-500">
+          <li className="px-2.5 pb-1 pt-0.5 text-[8px] uppercase tracking-[0.08em] text-slate-500">
             Alternative routes
           </li>
           {alternatives.map((route) => (
@@ -317,19 +348,19 @@ function AlternativeRouteItem({
       <button
         type="button"
         onClick={onSelect}
-        className={`flex w-full items-start gap-2 px-3.5 py-2 text-left transition ${
+        className={`flex w-full items-start gap-1.5 px-2.5 py-1.5 text-left transition ${
           route.selected
             ? "bg-teal-400/10 text-white"
             : "text-slate-200 hover:bg-white/[0.05]"
         }`}
       >
-        <span className="mt-0.5 w-3 shrink-0 text-[11px] text-teal-300/90">
+        <span className="mt-0.5 w-2.5 shrink-0 text-[10px] text-teal-300/90">
           {route.selected ? "✓" : ""}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[12px] font-medium text-white/95">
+          <span className="block text-[11px] font-medium text-white/95">
             <span className="text-emerald-200/95">{route.origin.name}</span>
-            <span className="mx-1 text-teal-300/70">→</span>
+            <span className="mx-1 text-teal-300/65">→</span>
             <span className="text-sky-200/95">{route.destination.name}</span>
           </span>
           <span className="mt-0.5 block text-[10px] text-slate-400">
