@@ -25,6 +25,11 @@ import {
   THEME_PREMIUM_MARITIME,
   type OverlayTheme,
 } from "@/lib/map/visualThemes";
+import {
+  DEFAULT_MAP_FOUNDATION_ID,
+  resolveMapFoundationStyle,
+  type MapFoundationId,
+} from "@/lib/map/mapFoundations";
 
 const VESSELS_SOURCE = "cc-vessels";
 const PORTS_SOURCE = "cc-ports";
@@ -77,6 +82,8 @@ interface MaritimeMapProps {
   }) => void;
   /** Visual-only overlay/basemap theme (beautification exploration). */
   visualTheme?: OverlayTheme;
+  /** Visual-only map foundation (research / proof exploration). */
+  mapFoundationId?: MapFoundationId;
 }
 
 /**
@@ -103,6 +110,7 @@ export const MaritimeMap = memo(function MaritimeMap({
   onMapClick,
   onViewportChange,
   visualTheme = THEME_PREMIUM_MARITIME,
+  mapFoundationId = DEFAULT_MAP_FOUNDATION_ID,
 }: MaritimeMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -110,6 +118,8 @@ export const MaritimeMap = memo(function MaritimeMap({
   const [styleFailed, setStyleFailed] = useState(false);
   const themeRef = useRef(visualTheme);
   themeRef.current = visualTheme;
+  const foundationRef = useRef(mapFoundationId);
+  foundationRef.current = mapFoundationId;
   const vesselMotionRef = useRef<Vessel[]>(vessels);
   const routesRef = useRef(routes);
   const portsRef = useRef(ports);
@@ -179,220 +189,241 @@ export const MaritimeMap = memo(function MaritimeMap({
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
-    ensureMapLibreWorker();
+    let cancelled = false;
+    let map: MapLibreMap | null = null;
+    let resizeObserver: ResizeObserver | null = null;
+    const onWindowResize = () => map?.resize();
 
-    const style = resolveMapStyleForTheme(appConfig.mapStyleUrl, themeRef.current);
+    const boot = async () => {
+      ensureMapLibreWorker();
 
-    const camera = initialViewRef.current;
-    const map = new MapLibreMap({
-      container: containerRef.current,
-      style,
-      center: camera.center,
-      zoom: camera.zoom,
-      minZoom: camera.minZoom ?? INITIAL_MAP_VIEW.minZoom,
-      maxZoom: camera.maxZoom ?? INITIAL_MAP_VIEW.maxZoom,
-      attributionControl: { compact: true },
-      pitch: 0,
-      maxPitch: 0,
-      // Snappy tile cross-fades; avoid laggy fade during wheel zoom
-      fadeDuration: 0,
-      renderWorldCopies: true,
-      // Prefer immediate camera response over heavy post-processing
-      refreshExpiredTiles: false,
-      maxTileCacheSize: 80,
-    });
-
-    // Natural wheel/trackpad feel (MapLibre defaults are conservative)
-    map.scrollZoom.setWheelZoomRate(1 / 350);
-    map.scrollZoom.setZoomRate(1 / 90);
-    map.dragPan.enable();
-    map.touchZoomRotate.enable();
-    map.doubleClickZoom.enable();
-    map.keyboard.enable();
-
-    map.addControl(new NavigationControl({ visualizePitch: false }), "bottom-right");
-    mapRef.current = map;
-
-    const bindLayerHover = (
-      layerId: string,
-      onHover: (id: string | null, x: number, y: number) => void,
-    ) => {
-      map.on("mousemove", layerId, (e: MapLayerMouseEvent) => {
-        // Skip hover work while the camera is moving — protects FPS during zoom
-        if (interactingRef.current || map.isMoving()) return;
-        map.getCanvas().style.cursor = "pointer";
-        const id = String(e.features?.[0]?.properties?.id ?? "");
-        if (id) onHover(id, e.point.x, e.point.y);
-      });
-      map.on("mouseleave", layerId, () => {
-        map.getCanvas().style.cursor = "";
-        onHover(null, 0, 0);
-      });
-    };
-
-    const seedOverlayData = () => {
-      const portsSource = map.getSource(PORTS_SOURCE) as GeoJSONSource | undefined;
-      const routesSource = map.getSource(ROUTES_SOURCE) as GeoJSONSource | undefined;
-      const vesselsSource = map.getSource(VESSELS_SOURCE) as GeoJSONSource | undefined;
-      const corridorSource = map.getSource(CORRIDOR_SOURCE) as GeoJSONSource | undefined;
-      portsSource?.setData(
-        portsToGeoJSON(portsRef.current, {
-          originId: originPortIdRef.current ?? undefined,
-          destinationId: destinationPortIdRef.current ?? undefined,
-          candidateIds: candidatePortIdsRef.current,
-          highlightCandidateId: highlightCandidatePortIdRef.current,
-        }),
-      );
-      routesSource?.setData(
-        routesToGeoJSON(searchActiveRef.current ? [] : routesRef.current),
-      );
-      corridorSource?.setData(corridorToGeoJSON(corridorRef.current ?? undefined));
-      vesselsSource?.setData(
-        vesselsToGeoJSON(vesselMotionRef.current, {
-          relevantIds: relevantRef.current,
-          searchActive: searchActiveRef.current,
-        }),
-      );
-    };
-
-    const attachOverlayLayers = () => {
-      if (layersAttachedRef.current || !mapRef.current) return;
+      let style;
       try {
-        registerVesselIcons(map, themeRef.current);
-        addLayers(map, themeRef.current);
-        seedOverlayData();
-
-        // Worker may still be warming up on first paint — re-seed once.
-        window.setTimeout(() => {
-          if (!mapRef.current) return;
-          seedOverlayData();
-        }, 120);
-
-        layersAttachedRef.current = true;
-        setMapReady(true);
-        setStyleFailed(false);
-        bindLayerHover("cc-vessels-symbol", (id, x, y) =>
-          handlersRef.current.onVesselHover(id, x, y),
-        );
-        bindLayerHover("cc-vessels-dot", (id, x, y) =>
-          handlersRef.current.onVesselHover(id, x, y),
-        );
-        bindLayerHover("cc-ports-hit", (id, x, y) =>
-          handlersRef.current.onPortHover(id, x, y),
+        style = await resolveMapFoundationStyle(
+          foundationRef.current,
+          appConfig.mapStyleUrl,
+          themeRef.current,
         );
       } catch (err) {
-        console.error("[CargoConnect map] failed to attach overlay layers", err);
+        console.warn("[CargoConnect map] foundation style failed; falling back to Esri", err);
+        style = resolveMapStyleForTheme(appConfig.mapStyleUrl, themeRef.current);
         setStyleFailed(true);
       }
-      requestAnimationFrame(() => {
-        map.resize();
+
+      if (cancelled || !containerRef.current) return;
+
+      const camera = initialViewRef.current;
+      map = new MapLibreMap({
+        container: containerRef.current,
+        style,
+        center: camera.center,
+        zoom: camera.zoom,
+        minZoom: camera.minZoom ?? INITIAL_MAP_VIEW.minZoom,
+        maxZoom: camera.maxZoom ?? INITIAL_MAP_VIEW.maxZoom,
+        attributionControl: { compact: true },
+        pitch: 0,
+        maxPitch: 0,
+        fadeDuration: 0,
+        renderWorldCopies: true,
+        refreshExpiredTiles: false,
+        maxTileCacheSize: 80,
       });
-    };
 
-    map.on("load", attachOverlayLayers);
-    if (map.loaded()) {
-      attachOverlayLayers();
-    }
+      map.scrollZoom.setWheelZoomRate(1 / 350);
+      map.scrollZoom.setZoomRate(1 / 90);
+      map.dragPan.enable();
+      map.touchZoomRotate.enable();
+      map.doubleClickZoom.enable();
+      map.keyboard.enable();
 
-    map.on("error", (event) => {
-      const message = event.error?.message ?? String(event.error ?? "");
-      console.warn("[CargoConnect map]", message);
-      if (/style|sprites|Failed to fetch|Load failed|NetworkError/i.test(message)) {
-        setStyleFailed(true);
-      }
-    });
+      map.addControl(new NavigationControl({ visualizePitch: false }), "bottom-right");
+      mapRef.current = map;
 
-    const beginInteraction = () => {
-      interactingRef.current = true;
-      // Clear hover once — avoids React work every wheel tick
-      handlersRef.current.onVesselHover(null, 0, 0);
-      handlersRef.current.onPortHover(null, 0, 0);
-    };
+      const bindLayerHover = (
+        layerId: string,
+        onHover: (id: string | null, x: number, y: number) => void,
+      ) => {
+        map!.on("mousemove", layerId, (e: MapLayerMouseEvent) => {
+          if (interactingRef.current || map!.isMoving()) return;
+          map!.getCanvas().style.cursor = "pointer";
+          const id = String(e.features?.[0]?.properties?.id ?? "");
+          if (id) onHover(id, e.point.x, e.point.y);
+        });
+        map!.on("mouseleave", layerId, () => {
+          map!.getCanvas().style.cursor = "";
+          onHover(null, 0, 0);
+        });
+      };
 
-    const reportViewport = (m: MapLibreMap) => {
-      const b = m.getBounds();
-      handlersRef.current.onViewportChange?.({
-        west: b.getWest(),
-        south: b.getSouth(),
-        east: b.getEast(),
-        north: b.getNorth(),
-        zoom: m.getZoom(),
-      });
-    };
+      const seedOverlayData = () => {
+        const portsSource = map!.getSource(PORTS_SOURCE) as GeoJSONSource | undefined;
+        const routesSource = map!.getSource(ROUTES_SOURCE) as GeoJSONSource | undefined;
+        const vesselsSource = map!.getSource(VESSELS_SOURCE) as GeoJSONSource | undefined;
+        const corridorSource = map!.getSource(CORRIDOR_SOURCE) as GeoJSONSource | undefined;
+        portsSource?.setData(
+          portsToGeoJSON(portsRef.current, {
+            originId: originPortIdRef.current ?? undefined,
+            destinationId: destinationPortIdRef.current ?? undefined,
+            candidateIds: candidatePortIdsRef.current,
+            highlightCandidateId: highlightCandidatePortIdRef.current,
+          }),
+        );
+        routesSource?.setData(
+          routesToGeoJSON(searchActiveRef.current ? [] : routesRef.current),
+        );
+        corridorSource?.setData(corridorToGeoJSON(corridorRef.current ?? undefined));
+        vesselsSource?.setData(
+          vesselsToGeoJSON(vesselMotionRef.current, {
+            relevantIds: relevantRef.current,
+            searchActive: searchActiveRef.current,
+          }),
+        );
+      };
 
-    const endInteraction = () => {
-      interactingRef.current = false;
-      reportViewport(map);
-    };
+      const attachOverlayLayers = () => {
+        if (layersAttachedRef.current || !mapRef.current) return;
+        try {
+          registerVesselIcons(map!, themeRef.current);
+          addLayers(map!, themeRef.current);
+          seedOverlayData();
 
-    map.on("movestart", beginInteraction);
-    map.on("zoomstart", beginInteraction);
-    map.on("rotatestart", beginInteraction);
-    map.on("pitchstart", beginInteraction);
-    map.on("moveend", endInteraction);
-    map.on("zoomend", endInteraction);
-    map.on("rotateend", endInteraction);
-    map.on("pitchend", endInteraction);
+          window.setTimeout(() => {
+            if (!mapRef.current) return;
+            seedOverlayData();
+          }, 120);
 
-    // Initial viewport after load
-    map.once("idle", () => reportViewport(map));
-
-    map.on("click", (e) => {
-      const layers = INTERACTIVE_LAYERS.filter((id) => Boolean(map.getLayer(id)));
-      const features = layers.length
-        ? map.queryRenderedFeatures(e.point, { layers })
-        : [];
-      if (!features.length) {
-        handlersRef.current.onMapClick();
-        return;
-      }
-      const feature = features[0];
-      if (feature.layer.id === "cc-vessels-cluster") {
-        const clusterId = feature.properties?.cluster_id;
-        const source = map.getSource(VESSELS_SOURCE) as GeoJSONSource | undefined;
-        if (source && typeof clusterId === "number") {
-          source.getClusterExpansionZoom(clusterId)
-            .then((zoom) => {
-              const coords = (feature.geometry as GeoJSON.Point).coordinates as [
-                number,
-                number,
-              ];
-              map.easeTo({ center: coords, zoom });
-            })
-            .catch(() => undefined);
+          layersAttachedRef.current = true;
+          setMapReady(true);
+          setStyleFailed(false);
+          bindLayerHover("cc-vessels-symbol", (id, x, y) =>
+            handlersRef.current.onVesselHover(id, x, y),
+          );
+          bindLayerHover("cc-vessels-dot", (id, x, y) =>
+            handlersRef.current.onVesselHover(id, x, y),
+          );
+          bindLayerHover("cc-ports-hit", (id, x, y) =>
+            handlersRef.current.onPortHover(id, x, y),
+          );
+        } catch (err) {
+          console.error("[CargoConnect map] failed to attach overlay layers", err);
+          setStyleFailed(true);
         }
+        requestAnimationFrame(() => {
+          map!.resize();
+        });
+      };
+
+      map.on("load", attachOverlayLayers);
+      if (map.loaded()) {
+        attachOverlayLayers();
+      }
+
+      map.on("error", (event) => {
+        const message = event.error?.message ?? String(event.error ?? "");
+        console.warn("[CargoConnect map]", message);
+        if (/style|sprites|Failed to fetch|Load failed|NetworkError/i.test(message)) {
+          setStyleFailed(true);
+        }
+      });
+
+      const beginInteraction = () => {
+        interactingRef.current = true;
+        handlersRef.current.onVesselHover(null, 0, 0);
+        handlersRef.current.onPortHover(null, 0, 0);
+      };
+
+      const reportViewport = (m: MapLibreMap) => {
+        const b = m.getBounds();
+        handlersRef.current.onViewportChange?.({
+          west: b.getWest(),
+          south: b.getSouth(),
+          east: b.getEast(),
+          north: b.getNorth(),
+          zoom: m.getZoom(),
+        });
+      };
+
+      const endInteraction = () => {
+        interactingRef.current = false;
+        reportViewport(map!);
+      };
+
+      map.on("movestart", beginInteraction);
+      map.on("zoomstart", beginInteraction);
+      map.on("rotatestart", beginInteraction);
+      map.on("pitchstart", beginInteraction);
+      map.on("moveend", endInteraction);
+      map.on("zoomend", endInteraction);
+      map.on("rotateend", endInteraction);
+      map.on("pitchend", endInteraction);
+
+      map.once("idle", () => reportViewport(map!));
+
+      map.on("click", (e) => {
+        const layers = INTERACTIVE_LAYERS.filter((id) => Boolean(map!.getLayer(id)));
+        const features = layers.length
+          ? map!.queryRenderedFeatures(e.point, { layers })
+          : [];
+        if (!features.length) {
+          handlersRef.current.onMapClick();
+          return;
+        }
+        const feature = features[0];
+        if (feature.layer.id === "cc-vessels-cluster") {
+          const clusterId = feature.properties?.cluster_id;
+          const source = map!.getSource(VESSELS_SOURCE) as GeoJSONSource | undefined;
+          if (source && typeof clusterId === "number") {
+            source.getClusterExpansionZoom(clusterId)
+              .then((zoom) => {
+                const coords = (feature.geometry as GeoJSON.Point).coordinates as [
+                  number,
+                  number,
+                ];
+                map!.easeTo({ center: coords, zoom });
+              })
+              .catch(() => undefined);
+          }
+          return;
+        }
+        const id = String(feature.properties?.id ?? "");
+        if (!id) return;
+        if (
+          feature.layer.id === "cc-vessels-symbol" ||
+          feature.layer.id === "cc-vessels-dot"
+        ) {
+          handlersRef.current.onVesselClick(id);
+        } else {
+          handlersRef.current.onPortClick(id);
+        }
+      });
+
+      if (cancelled) {
+        map.remove();
+        mapRef.current = null;
         return;
       }
-      const id = String(feature.properties?.id ?? "");
-      if (!id) return;
-      if (
-        feature.layer.id === "cc-vessels-symbol" ||
-        feature.layer.id === "cc-vessels-dot"
-      ) {
-        handlersRef.current.onVesselClick(id);
-      } else {
-        handlersRef.current.onPortClick(id);
-      }
-    });
 
-    const resizeObserver = new ResizeObserver(() => {
-      // Debounce resize during layout thrash
-      map.resize();
-    });
-    resizeObserver.observe(containerRef.current);
-    const onWindowResize = () => map.resize();
-    window.addEventListener("resize", onWindowResize);
+      resizeObserver = new ResizeObserver(() => {
+        map?.resize();
+      });
+      resizeObserver.observe(containerRef.current);
+      window.addEventListener("resize", onWindowResize);
 
-    // Expose for demo diagnostics / visual probes (Render, local).
-    (window as unknown as { __ccMap?: MapLibreMap }).__ccMap = map;
+      (window as unknown as { __ccMap?: MapLibreMap }).__ccMap = map;
+    };
+
+    void boot();
 
     return () => {
-      resizeObserver.disconnect();
+      cancelled = true;
+      resizeObserver?.disconnect();
       window.removeEventListener("resize", onWindowResize);
       layersAttachedRef.current = false;
       delete (window as unknown as { __ccMap?: MapLibreMap }).__ccMap;
-      map.remove();
-      mapRef.current = null;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
       setMapReady(false);
     };
   }, []);

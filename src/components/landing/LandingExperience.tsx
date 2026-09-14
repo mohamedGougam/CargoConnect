@@ -11,11 +11,16 @@ import { PortHoverCard, VesselHoverCard } from "@/components/vessel/VesselHoverC
 import { VesselDetailPanel } from "@/components/vessel/VesselDetailPanel";
 import { DemoOperatorControls } from "@/components/demo/DemoOperatorControls";
 import { VisualThemeToggle } from "@/components/map/VisualThemeToggle";
+import { MapFoundationToggle } from "@/components/map/MapFoundationToggle";
 import {
   RouteSearchProvider,
   useRouteSearch,
 } from "@/context/RouteSearchContext";
 import { VisualThemeProvider, useVisualTheme } from "@/context/VisualThemeContext";
+import {
+  MapFoundationProvider,
+  useMapFoundation,
+} from "@/context/MapFoundationContext";
 import { useMapInteraction } from "@/hooks/useMapInteraction";
 import { useMaritimeData } from "@/hooks/useMaritimeData";
 import { EASTERN_MED_MAP_VIEW } from "@/lib/map/style";
@@ -47,7 +52,9 @@ export function LandingExperience() {
   return (
     <RouteSearchProvider>
       <VisualThemeProvider>
-        <LandingExperienceInner />
+        <MapFoundationProvider>
+          <LandingExperienceInner />
+        </MapFoundationProvider>
       </VisualThemeProvider>
     </RouteSearchProvider>
   );
@@ -107,6 +114,7 @@ function LandingExperienceInner() {
   const [mapChrome, setMapChrome] = useState(createMapChromeUiState);
   const searchChromeVisible = isSearchChromeVisible(mapChrome);
   const { theme } = useVisualTheme();
+  const { foundationId } = useMapFoundation();
 
   const portsById = useMemo(() => {
     const map = new Map(mapPorts.map((p) => [p.id, p]));
@@ -232,7 +240,7 @@ function LandingExperienceInner() {
     >
       {!isLoading && !error ? (
         <MaritimeMap
-          key={theme.id}
+          key={`${foundationId}:${theme.id}`}
           vessels={vessels}
           ports={mapPorts}
           routes={routes}
@@ -246,6 +254,7 @@ function LandingExperienceInner() {
           relevantVesselIds={searchActive ? search.relevantVesselIds : []}
           searchActive={searchActive}
           visualTheme={theme}
+          mapFoundationId={foundationId}
           onVesselHover={onVesselHover}
           onPortHover={onPortHover}
           onVesselClick={selectVessel}
@@ -379,6 +388,7 @@ function LandingExperienceInner() {
 
       {searchChromeVisible ? <DemoOperatorControls variant="map" /> : null}
       {searchChromeVisible ? <VisualThemeToggle /> : null}
+      {searchChromeVisible ? <MapFoundationToggle /> : null}
     </div>
   );
 }
