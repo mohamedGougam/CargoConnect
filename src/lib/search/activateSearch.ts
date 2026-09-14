@@ -33,6 +33,60 @@ export function buildDestinationOptions(
   return options;
 }
 
+/** Rank origin candidates by estimated maritime distance to a fixed destination. */
+export function buildOriginOptions(
+  destination: Port,
+  candidates: PortResolution[],
+  vessels: Vessel[],
+): SmartPortOption[] {
+  const options: SmartPortOption[] = candidates.map((c) => ({
+    port: c.port,
+    estimatedDistanceNm: estimateMaritimeDistanceNm(c.port, destination).distanceNm,
+    aisDestinationVesselCount: countAisDestinationVessels(vessels, c.port),
+    confidence: c.confidence,
+  }));
+  options.sort(
+    (a, b) =>
+      a.estimatedDistanceNm - b.estimatedDistanceNm ||
+      a.port.name.localeCompare(b.port.name),
+  );
+  return options;
+}
+
+/**
+ * When both origin and destination are multi-port countries/regions, pick the
+ * origin–destination pair with the shortest estimated maritime distance.
+ */
+export function pickNearestOriginDestinationPair(
+  originCandidates: PortResolution[],
+  destinationCandidates: PortResolution[],
+): { origin: Port; destination: Port; distanceNm: number } | null {
+  let best: { origin: Port; destination: Port; distanceNm: number } | null =
+    null;
+  for (const originHit of originCandidates) {
+    for (const destHit of destinationCandidates) {
+      const distanceNm = estimateMaritimeDistanceNm(
+        originHit.port,
+        destHit.port,
+      ).distanceNm;
+      if (
+        !best ||
+        distanceNm < best.distanceNm ||
+        (distanceNm === best.distanceNm &&
+          `${originHit.port.name}|${destHit.port.name}` <
+            `${best.origin.name}|${best.destination.name}`)
+      ) {
+        best = {
+          origin: originHit.port,
+          destination: destHit.port,
+          distanceNm,
+        };
+      }
+    }
+  }
+  return best;
+}
+
 export function activateRouteSearch(params: {
   id?: string;
   originalQuery: string;
@@ -45,9 +99,11 @@ export function activateRouteSearch(params: {
   originCandidates?: PortResolution[];
   destinationCandidates?: PortResolution[];
   destinationOptions?: SmartPortOption[];
+  originOptions?: SmartPortOption[];
   requestedDestinationLabel?: string;
   requestedOriginLabel?: string;
   destinationSelectionReason?: RouteSearchState["destinationSelectionReason"];
+  originSelectionReason?: RouteSearchState["originSelectionReason"];
   interpreterUsed?: RouteSearchState["interpreterUsed"];
   interpreterFallbackUsed?: boolean;
   interpreterErrorCode?: string;
@@ -82,9 +138,11 @@ export function activateRouteSearch(params: {
     originCandidates: params.originCandidates,
     destinationCandidates: params.destinationCandidates,
     destinationOptions: params.destinationOptions,
+    originOptions: params.originOptions,
     requestedDestinationLabel: params.requestedDestinationLabel,
     requestedOriginLabel: params.requestedOriginLabel,
     destinationSelectionReason: params.destinationSelectionReason ?? "exact",
+    originSelectionReason: params.originSelectionReason ?? "exact",
     cargo: params.cargo,
     vesselType: params.vesselType,
     corridor,
@@ -142,9 +200,11 @@ export function switchSearchDestination(
     originCandidates: search.originCandidates,
     destinationCandidates: search.destinationCandidates,
     destinationOptions: refreshedOptions,
+    originOptions: search.originOptions,
     requestedDestinationLabel: search.requestedDestinationLabel,
     requestedOriginLabel: search.requestedOriginLabel,
     destinationSelectionReason: "user_selected",
+    originSelectionReason: search.originSelectionReason,
     interpreterUsed: search.interpreterUsed,
     interpreterFallbackUsed: search.interpreterFallbackUsed,
     interpreterErrorCode: search.interpreterErrorCode,

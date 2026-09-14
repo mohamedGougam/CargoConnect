@@ -6,6 +6,7 @@ import {
 } from "@/lib/search/aisDestinationMatch";
 import {
   buildDestinationOptions,
+  buildOriginOptions,
   switchSearchDestination,
 } from "@/lib/search/activateSearch";
 import {
@@ -298,13 +299,53 @@ describe("smart destination auto-selection", () => {
     expect(second).toEqual(first);
   });
 
-  it("Spain → Egypt stays ambiguous (multi source, not auto-picked by nearest)", async () => {
+  it("Spain → Egypt auto-selects nearest origin–destination pair", async () => {
     const result = await runMaritimeRouteSearch({
       query: "Spain to Egypt",
       vessels: [],
       deterministicOnly: true,
     });
-    expect(result.status).toBe("ambiguous");
-    expect(result.originCandidates?.length).toBeGreaterThan(1);
+    expect(result.status).toBe("active");
+    expect(result.origin?.country).toBe("Spain");
+    expect(result.destination?.country).toBe("Egypt");
+    expect(result.originSelectionReason).toBe("shortest_maritime_distance");
+    expect(result.destinationSelectionReason).toBe(
+      "shortest_maritime_distance",
+    );
+    expect(result.originOptions?.length).toBeGreaterThan(1);
+    expect(result.destinationOptions?.length).toBeGreaterThan(1);
+    expect(result.originOptions?.[0]?.port.id).toBe(result.origin?.id);
+  });
+
+  it("Algeria → Singapore auto-selects nearest Algerian origin (no clarification)", async () => {
+    const result = await runMaritimeRouteSearch({
+      query: "Algeria to Singapore",
+      vessels: [],
+      deterministicOnly: true,
+    });
+    expect(result.status).toBe("active");
+    expect(result.origin?.country).toBe("Algeria");
+    expect(result.destination?.name).toMatch(/Singapore/i);
+    expect(result.originSelectionReason).toBe("shortest_maritime_distance");
+    expect(result.originOptions?.[0]?.port.id).toBe(result.origin?.id);
+    expect(result.originOptions?.[0]?.estimatedDistanceNm).toBe(
+      Math.min(...(result.originOptions?.map((o) => o.estimatedDistanceNm) ?? [])),
+    );
+  });
+
+  it("buildOriginOptions ranks nearer Algerian ports ahead of farther ones to Singapore", () => {
+    const ports = getSearchPortIndex();
+    const destination = resolveLocation("Singapore", ports).best!.port;
+    const algeria = resolveLocation("Algeria", ports);
+    const options = buildOriginOptions(destination, algeria.candidates, []);
+    expect(options.length).toBeGreaterThan(1);
+    expect(options[0].estimatedDistanceNm).toBe(
+      Math.min(...options.map((o) => o.estimatedDistanceNm)),
+    );
+    for (let i = 1; i < options.length; i++) {
+      expect(options[i].estimatedDistanceNm).toBeGreaterThanOrEqual(
+        options[i - 1].estimatedDistanceNm,
+      );
+    }
   });
 });

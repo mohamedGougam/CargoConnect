@@ -103,8 +103,12 @@ export interface RouteSearchState {
   requestedOriginLabel?: string;
   /** Ranked destination options when destination was country/region multi-match. */
   destinationOptions?: SmartPortOption[];
+  /** Ranked origin options when origin was country/region multi-match. */
+  originOptions?: SmartPortOption[];
   /** Why the current destination was chosen. */
   destinationSelectionReason?: "shortest_maritime_distance" | "exact" | "user_selected";
+  /** Why the current origin was chosen. */
+  originSelectionReason?: "shortest_maritime_distance" | "exact" | "user_selected";
   createdAt: string;
   updatedAt: string;
 }

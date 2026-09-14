@@ -27,6 +27,8 @@ import {
 import {
   activateRouteSearch,
   buildDestinationOptions,
+  buildOriginOptions,
+  pickNearestOriginDestinationPair,
 } from "./activateSearch";
 
 export interface RunSearchInput {
@@ -200,6 +202,89 @@ export async function runMaritimeRouteSearch(
           requestedDestinationLabel: destRes.queryText || parsed.destinationText,
           requestedOriginLabel: originRes.queryText || parsed.originText,
           destinationSelectionReason: "shortest_maritime_distance",
+          originSelectionReason: "exact",
+          ...interpretMeta,
+          resolutionOutcome: "candidates",
+          now,
+        });
+      }
+    }
+
+    // Exact/auto destination + multiple origin candidates → auto-select nearest origin
+    if (
+      destOutcome === "auto" &&
+      destRes.best &&
+      originOutcome === "candidates" &&
+      originRes.candidates.length > 0
+    ) {
+      const destination = destRes.best.port;
+      const originOptions = buildOriginOptions(
+        destination,
+        originRes.candidates,
+        input.vessels,
+      );
+      const nearest = originOptions[0];
+      if (nearest) {
+        return activateRouteSearch({
+          originalQuery: input.query,
+          parsed,
+          origin: nearest.port,
+          destination,
+          vessels: input.vessels,
+          cargo: parsed.cargo,
+          vesselType: parsed.vesselType,
+          originCandidates: originRes.candidates,
+          destinationCandidates: destRes.candidates,
+          originOptions,
+          requestedDestinationLabel: destRes.queryText || parsed.destinationText,
+          requestedOriginLabel: originRes.queryText || parsed.originText,
+          destinationSelectionReason: "exact",
+          originSelectionReason: "shortest_maritime_distance",
+          ...interpretMeta,
+          resolutionOutcome: "candidates",
+          now,
+        });
+      }
+    }
+
+    // Both sides multi-port → pick nearest origin–destination pair
+    if (
+      originOutcome === "candidates" &&
+      destOutcome === "candidates" &&
+      originRes.candidates.length > 0 &&
+      destRes.candidates.length > 0
+    ) {
+      const pair = pickNearestOriginDestinationPair(
+        originRes.candidates,
+        destRes.candidates,
+      );
+      if (pair) {
+        const destinationOptions = buildDestinationOptions(
+          pair.origin,
+          destRes.candidates,
+          input.vessels,
+        );
+        const originOptions = buildOriginOptions(
+          pair.destination,
+          originRes.candidates,
+          input.vessels,
+        );
+        return activateRouteSearch({
+          originalQuery: input.query,
+          parsed,
+          origin: pair.origin,
+          destination: pair.destination,
+          vessels: input.vessels,
+          cargo: parsed.cargo,
+          vesselType: parsed.vesselType,
+          originCandidates: originRes.candidates,
+          destinationCandidates: destRes.candidates,
+          destinationOptions,
+          originOptions,
+          requestedDestinationLabel: destRes.queryText || parsed.destinationText,
+          requestedOriginLabel: originRes.queryText || parsed.originText,
+          destinationSelectionReason: "shortest_maritime_distance",
+          originSelectionReason: "shortest_maritime_distance",
           ...interpretMeta,
           resolutionOutcome: "candidates",
           now,
@@ -318,6 +403,7 @@ export async function runMaritimeRouteSearch(
     originCandidates: originRes.candidates,
     destinationCandidates: destRes.candidates,
     destinationSelectionReason: "exact",
+    originSelectionReason: "exact",
     requestedOriginLabel: parsed.originText,
     requestedDestinationLabel: parsed.destinationText,
     ...interpretMeta,

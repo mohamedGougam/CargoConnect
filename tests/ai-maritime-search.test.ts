@@ -348,43 +348,37 @@ describe("AI maritime search (mocked OpenAI)", () => {
     expect(result.destination?.name).toMatch(/Alexandria/i);
   });
 
-  it("country Netherlands to Egypt shows country-level candidates", async () => {
+  it("country Netherlands to Egypt auto-selects nearest pair", async () => {
     const result = await runMaritimeRouteSearch({
       query: "Netherlands to Egypt",
       vessels: [],
       deterministicOnly: true,
     });
-    expect(result.status).toBe("ambiguous");
-    expect(
-      result.originCandidates?.every((c) => c.port.country === "Netherlands") ||
-        result.origin?.country === "Netherlands",
-    ).toBe(true);
-    expect(
-      result.destinationCandidates?.every((c) => c.port.country === "Egypt") ||
-        result.destination?.country === "Egypt",
-    ).toBe(true);
+    expect(result.status).toBe("active");
+    expect(result.origin?.country).toBe("Netherlands");
+    expect(result.destination?.country).toBe("Egypt");
+    expect(result.originSelectionReason).toBe("shortest_maritime_distance");
+    expect(result.destinationSelectionReason).toBe(
+      "shortest_maritime_distance",
+    );
   });
 
-  it("Spain to Egypt returns helpful origin candidates", async () => {
+  it("Spain to Egypt auto-selects nearest Spanish origin toward Egypt", async () => {
     const result = await runMaritimeRouteSearch({
       query: "Spain to Egypt",
       vessels: [],
       deterministicOnly: true,
     });
-    expect(result.status).toBe("ambiguous");
+    expect(result.status).toBe("active");
     expect(result.resolutionOutcome).toBe("candidates");
-    const originNames = result.originCandidates?.map((c) => c.port.name) ?? [];
-    const destNames =
-      result.destinationCandidates?.map((c) => c.port.name) ?? [];
-    expect(originNames.every(() => true)).toBe(true);
+    expect(result.origin?.country).toBe("Spain");
+    expect(result.destination?.country).toBe("Egypt");
+    expect(result.originCandidates?.every((c) => c.port.country === "Spain")).toBe(
+      true,
+    );
     expect(
-      result.originCandidates?.every((c) => c.port.country === "Spain"),
+      result.destinationCandidates?.every((c) => c.port.country === "Egypt"),
     ).toBe(true);
-    expect(
-      result.destinationCandidates?.every((c) => c.port.country === "Egypt") ||
-        destNames.length === 0,
-    ).toBe(true);
-    expect(result.uxMessage?.toLowerCase()).not.toContain("could not resolve");
   });
 
   it("vague northern Europe asks clarification", async () => {
