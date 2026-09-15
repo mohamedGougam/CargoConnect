@@ -3,8 +3,8 @@ import type { OverlayTheme } from "@/lib/map/visualThemes";
 import { resolveMapStyleForTheme } from "@/lib/map/style";
 
 /**
- * Map foundation exploration — research + visual proof only.
- * Production default remains current Esri until a foundation is explicitly locked.
+ * Map foundation exploration — research + visual proof.
+ * Default: OFM Premium Maritime proof (OpenFreeMap vector).
  */
 
 export type MapFoundationId =
@@ -27,7 +27,8 @@ export const MAP_FOUNDATION_LABELS: Record<MapFoundationId, string> = {
   "openfreemap-premium-proof": "OFM Premium Maritime proof",
 };
 
-export const DEFAULT_MAP_FOUNDATION_ID: MapFoundationId = "current-esri";
+export const DEFAULT_MAP_FOUNDATION_ID: MapFoundationId =
+  "openfreemap-premium-proof";
 export const MAP_FOUNDATION_STORAGE_KEY = "cc_map_foundation_explorer";
 
 export const OPENFREEMAP_STYLE_DARK =

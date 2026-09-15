@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  DEFAULT_MAP_FOUNDATION_ID,
   MAP_FOUNDATION_IDS,
   MAP_FOUNDATION_META,
   OPENFREEMAP_STYLE_DARK,
@@ -72,7 +73,8 @@ function sampleStyle(): StyleSpecification {
 }
 
 describe("map foundations (research / visual proof)", () => {
-  it("keeps current Esri as non-permanent default foundation", () => {
+  it("defaults to OFM Premium Maritime proof", () => {
+    expect(DEFAULT_MAP_FOUNDATION_ID).toBe("openfreemap-premium-proof");
     expect(MAP_FOUNDATION_META["current-esri"].recurringLicenseCost).toBe(
       "uncertain",
     );
