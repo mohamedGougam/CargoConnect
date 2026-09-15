@@ -271,6 +271,9 @@ function LandingExperienceInner() {
           searchActive={searchActive}
           visualTheme={theme}
           mapFoundationId={foundationId}
+          labelLanguage={
+            searchActive ? search.parsed?.detectedLanguage ?? null : null
+          }
           focusPort={focusPort}
           onVesselHover={onVesselHover}
           onPortHover={onPortHover}

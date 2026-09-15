@@ -27,6 +27,8 @@ import {
 } from "@/lib/map/visualThemes";
 import {
   DEFAULT_MAP_FOUNDATION_ID,
+  basemapLabelTextField,
+  isBasemapPlaceLabelLayerId,
   resolveMapFoundationStyle,
   type MapFoundationId,
 } from "@/lib/map/mapFoundations";
@@ -84,6 +86,11 @@ interface MaritimeMapProps {
   visualTheme?: OverlayTheme;
   /** Visual-only map foundation (research / proof exploration). */
   mapFoundationId?: MapFoundationId;
+  /**
+   * Basemap place-label language from active search (detectedLanguage).
+   * Default / idle = English only (no bilingual native scripts).
+   */
+  labelLanguage?: string | null;
   /** One-shot camera focus on a port (token changes re-trigger). */
   focusPort?: {
     longitude: number;
@@ -118,6 +125,7 @@ export const MaritimeMap = memo(function MaritimeMap({
   onViewportChange,
   visualTheme = THEME_PREMIUM_MARITIME,
   mapFoundationId = DEFAULT_MAP_FOUNDATION_ID,
+  labelLanguage = null,
   focusPort = null,
 }: MaritimeMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -489,6 +497,37 @@ export const MaritimeMap = memo(function MaritimeMap({
       duration: 900,
     });
   }, [focusPort, mapReady]);
+
+  // Basemap place labels: English by default; search language when detected
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady) return;
+    const field = basemapLabelTextField(labelLanguage);
+    const style = map.getStyle();
+    for (const layer of style?.layers ?? []) {
+      if (layer.type !== "symbol") continue;
+      if (!isBasemapPlaceLabelLayerId(layer.id)) continue;
+      if (!map.getLayer(layer.id)) continue;
+      try {
+        const current = map.getLayoutProperty(layer.id, "text-field");
+        const serialized = JSON.stringify(current ?? "");
+        if (
+          !serialized.includes("name") &&
+          !serialized.includes("name:nonlatin") &&
+          !serialized.includes("name:latin")
+        ) {
+          continue;
+        }
+        map.setLayoutProperty(
+          layer.id,
+          "text-field",
+          field as never,
+        );
+      } catch {
+        // Layer may not support text-field — ignore
+      }
+    }
+  }, [labelLanguage, mapReady]);
 
   // Subtle corridor glow pulse — paint only, never setData / never per-frame scoring
   useEffect(() => {

@@ -4,9 +4,12 @@ import {
   MAP_FOUNDATION_META,
   OPENFREEMAP_STYLE_DARK,
   PROTOMAPS_RESEARCH_NOTE,
+  applyBasemapLabelLanguage,
   applyDayViewMaritimeOverrides,
   applyPremiumMaritimeProofOverrides,
+  basemapLabelTextField,
   isVectorFoundation,
+  normalizeBasemapLabelLanguage,
 } from "@/lib/map/mapFoundations";
 import type { StyleSpecification } from "maplibre-gl";
 
@@ -40,7 +43,29 @@ function sampleStyle(): StyleSpecification {
         type: "symbol",
         source: "openmaptiles",
         "source-layer": "place",
+        layout: {
+          "text-field": [
+            "case",
+            ["has", "name:nonlatin"],
+            ["concat", ["get", "name:latin"], "\n", ["get", "name:nonlatin"]],
+            ["coalesce", ["get", "name_en"], ["get", "name"]],
+          ],
+        },
         paint: { "text-opacity": 1 },
+      },
+      {
+        id: "label_country_1",
+        type: "symbol",
+        source: "openmaptiles",
+        "source-layer": "place",
+        layout: {
+          "text-field": [
+            "case",
+            ["has", "name:nonlatin"],
+            ["concat", ["get", "name:latin"], "\n", ["get", "name:nonlatin"]],
+            ["coalesce", ["get", "name_en"], ["get", "name"]],
+          ],
+        },
       },
     ],
   };
@@ -96,6 +121,29 @@ describe("map foundations (research / visual proof)", () => {
     expect(waterPaint["fill-color"]).not.toBe("#071018");
     expect(String(bgPaint["background-color"])).toMatch(/#[0-9a-f]{6}/i);
     expect(day.name).toMatch(/Day View/i);
+  });
+
+  it("strips bilingual nonlatin place labels to English by default", () => {
+    const next = applyBasemapLabelLanguage(sampleStyle(), "en");
+    const country = next.layers?.find((l) => l.id === "label_country_1");
+    const layout = (country?.layout ?? {}) as Record<string, unknown>;
+    const field = JSON.stringify(layout["text-field"] ?? "");
+    expect(field).toContain("name:en");
+    expect(field).toContain("name:latin");
+    expect(field).not.toContain("name:nonlatin");
+    expect(basemapLabelTextField("en")).toEqual(
+      expect.arrayContaining(["coalesce"]),
+    );
+    expect(normalizeBasemapLabelLanguage("ar-EG")).toBe("ar");
+  });
+
+  it("uses search language name field when provided", () => {
+    const next = applyBasemapLabelLanguage(sampleStyle(), "ar");
+    const village = next.layers?.find((l) => l.id === "place_village");
+    const layout = (village?.layout ?? {}) as Record<string, unknown>;
+    const field = JSON.stringify(layout["text-field"] ?? "");
+    expect(field).toContain("name:ar");
+    expect(field).not.toContain("name:nonlatin");
   });
 
   it("exposes explorer foundation ids including baseline", () => {

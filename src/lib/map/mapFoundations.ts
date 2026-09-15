@@ -144,9 +144,95 @@ export function isVectorFoundation(id: MapFoundationId): boolean {
 }
 
 /**
+ * OpenFreeMap / OpenMapTiles place labels often concatenate latin + nonlatin.
+ * Non-Latin (esp. Arabic) can render as detached glyphs in MapLibre.
+ * Default: English only. Optional search language uses name:{lang} when present.
+ */
+export type BasemapLabelExpression = (
+  | string
+  | BasemapLabelExpression
+)[];
+
+export function normalizeBasemapLabelLanguage(
+  language?: string | null,
+): string {
+  const raw = (language ?? "en").trim().toLowerCase();
+  if (!raw) return "en";
+  const primary = raw.split(/[-_]/)[0] ?? "en";
+  if (!/^[a-z]{2,3}$/.test(primary)) return "en";
+  return primary;
+}
+
+export function basemapLabelTextField(
+  language?: string | null,
+): BasemapLabelExpression {
+  const lang = normalizeBasemapLabelLanguage(language);
+  if (lang === "en") {
+    return [
+      "coalesce",
+      ["get", "name:en"],
+      ["get", "name:latin"],
+      ["get", "name_en"],
+      ["get", "name"],
+    ];
+  }
+  return [
+    "coalesce",
+    ["get", `name:${lang}`],
+    ["get", "name:en"],
+    ["get", "name:latin"],
+    ["get", "name_en"],
+    ["get", "name"],
+  ];
+}
+
+function textFieldUsesPlaceName(textField: unknown): boolean {
+  const serialized = JSON.stringify(textField ?? "");
+  return (
+    serialized.includes("name:nonlatin") ||
+    serialized.includes("name:latin") ||
+    serialized.includes("name_en") ||
+    serialized.includes('"name"') ||
+    serialized.includes("name:en")
+  );
+}
+
+export function isBasemapPlaceLabelLayerId(layerId: string): boolean {
+  if (layerId.startsWith("cc-")) return false;
+  return (
+    layerId.startsWith("place_") ||
+    layerId.startsWith("label_") ||
+    layerId.startsWith("water_name") ||
+    layerId.includes("waterway_line_label") ||
+    /(?:^|_)label(?:_|$)/.test(layerId)
+  );
+}
+
+/** Rewrite OFM bilingual place/water labels to a single language (default English). */
+export function applyBasemapLabelLanguage(
+  style: StyleSpecification,
+  language?: string | null,
+): StyleSpecification {
+  const next = style;
+  const field = basemapLabelTextField(language);
+
+  for (const layer of next.layers ?? []) {
+    if (layer.type !== "symbol") continue;
+    if (!isBasemapPlaceLabelLayerId(layer.id)) continue;
+    const layout = (layer.layout ?? {}) as Record<string, unknown>;
+    if (!textFieldUsesPlaceName(layout["text-field"])) continue;
+    layout["text-field"] = field;
+    layer.layout = layout as typeof layer.layout;
+  }
+
+  return next;
+}
+
+/**
  * Resolve basemap style for foundation exploration.
  * Esri path preserves existing theme raster tunes; vector paths ignore Esri tunes
  * unless Day View requests premium blue water paint overrides.
+ * Vector place labels are forced to English (no bilingual native scripts).
  */
 export async function resolveMapFoundationStyle(
   foundationId: MapFoundationId,
@@ -162,12 +248,12 @@ export async function resolveMapFoundationStyle(
       if (wantsDaySea) {
         return buildOpenFreeMapDayViewStyle(OPENFREEMAP_STYLE_DARK);
       }
-      return OPENFREEMAP_STYLE_DARK;
+      return buildOpenFreeMapEnglishLabeledStyle(OPENFREEMAP_STYLE_DARK);
     case "openfreemap-fiord":
       if (wantsDaySea) {
         return buildOpenFreeMapDayViewStyle(OPENFREEMAP_STYLE_FIORD);
       }
-      return OPENFREEMAP_STYLE_FIORD;
+      return buildOpenFreeMapEnglishLabeledStyle(OPENFREEMAP_STYLE_FIORD);
     case "openfreemap-premium-proof":
       if (wantsDaySea) {
         // Liberty land + day maritime water — clearer daytime premium blue sea.
@@ -177,6 +263,18 @@ export async function resolveMapFoundationStyle(
     default:
       return resolveMapStyleForTheme(envStyleUrl, theme);
   }
+}
+
+/** Fetch OFM style and strip bilingual native-script place labels → English. */
+export async function buildOpenFreeMapEnglishLabeledStyle(
+  styleUrl: string,
+): Promise<StyleSpecification> {
+  const res = await fetch(styleUrl);
+  if (!res.ok) {
+    throw new Error(`Failed to load OpenFreeMap style (${res.status})`);
+  }
+  const style = (await res.json()) as StyleSpecification;
+  return applyBasemapLabelLanguage(style, "en");
 }
 
 /** Day View vector proof — premium blue sea on OpenFreeMap tiles. */
@@ -301,7 +399,7 @@ export function applyDayViewMaritimeOverrides(
     }
   }
 
-  return next;
+  return applyBasemapLabelLanguage(next, "en");
 }
 
 /** Client-side Premium Maritime proof on OpenFreeMap Dark vector tiles. */
@@ -421,5 +519,5 @@ export function applyPremiumMaritimeProofOverrides(
     }
   }
 
-  return next;
+  return applyBasemapLabelLanguage(next, "en");
 }
