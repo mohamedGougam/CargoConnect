@@ -6,18 +6,21 @@
 export type VisualThemeId =
   | "premium-maritime"
   | "intelligence-command"
-  | "modern-navigation";
+  | "modern-navigation"
+  | "day-view";
 
 export const VISUAL_THEME_IDS: VisualThemeId[] = [
   "premium-maritime",
   "intelligence-command",
   "modern-navigation",
+  "day-view",
 ];
 
 export const VISUAL_THEME_LABELS: Record<VisualThemeId, string> = {
   "premium-maritime": "Premium Maritime",
   "intelligence-command": "Intelligence Command",
   "modern-navigation": "Modern Navigation",
+  "day-view": "Day View",
 };
 
 /** Raster basemap paint (Esri tiles — free, attribution required). */
@@ -44,6 +47,8 @@ export type OverlayTheme = {
     chromeBorder: string;
     chromeShadow: string;
     vignette: string;
+    /** Soft animated sea-wave overlay opacity (0 = off). */
+    seaWavesOpacity: string;
   };
   corridor: {
     glowColor: string;
@@ -131,6 +136,7 @@ export const THEME_PREMIUM_MARITIME: OverlayTheme = {
     chromeBorder: "rgba(255, 255, 255, 0.11)",
     chromeShadow: "0 10px 32px rgba(0, 0, 0, 0.38)",
     vignette: "rgba(4, 10, 18, 0.32)",
+    seaWavesOpacity: "0",
   },
   corridor: {
     glowColor: "#0f766e",
@@ -218,6 +224,7 @@ export const THEME_INTELLIGENCE_COMMAND: OverlayTheme = {
     chromeBorder: "rgba(34, 211, 238, 0.18)",
     chromeShadow: "0 8px 28px rgba(0, 0, 0, 0.5)",
     vignette: "rgba(0, 0, 0, 0.42)",
+    seaWavesOpacity: "0",
   },
   corridor: {
     glowColor: "#0891b2",
@@ -305,6 +312,7 @@ export const THEME_MODERN_NAVIGATION: OverlayTheme = {
     chromeBorder: "rgba(255, 255, 255, 0.14)",
     chromeShadow: "0 8px 26px rgba(0, 0, 0, 0.28)",
     vignette: "rgba(8, 18, 30, 0.22)",
+    seaWavesOpacity: "0",
   },
   corridor: {
     glowColor: "#14b8a6",
@@ -371,10 +379,102 @@ export const THEME_MODERN_NAVIGATION: OverlayTheme = {
   },
 };
 
+/**
+ * Day View — bright premium maritime blues with soft sea motion.
+ * Explorer option only; does not lock production default.
+ */
+export const THEME_DAY_VIEW: OverlayTheme = {
+  id: "day-view",
+  label: "Day View",
+  basemapAlias: "ocean",
+  raster: {
+    baseSaturation: 0.42,
+    baseContrast: 0.14,
+    baseBrightnessMin: 0.12,
+    baseBrightnessMax: 1,
+    labelsOpacity: 0.78,
+  },
+  css: {
+    background: "#0a4a72",
+    foreground: "#f8fafc",
+    teal: "#0ea5a4",
+    ocean: "#0284c7",
+    glass: "rgba(12, 36, 58, 0.72)",
+    chromeBorder: "rgba(255, 255, 255, 0.16)",
+    chromeShadow: "0 10px 28px rgba(8, 40, 72, 0.28)",
+    vignette: "rgba(20, 80, 130, 0.14)",
+    seaWavesOpacity: "0.32",
+  },
+  corridor: {
+    glowColor: "#0369a1",
+    glowWidth: [7, 10, 14],
+    glowOpacity: 0.2,
+    glowPulseBright: 0.28,
+    glowPulseDim: 0.14,
+    underlayColor: "#0e7490",
+    underlayWidth: [2.8, 3.8, 4.8],
+    underlayOpacity: 0.55,
+    coreColor: "#ecfeff",
+    coreWidth: [1.4, 2, 2.5],
+    coreOpacity: 0.95,
+    dashColor: "#ffffff",
+    dashWidth: [0.85, 1.2],
+    dashOpacity: 0.55,
+  },
+  routes: {
+    glowColor: "#0284c7",
+    lineColor: "#67e8f9",
+  },
+  ports: {
+    originHalo: "#059669",
+    destHalo: "#0369a1",
+    candidateHoverHalo: "#0284c7",
+    candidateHalo: "#64748b",
+    defaultHalo: "#0ea5e9",
+    originCore: "#ecfdf5",
+    destCore: "#e0f2fe",
+    candidateHoverCore: "#bae6fd",
+    candidateCore: "#94a3b8",
+    originStroke: "#047857",
+    destStroke: "#075985",
+    candidateHoverStroke: "#0284c7",
+    candidateStroke: "#475569",
+    labelColor: "rgba(15, 23, 42, 0.88)",
+    labelHalo: "rgba(248, 250, 252, 0.85)",
+    labelMinZoom: 2.9,
+  },
+  clusters: {
+    fill: "#0284c7",
+    stroke: "#0c4a6e",
+    opacity: 0.5,
+    strokeWidth: 1.1,
+    radii: [12, 15, 19],
+    textColor: "#f0f9ff",
+    textSize: 10.5,
+  },
+  vessels: {
+    haloColor: "#0ea5e9",
+    relevantHaloColor: "#d97706",
+    relevantHaloOpacity: 0.34,
+    dotRelevant: "#fbbf24",
+    dotMuted: "#64748b",
+    dotDefault: "#0369a1",
+    strokeRelevant: "#92400e",
+    strokeDefault: "#f8fafc",
+    labelColor: "#0f172a",
+    labelHalo: "rgba(248,250,252,0.9)",
+    labelMinZoom: 5.3,
+    iconScale: 0.9,
+    glowRgba: "rgba(14, 165, 233, 0.16)",
+    outlineWidth: 1.8,
+  },
+};
+
 export const VISUAL_THEMES: Record<VisualThemeId, OverlayTheme> = {
   "premium-maritime": THEME_PREMIUM_MARITIME,
   "intelligence-command": THEME_INTELLIGENCE_COMMAND,
   "modern-navigation": THEME_MODERN_NAVIGATION,
+  "day-view": THEME_DAY_VIEW,
 };
 
 /** Production default until a theme is chosen permanently. */
@@ -400,6 +500,10 @@ export function applyThemeCssVars(
   root.style.setProperty("--cc-chrome-border", theme.css.chromeBorder);
   root.style.setProperty("--cc-chrome-shadow", theme.css.chromeShadow);
   root.style.setProperty("--cc-vignette", theme.css.vignette);
+  root.style.setProperty(
+    "--cc-sea-waves-opacity",
+    theme.css.seaWavesOpacity ?? "0",
+  );
 }
 
 export const VISUAL_THEME_STORAGE_KEY = "cc_visual_theme_explorer";

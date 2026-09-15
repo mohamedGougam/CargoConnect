@@ -4,10 +4,47 @@ import {
   MAP_FOUNDATION_META,
   OPENFREEMAP_STYLE_DARK,
   PROTOMAPS_RESEARCH_NOTE,
+  applyDayViewMaritimeOverrides,
   applyPremiumMaritimeProofOverrides,
   isVectorFoundation,
 } from "@/lib/map/mapFoundations";
 import type { StyleSpecification } from "maplibre-gl";
+
+function sampleStyle(): StyleSpecification {
+  return {
+    version: 8,
+    name: "test",
+    sources: {},
+    layers: [
+      {
+        id: "background",
+        type: "background",
+        paint: { "background-color": "#000" },
+      },
+      {
+        id: "water",
+        type: "fill",
+        source: "openmaptiles",
+        "source-layer": "water",
+        paint: { "fill-color": "#111" },
+      },
+      {
+        id: "highway_minor",
+        type: "line",
+        source: "openmaptiles",
+        "source-layer": "transportation",
+        paint: { "line-opacity": 0.9, "line-color": "#fff" },
+      },
+      {
+        id: "place_village",
+        type: "symbol",
+        source: "openmaptiles",
+        "source-layer": "place",
+        paint: { "text-opacity": 1 },
+      },
+    ],
+  };
+}
 
 describe("map foundations (research / visual proof)", () => {
   it("keeps current Esri as non-permanent default foundation", () => {
@@ -32,41 +69,7 @@ describe("map foundations (research / visual proof)", () => {
   });
 
   it("premium proof mutates OpenFreeMap dark toward navy sea / quiet land", () => {
-    const base: StyleSpecification = {
-      version: 8,
-      name: "test",
-      sources: {},
-      layers: [
-        {
-          id: "background",
-          type: "background",
-          paint: { "background-color": "#000" },
-        },
-        {
-          id: "water",
-          type: "fill",
-          source: "openmaptiles",
-          "source-layer": "water",
-          paint: { "fill-color": "#111" },
-        },
-        {
-          id: "highway_minor",
-          type: "line",
-          source: "openmaptiles",
-          "source-layer": "transportation",
-          paint: { "line-opacity": 0.9, "line-color": "#fff" },
-        },
-        {
-          id: "place_village",
-          type: "symbol",
-          source: "openmaptiles",
-          "source-layer": "place",
-          paint: { "text-opacity": 1 },
-        },
-      ],
-    };
-
-    const proof = applyPremiumMaritimeProofOverrides(base);
+    const proof = applyPremiumMaritimeProofOverrides(sampleStyle());
     const water = proof.layers?.find((l) => l.id === "water");
     const road = proof.layers?.find((l) => l.id === "highway_minor");
     const village = proof.layers?.find((l) => l.id === "place_village");
@@ -78,6 +81,21 @@ describe("map foundations (research / visual proof)", () => {
     expect(roadPaint["line-opacity"]).toBe(0.08);
     expect(villagePaint["text-opacity"]).toBe(0.2);
     expect(village?.minzoom).toBe(8);
+    expect(OPENFREEMAP_STYLE_DARK).toContain("openfreemap");
+    expect(MAP_FOUNDATION_IDS.length).toBeGreaterThan(0);
+  });
+
+  it("day view overrides produce premium blue sea on vector foundations", () => {
+    const day = applyDayViewMaritimeOverrides(sampleStyle());
+    const water = day.layers?.find((l) => l.id === "water");
+    const bg = day.layers?.find((l) => l.id === "background");
+    const waterPaint = (water?.paint ?? {}) as Record<string, unknown>;
+    const bgPaint = (bg?.paint ?? {}) as Record<string, unknown>;
+
+    expect(String(waterPaint["fill-color"])).toMatch(/#[0-9a-f]{6}/i);
+    expect(waterPaint["fill-color"]).not.toBe("#071018");
+    expect(String(bgPaint["background-color"])).toMatch(/#[0-9a-f]{6}/i);
+    expect(day.name).toMatch(/Day View/i);
   });
 
   it("exposes explorer foundation ids including baseline", () => {

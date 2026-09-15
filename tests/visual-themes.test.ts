@@ -7,14 +7,22 @@ import {
 } from "@/lib/map/visualThemes";
 
 describe("visual themes (style-only)", () => {
-  it("resolves all three exploration themes", () => {
-    expect(VISUAL_THEME_IDS).toHaveLength(3);
+  it("resolves all exploration themes including day view", () => {
+    expect(VISUAL_THEME_IDS).toHaveLength(4);
+    expect(VISUAL_THEME_IDS).toContain("day-view");
     for (const id of VISUAL_THEME_IDS) {
       const theme = resolveVisualTheme(id);
       expect(theme.id).toBe(id);
       expect(theme.corridor.coreWidth[0]).toBeLessThan(theme.corridor.glowWidth[0]);
       expect(theme.clusters.radii[0]).toBeLessThanOrEqual(theme.clusters.radii[2]);
     }
+  });
+
+  it("day view uses ocean basemap with wave overlay opacity", () => {
+    const day = resolveVisualTheme("day-view");
+    expect(day.basemapAlias).toBe("ocean");
+    expect(Number(day.css.seaWavesOpacity)).toBeGreaterThan(0);
+    expect(day.raster.baseSaturation).toBeGreaterThan(0);
   });
 
   it("defaults to premium maritime", () => {

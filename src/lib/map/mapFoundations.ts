@@ -145,25 +145,163 @@ export function isVectorFoundation(id: MapFoundationId): boolean {
 
 /**
  * Resolve basemap style for foundation exploration.
- * Esri path preserves existing theme raster tunes; vector paths ignore Esri tunes.
+ * Esri path preserves existing theme raster tunes; vector paths ignore Esri tunes
+ * unless Day View requests premium blue water paint overrides.
  */
 export async function resolveMapFoundationStyle(
   foundationId: MapFoundationId,
   envStyleUrl: string | undefined,
   theme: OverlayTheme,
 ): Promise<string | StyleSpecification> {
+  const wantsDaySea = theme.id === "day-view";
+
   switch (foundationId) {
     case "current-esri":
       return resolveMapStyleForTheme(envStyleUrl, theme);
     case "openfreemap-dark":
+      if (wantsDaySea) {
+        return buildOpenFreeMapDayViewStyle(OPENFREEMAP_STYLE_DARK);
+      }
       return OPENFREEMAP_STYLE_DARK;
     case "openfreemap-fiord":
+      if (wantsDaySea) {
+        return buildOpenFreeMapDayViewStyle(OPENFREEMAP_STYLE_FIORD);
+      }
       return OPENFREEMAP_STYLE_FIORD;
     case "openfreemap-premium-proof":
+      if (wantsDaySea) {
+        // Liberty land + day maritime water — clearer daytime premium blue sea.
+        return buildOpenFreeMapDayViewStyle(OPENFREEMAP_STYLE_LIBERTY);
+      }
       return buildOpenFreeMapPremiumProofStyle();
     default:
       return resolveMapStyleForTheme(envStyleUrl, theme);
   }
+}
+
+/** Day View vector proof — premium blue sea on OpenFreeMap tiles. */
+export async function buildOpenFreeMapDayViewStyle(
+  styleUrl: string = OPENFREEMAP_STYLE_LIBERTY,
+): Promise<StyleSpecification> {
+  const res = await fetch(styleUrl);
+  if (!res.ok) {
+    throw new Error(`Failed to load OpenFreeMap day style (${res.status})`);
+  }
+  const style = (await res.json()) as StyleSpecification;
+  return applyDayViewMaritimeOverrides(style);
+}
+
+/**
+ * Bright maritime day: rich blue water, soft land, restrained roads.
+ * Overlay layers remain CargoConnect-owned.
+ */
+export function applyDayViewMaritimeOverrides(
+  style: StyleSpecification,
+): StyleSpecification {
+  const next = structuredClone(style);
+  next.name = "CargoConnect Day View (OFM)";
+
+  for (const layer of next.layers ?? []) {
+    const id = layer.id;
+    const paint = (layer.paint ?? {}) as Record<string, unknown>;
+    layer.paint = paint as typeof layer.paint;
+
+    if (layer.type === "background") {
+      paint["background-color"] = "#7eb6d9";
+      continue;
+    }
+
+    if (id === "water" || id === "waterway") {
+      if (layer.type === "fill") {
+        paint["fill-color"] = "#1a7bb8";
+        paint["fill-opacity"] = 1;
+      }
+      if (layer.type === "line") {
+        paint["line-color"] = "#156fa8";
+        paint["line-opacity"] = 0.9;
+      }
+      continue;
+    }
+
+    if (id === "water_name" || id.startsWith("water_name")) {
+      paint["text-color"] = "rgba(255, 255, 255, 0.72)";
+      paint["text-halo-color"] = "rgba(12, 74, 110, 0.55)";
+      paint["text-halo-width"] = 1.2;
+      continue;
+    }
+
+    if (id.startsWith("landuse_") || id.startsWith("landcover_")) {
+      if (layer.type === "fill") {
+        paint["fill-opacity"] = 0.55;
+        paint["fill-color"] = "#e8e2d4";
+      }
+      continue;
+    }
+
+    if (id === "landcover" || id === "landuse") {
+      if (layer.type === "fill") {
+        paint["fill-opacity"] = 0.5;
+      }
+      continue;
+    }
+
+    if (id === "building") {
+      if (layer.type === "fill") {
+        paint["fill-opacity"] = 0.35;
+        paint["fill-color"] = "#d4cfc4";
+        paint["fill-outline-color"] = "#c4bfb4";
+      }
+      continue;
+    }
+
+    if (id.startsWith("boundary_")) {
+      if (layer.type === "line") {
+        paint["line-color"] = "rgba(71, 85, 105, 0.35)";
+        paint["line-opacity"] = 0.45;
+        paint["line-width"] = 0.7;
+      }
+      continue;
+    }
+
+    if (
+      id.startsWith("highway_") ||
+      id.startsWith("railway") ||
+      id.startsWith("road_") ||
+      id.startsWith("aeroway")
+    ) {
+      if (layer.type === "line") {
+        paint["line-opacity"] = 0.22;
+      }
+      if (layer.type === "symbol") {
+        paint["icon-opacity"] = 0.15;
+        paint["text-opacity"] = 0.2;
+      }
+      if (layer.type === "fill") {
+        paint["fill-opacity"] = 0.12;
+      }
+      continue;
+    }
+
+    if (id.startsWith("place_")) {
+      if (layer.type === "symbol") {
+        const quiet =
+          id.includes("suburb") ||
+          id.includes("village") ||
+          id.includes("other") ||
+          id.includes("town");
+        paint["text-opacity"] = quiet ? 0.35 : 0.7;
+        paint["text-color"] = "rgba(30, 41, 59, 0.85)";
+        paint["text-halo-color"] = "rgba(255, 255, 255, 0.75)";
+        paint["icon-opacity"] = 0.4;
+        if (quiet && layer.minzoom == null) {
+          layer.minzoom = 7.5;
+        }
+      }
+      continue;
+    }
+  }
+
+  return next;
 }
 
 /** Client-side Premium Maritime proof on OpenFreeMap Dark vector tiles. */

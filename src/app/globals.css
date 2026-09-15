@@ -9,6 +9,7 @@
   --cc-chrome-border: rgba(255, 255, 255, 0.11);
   --cc-chrome-shadow: 0 10px 32px rgba(0, 0, 0, 0.38);
   --cc-vignette: rgba(7, 16, 24, 0.28);
+  --cc-sea-waves-opacity: 0;
 }
 
 @theme inline {
@@ -123,6 +124,93 @@ html.cc-drawer-open .maplibregl-ctrl-bottom-left {
   50%,
   100% {
     opacity: 0;
+  }
+}
+
+/* Day View — soft wave / caustic veil over ocean (map stays interactive below). */
+.cc-sea-waves {
+  opacity: var(--cc-sea-waves-opacity, 0);
+  mix-blend-mode: soft-light;
+  overflow: hidden;
+}
+
+.cc-sea-waves__sheet {
+  position: absolute;
+  inset: -20% -10%;
+  background-repeat: repeat;
+  background-size: 280px 120px;
+  will-change: transform, background-position;
+}
+
+.cc-sea-waves__sheet--a {
+  opacity: 0.55;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='120' viewBox='0 0 280 120'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-opacity='0.35' stroke-width='1.2' d='M0 40 Q35 18 70 40 T140 40 T210 40 T280 40'/%3E%3Cpath fill='none' stroke='%23b8e0f5' stroke-opacity='0.28' stroke-width='1' d='M0 70 Q35 52 70 70 T140 70 T210 70 T280 70'/%3E%3C/svg%3E");
+  animation: cc-sea-drift-a 28s linear infinite;
+}
+
+.cc-sea-waves__sheet--b {
+  opacity: 0.4;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='140' viewBox='0 0 320 140'%3E%3Cpath fill='none' stroke='%23e0f2fe' stroke-opacity='0.3' stroke-width='1.1' d='M0 55 Q40 30 80 55 T160 55 T240 55 T320 55'/%3E%3Cpath fill='none' stroke='%23ffffff' stroke-opacity='0.18' stroke-width='0.9' d='M0 95 Q40 78 80 95 T160 95 T240 95 T320 95'/%3E%3C/svg%3E");
+  background-size: 320px 140px;
+  animation: cc-sea-drift-b 42s linear infinite;
+}
+
+.cc-sea-waves__caustic {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 45% 30% at 20% 40%,
+      rgba(255, 255, 255, 0.14),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 40% 28% at 75% 55%,
+      rgba(186, 230, 253, 0.12),
+      transparent 65%
+    ),
+    radial-gradient(
+      ellipse 35% 22% at 50% 70%,
+      rgba(255, 255, 255, 0.08),
+      transparent 70%
+    );
+  animation: cc-sea-caustic 16s ease-in-out infinite alternate;
+}
+
+@keyframes cc-sea-drift-a {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 280px 40px;
+  }
+}
+
+@keyframes cc-sea-drift-b {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -320px 28px;
+  }
+}
+
+@keyframes cc-sea-caustic {
+  from {
+    opacity: 0.65;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(1.5%, -1%, 0) scale(1.03);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-sea-waves__sheet--a,
+  .cc-sea-waves__sheet--b,
+  .cc-sea-waves__caustic {
+    animation: none;
   }
 }
 

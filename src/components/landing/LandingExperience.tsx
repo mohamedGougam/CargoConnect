@@ -6,6 +6,7 @@ import { AiAssistantBar } from "@/components/ai/AiAssistantBar";
 import { PortDetailPanel } from "@/components/port/PortDetailPanel";
 import { RouteSearchSummary } from "@/components/search/RouteSearchSummary";
 import { MapFullscreenControl } from "@/components/map/MapFullscreenControl";
+import { MapSeaWaveOverlay } from "@/components/map/MapSeaWaveOverlay";
 import { PortHoverCard, VesselHoverCard } from "@/components/vessel/VesselHoverCard";
 import { VesselDetailPanel } from "@/components/vessel/VesselDetailPanel";
 import { DemoOperatorControls } from "@/components/demo/DemoOperatorControls";
@@ -301,6 +302,7 @@ function LandingExperienceInner() {
           background: `radial-gradient(ellipse at center, transparent 55%, var(--cc-vignette, rgba(7,16,24,0.28)) 100%)`,
         }}
       />
+      <MapSeaWaveOverlay active={theme.id === "day-view"} />
 
       <MapFullscreenControl
         fullscreen={mapChrome.mapFullscreen}
