@@ -216,10 +216,15 @@ function resolveCountry(
   ports: Port[],
   countryCode: string,
 ): LocationResolutionResult {
+  const code = countryCode.trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(code)) {
+    return { queryText, candidates: [], ambiguous: true };
+  }
+
   const inCountry = ports.filter(
     (p) =>
-      p.unlocode?.slice(0, 2).toUpperCase() === countryCode ||
-      normalize(p.country) === normalize(countryNameFromCode(countryCode)),
+      p.unlocode?.slice(0, 2).toUpperCase() === code ||
+      normalize(p.country) === normalize(countryNameFromCode(code)),
   );
 
   if (!inCountry.length) {
@@ -254,6 +259,18 @@ function resolveCountry(
     candidates: hits,
     ambiguous: true,
   };
+}
+
+/**
+ * Catalogue lookup by ISO country code (e.g. from OpenAI amplify hints).
+ * Never invents ports — only filters the existing index.
+ */
+export function resolveByCountryCode(
+  queryText: string,
+  ports: Port[],
+  countryCode: string,
+): LocationResolutionResult {
+  return resolveCountry(queryText, ports, countryCode);
 }
 
 function countryNameFromCode(code: string): string {

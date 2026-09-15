@@ -1,6 +1,8 @@
 import type { Vessel } from "@/domain/models";
 import {
   createIdleSearchState,
+  type LocationResolutionResult,
+  type PortResolution,
   type RouteSearchState,
 } from "@/domain/search/types";
 import { logger } from "@/server/ops/logger";
@@ -19,6 +21,11 @@ import {
 import { resolveLocation } from "./resolvePorts";
 import { resolvePlaceIntent } from "./resolvePlaceIntent";
 import {
+  amplifyPlaceAgainstCatalogue,
+  placeNeedsCatalogueAmplify,
+  type AmplifyPlaceResult,
+} from "./catalogueAmplify";
+import {
   ambiguousBothMessage,
   ambiguousNearMessage,
   catalogueNoMatchMessage,
@@ -30,6 +37,8 @@ import {
   buildOriginOptions,
   pickNearestOriginDestinationPair,
 } from "./activateSearch";
+import type { MaritimePlaceIntent } from "@/domain/search/intent";
+import { emptyPlaceIntent } from "./intent/schema";
 
 export interface RunSearchInput {
   query: string;
@@ -38,12 +47,23 @@ export interface RunSearchInput {
   interpreter?: MaritimeIntentInterpreter;
   /** Force skip OpenAI even when enabled (tests). */
   deterministicOnly?: boolean;
+  /**
+   * Injectable catalogue amplify (step 2). Tests pass a stub;
+   * production uses OpenAI → verified catalogue hints.
+   */
+  amplifyPlace?: (input: {
+    place: MaritimePlaceIntent;
+    fallbackLabel?: string;
+    ports: ReturnType<typeof getSearchPortIndex>;
+  }) => Promise<AmplifyPlaceResult>;
 }
 
 /**
- * Orchestrate interpret → resolve ports → corridor → vessel relevance.
- * Hybrid: deterministic fast path when both ports resolve confidently;
- * otherwise OpenAI interpretation (when enabled) then catalogue resolution.
+ * Mission search pipeline:
+ * 1) User prompt (e.g. تونس إلى الصين)
+ * 2) OpenAI understands source + destination geography
+ * 3) Catalogue (+ OpenAI amplify) finds ports on each side
+ * 4) Map the two closest ports by estimated maritime distance
  */
 export async function runMaritimeRouteSearch(
   input: RunSearchInput,
@@ -68,6 +88,18 @@ export async function runMaritimeRouteSearch(
   let interpretLatency = detResult.latencyMs;
   let fallbackUsed = false;
   let interpreterErrorCode: string | undefined;
+  let originPlace: MaritimePlaceIntent = emptyPlaceIntent();
+  let destPlace: MaritimePlaceIntent = emptyPlaceIntent();
+  originPlace = {
+    ...emptyPlaceIntent(),
+    rawText: parsed.originText ?? null,
+    interpretedName: parsed.originText ?? null,
+  };
+  destPlace = {
+    ...emptyPlaceIntent(),
+    rawText: parsed.destinationText ?? null,
+    interpretedName: parsed.destinationText ?? null,
+  };
 
   const deterministicStrong =
     Boolean(parsed.originText && parsed.destinationText) &&
@@ -122,7 +154,70 @@ export async function runMaritimeRouteSearch(
         originOutcome = aiOriginOutcome;
         destOutcome = aiDestOutcome;
         interpreterUsed = aiResult.source === "openai" ? "openai" : "deterministic";
+        if (aiResult.source === "openai") {
+          originPlace = aiResult.intent.origin;
+          destPlace = aiResult.intent.destination;
+        } else {
+          originPlace = {
+            ...emptyPlaceIntent(),
+            rawText: parsed.originText ?? null,
+            interpretedName: parsed.originText ?? null,
+          };
+          destPlace = {
+            ...emptyPlaceIntent(),
+            rawText: parsed.destinationText ?? null,
+            interpretedName: parsed.destinationText ?? null,
+          };
+        }
       }
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Step 3 — OpenAI searches ports on each side (catalogue amplify)
+  // When deterministic lookup found no ports for an understood place, ask
+  // OpenAI for ISO country + seaport names, then verify against the index.
+  // -------------------------------------------------------------------------
+  const canAmplify =
+    !input.deterministicOnly &&
+    (Boolean(input.amplifyPlace) ||
+      Boolean(input.interpreter) ||
+      isOpenAiSearchEnabled());
+  const amplify = input.amplifyPlace ?? amplifyPlaceAgainstCatalogue;
+
+  if (canAmplify && placeNeedsCatalogueAmplify(originRes) && parsed.originText) {
+    const amp = await amplify({
+      place: originPlace,
+      fallbackLabel: parsed.originText,
+      ports,
+    });
+    if (amp.used) {
+      originRes = amp.result;
+      originOutcome = classifyLocationResolution(originRes);
+      interpreterUsed = "openai";
+      interpretLatency += amp.latencyMs;
+    } else if (amp.errorCode && !interpreterErrorCode) {
+      interpreterErrorCode = amp.errorCode;
+    }
+  }
+
+  if (
+    canAmplify &&
+    placeNeedsCatalogueAmplify(destRes) &&
+    parsed.destinationText
+  ) {
+    const amp = await amplify({
+      place: destPlace,
+      fallbackLabel: parsed.destinationText,
+      ports,
+    });
+    if (amp.used) {
+      destRes = amp.result;
+      destOutcome = classifyLocationResolution(destRes);
+      interpreterUsed = "openai";
+      interpretLatency += amp.latencyMs;
+    } else if (amp.errorCode && !interpreterErrorCode) {
+      interpreterErrorCode = amp.errorCode;
     }
   }
 
@@ -168,105 +263,32 @@ export async function runMaritimeRouteSearch(
     };
   }
 
+  // -------------------------------------------------------------------------
+  // Step 4 — once ports are defined on both sides, map the 2 closest ports
+  // -------------------------------------------------------------------------
   if (
     resolutionOutcome !== "auto" ||
     !originRes.best ||
     !destRes.best
   ) {
-    // Exact/auto origin + multiple destination candidates → auto-select nearest
-    if (
-      originOutcome === "auto" &&
-      originRes.best &&
-      destOutcome === "candidates" &&
-      destRes.candidates.length > 0
-    ) {
-      const origin = originRes.best.port;
-      const destinationOptions = buildDestinationOptions(
-        origin,
-        destRes.candidates,
-        input.vessels,
-      );
-      const nearest = destinationOptions[0];
-      if (nearest) {
-        return activateRouteSearch({
-          originalQuery: input.query,
-          parsed,
-          origin,
-          destination: nearest.port,
-          vessels: input.vessels,
-          cargo: parsed.cargo,
-          vesselType: parsed.vesselType,
-          originCandidates: originRes.candidates,
-          destinationCandidates: destRes.candidates,
-          destinationOptions,
-          requestedDestinationLabel: destRes.queryText || parsed.destinationText,
-          requestedOriginLabel: originRes.queryText || parsed.originText,
-          destinationSelectionReason: "shortest_maritime_distance",
-          originSelectionReason: "exact",
-          ...interpretMeta,
-          resolutionOutcome: "candidates",
-          now,
-        });
-      }
-    }
+    const originPorts = portResolutionsForSide(originRes);
+    const destPorts = portResolutionsForSide(destRes);
 
-    // Exact/auto destination + multiple origin candidates → auto-select nearest origin
     if (
-      destOutcome === "auto" &&
-      destRes.best &&
-      originOutcome === "candidates" &&
-      originRes.candidates.length > 0
+      originPorts.length > 0 &&
+      destPorts.length > 0 &&
+      (originPorts.length > 1 || destPorts.length > 1)
     ) {
-      const destination = destRes.best.port;
-      const originOptions = buildOriginOptions(
-        destination,
-        originRes.candidates,
-        input.vessels,
-      );
-      const nearest = originOptions[0];
-      if (nearest) {
-        return activateRouteSearch({
-          originalQuery: input.query,
-          parsed,
-          origin: nearest.port,
-          destination,
-          vessels: input.vessels,
-          cargo: parsed.cargo,
-          vesselType: parsed.vesselType,
-          originCandidates: originRes.candidates,
-          destinationCandidates: destRes.candidates,
-          originOptions,
-          requestedDestinationLabel: destRes.queryText || parsed.destinationText,
-          requestedOriginLabel: originRes.queryText || parsed.originText,
-          destinationSelectionReason: "exact",
-          originSelectionReason: "shortest_maritime_distance",
-          ...interpretMeta,
-          resolutionOutcome: "candidates",
-          now,
-        });
-      }
-    }
-
-    // Both sides multi-port → pick nearest origin–destination pair
-    if (
-      originOutcome === "candidates" &&
-      destOutcome === "candidates" &&
-      originRes.candidates.length > 0 &&
-      destRes.candidates.length > 0
-    ) {
-      const pair = pickNearestOriginDestinationPair(
-        originRes.candidates,
-        destRes.candidates,
-      );
+      const pair = pickNearestOriginDestinationPair(originPorts, destPorts);
       if (pair) {
         const destinationOptions = buildDestinationOptions(
           pair.origin,
-          destRes.candidates,
+          destPorts,
           input.vessels,
         );
         const originOptions = buildOriginOptions(
           pair.destination,
-          originRes.candidates,
+          originPorts,
           input.vessels,
         );
         return activateRouteSearch({
@@ -277,14 +299,24 @@ export async function runMaritimeRouteSearch(
           vessels: input.vessels,
           cargo: parsed.cargo,
           vesselType: parsed.vesselType,
-          originCandidates: originRes.candidates,
-          destinationCandidates: destRes.candidates,
+          originCandidates: originPorts,
+          destinationCandidates: destPorts,
           destinationOptions,
           originOptions,
           requestedDestinationLabel: destRes.queryText || parsed.destinationText,
           requestedOriginLabel: originRes.queryText || parsed.originText,
-          destinationSelectionReason: "shortest_maritime_distance",
-          originSelectionReason: "shortest_maritime_distance",
+          destinationSelectionReason:
+            destPorts.length > 1
+              ? "shortest_maritime_distance"
+              : originOutcome === "auto"
+                ? "exact"
+                : "shortest_maritime_distance",
+          originSelectionReason:
+            originPorts.length > 1
+              ? "shortest_maritime_distance"
+              : destOutcome === "auto"
+                ? "exact"
+                : "shortest_maritime_distance",
           ...interpretMeta,
           resolutionOutcome: "candidates",
           now,
@@ -419,4 +451,13 @@ function scoreOutcome(
   const rank = (o: string) =>
     o === "auto" ? 3 : o === "candidates" ? 2 : 1;
   return rank(origin) + rank(dest);
+}
+
+/** Port set for one side of the mission (candidates, or the single best hit). */
+function portResolutionsForSide(
+  res: LocationResolutionResult,
+): PortResolution[] {
+  if (res.candidates.length > 0) return res.candidates;
+  if (res.best) return [res.best];
+  return [];
 }
