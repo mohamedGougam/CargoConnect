@@ -145,13 +145,18 @@ export function isVectorFoundation(id: MapFoundationId): boolean {
 
 /**
  * OpenFreeMap / OpenMapTiles place labels often concatenate latin + nonlatin.
- * Non-Latin (esp. Arabic) can render as detached glyphs in MapLibre.
- * Default: English only. Optional search language uses name:{lang} when present.
+ * Non-Latin Arabic (and related scripts) render as detached letters in MapLibre
+ * with the available OFM glyph fonts — no reliable cursive shaping.
+ * Default: English only. Other search languages use name:{lang} when present,
+ * except scripts that MapLibre cannot shape into proper words.
  */
 export type BasemapLabelExpression = (
   | string
   | BasemapLabelExpression
 )[];
+
+/** Scripts that MapLibre + OFM fonts typically show as isolated letters, not words. */
+const MAP_UNSHAPED_LABEL_LANGS = new Set(["ar", "fa", "ur", "ps"]);
 
 export function normalizeBasemapLabelLanguage(
   language?: string | null,
@@ -160,6 +165,8 @@ export function normalizeBasemapLabelLanguage(
   if (!raw) return "en";
   const primary = raw.split(/[-_]/)[0] ?? "en";
   if (!/^[a-z]{2,3}$/.test(primary)) return "en";
+  // Keep English on the map — Arabic/Persian/etc. would appear as letter salad
+  if (MAP_UNSHAPED_LABEL_LANGS.has(primary)) return "en";
   return primary;
 }
 

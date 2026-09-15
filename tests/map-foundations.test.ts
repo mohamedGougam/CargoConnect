@@ -134,15 +134,30 @@ describe("map foundations (research / visual proof)", () => {
     expect(basemapLabelTextField("en")).toEqual(
       expect.arrayContaining(["coalesce"]),
     );
-    expect(normalizeBasemapLabelLanguage("ar-EG")).toBe("ar");
+    expect(normalizeBasemapLabelLanguage("ar-EG")).toBe("en");
+    expect(normalizeBasemapLabelLanguage("fr")).toBe("fr");
+    // Arabic map labels stay English — OFM/MapLibre cannot shape joined Arabic words
+    const arField = JSON.stringify(basemapLabelTextField("ar"));
+    expect(arField).toContain("name:en");
+    expect(arField).not.toContain("name:ar");
   });
 
-  it("uses search language name field when provided", () => {
+  it("keeps English map labels for Arabic (MapLibre cannot join letters into words)", () => {
     const next = applyBasemapLabelLanguage(sampleStyle(), "ar");
     const village = next.layers?.find((l) => l.id === "place_village");
     const layout = (village?.layout ?? {}) as Record<string, unknown>;
     const field = JSON.stringify(layout["text-field"] ?? "");
-    expect(field).toContain("name:ar");
+    expect(field).toContain("name:en");
+    expect(field).not.toContain("name:ar");
+    expect(field).not.toContain("name:nonlatin");
+  });
+
+  it("uses search language name field when provided for shaped Latin scripts", () => {
+    const next = applyBasemapLabelLanguage(sampleStyle(), "fr");
+    const village = next.layers?.find((l) => l.id === "place_village");
+    const layout = (village?.layout ?? {}) as Record<string, unknown>;
+    const field = JSON.stringify(layout["text-field"] ?? "");
+    expect(field).toContain("name:fr");
     expect(field).not.toContain("name:nonlatin");
   });
 
