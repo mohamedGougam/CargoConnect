@@ -166,6 +166,32 @@ export async function POST(request: Request) {
         portName: contact.portName,
         email: contact.email,
         sourceUrl: contact.sourceUrl,
+        manual: false,
+      };
+    } else if (
+      patch.recipient &&
+      (patch.recipient.manual === true ||
+        (!patch.recipient.contactId && patch.recipient.email))
+    ) {
+      const email = sanitizeText(patch.recipient.email)?.toLowerCase();
+      const organizationName =
+        sanitizeText(patch.recipient.organizationName) ||
+        "Commercial recipient";
+      if (!email || !isValidRecipientEmail(email)) {
+        return NextResponse.json(
+          { error: "Enter a valid destination recipient email" },
+          { status: 400 },
+        );
+      }
+      const dest = existing.destination;
+      recipient = {
+        organizationName,
+        contactType: patch.recipient.contactType ?? "BROKER",
+        portId: dest?.id ?? "",
+        portName: dest?.name ?? "Destination",
+        email,
+        sourceUrl: "user-provided",
+        manual: true,
       };
     }
 
@@ -227,7 +253,16 @@ export async function POST(request: Request) {
 
     if (body.markReady && !merged.recipient) {
       return NextResponse.json(
-        { error: "Select a commercial recipient before marking ready" },
+        {
+          error:
+            "Select a commercial recipient or enter a destination email before marking ready",
+        },
+        { status: 400 },
+      );
+    }
+    if (body.markReady && merged.recipient && !merged.recipient.email?.trim()) {
+      return NextResponse.json(
+        { error: "Destination recipient email is required before marking ready" },
         { status: 400 },
       );
     }
@@ -256,4 +291,8 @@ function sanitizeText(value?: string): string | undefined {
 function sanitizeMultiline(value?: string): string | undefined {
   if (value == null) return undefined;
   return value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").slice(0, 12000);
+}
+
+function isValidRecipientEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }

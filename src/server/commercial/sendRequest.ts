@@ -131,35 +131,63 @@ export async function sendCommercialRequest(input: {
     return { ok: false, error: validationError, code: "validation", request: existing };
   }
 
-  const contactId = existing.recipient!.contactId;
-  const contact = await repos.contacts.getById(contactId);
-  if (!contact) {
-    return {
-      ok: false,
-      error: "Recipient is not in the approved commercial directory",
-      code: "invalid_recipient",
-      request: existing,
-    };
-  }
-  if (!contact.email?.trim()) {
-    return {
-      ok: false,
-      error: "Selected recipient has no verified email address",
-      code: "missing_recipient_email",
-      request: existing,
-    };
-  }
+  const existingRecipient = existing.recipient!;
+  let recipient: NonNullable<CommercialRequest["recipient"]>;
+  let toEmail: string;
+  let toOrganization: string;
 
-  // Resolve recipient from directory — never trust browser email
-  const recipient = {
-    contactId: contact.id,
-    organizationName: contact.organizationName,
-    contactType: contact.contactType,
-    portId: contact.portId,
-    portName: contact.portName,
-    email: contact.email,
-    sourceUrl: contact.sourceUrl,
-  };
+  if (existingRecipient.contactId && !existingRecipient.manual) {
+    const contact = await repos.contacts.getById(existingRecipient.contactId);
+    if (!contact) {
+      return {
+        ok: false,
+        error: "Recipient is not in the approved commercial directory",
+        code: "invalid_recipient",
+        request: existing,
+      };
+    }
+    if (!contact.email?.trim()) {
+      return {
+        ok: false,
+        error: "Selected recipient has no verified email address",
+        code: "missing_recipient_email",
+        request: existing,
+      };
+    }
+    // Resolve directory recipient from store — never trust browser email
+    recipient = {
+      contactId: contact.id,
+      organizationName: contact.organizationName,
+      contactType: contact.contactType,
+      portId: contact.portId,
+      portName: contact.portName,
+      email: contact.email,
+      sourceUrl: contact.sourceUrl,
+      manual: false,
+    };
+    toEmail = contact.email.trim().toLowerCase();
+    toOrganization = contact.organizationName;
+  } else {
+    const email = existingRecipient.email?.trim().toLowerCase() ?? "";
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return {
+        ok: false,
+        error: "Enter a valid destination recipient email before sending",
+        code: "missing_recipient_email",
+        request: existing,
+      };
+    }
+    toEmail = email;
+    toOrganization =
+      existingRecipient.organizationName.trim() || "Commercial recipient";
+    recipient = {
+      ...existingRecipient,
+      email: toEmail,
+      organizationName: toOrganization,
+      manual: true,
+      sourceUrl: existingRecipient.sourceUrl || "user-provided",
+    };
+  }
 
   const claimed = await repos.requests.claimForSend(input.requestId, input.user.id);
   if (!claimed) {
@@ -187,7 +215,10 @@ export async function sendCommercialRequest(input: {
     commercialRequestId: input.requestId,
     userId: input.user.id,
     eventType: "SEND_STARTED",
-    metadata: { contactId: contact.id },
+    metadata: {
+      contactId: recipient.contactId ?? null,
+      manual: Boolean(recipient.manual),
+    },
   });
 
   // Ensure reply correlation token exists before send
@@ -214,7 +245,7 @@ export async function sendCommercialRequest(input: {
       aiDraft: { ...existing.aiDraft!, subject, body: textDraft },
     },
     requester: input.user,
-    recipientOrganization: contact.organizationName,
+    recipientOrganization: toOrganization,
     repliesCapturedByCargoConnect: Boolean(captureReplyTo),
   });
 
@@ -244,8 +275,8 @@ export async function sendCommercialRequest(input: {
 
   const result = await provider.sendCommercialRequest({
     requestId: input.requestId,
-    toAddress: contact.email,
-    toOrganization: contact.organizationName,
+    toAddress: toEmail,
+    toOrganization,
     subject,
     textBody: bodies.text,
     htmlBody: bodies.html,
@@ -271,7 +302,7 @@ export async function sendCommercialRequest(input: {
       internetMessageId,
       fromAddress: `${from.name} <${from.address}>`,
       replyTo,
-      toAddress: contact.email,
+      toAddress: toEmail,
       subject,
       bodySnapshot: bodies.text,
       htmlSnapshot: bodies.html,
@@ -324,7 +355,7 @@ export async function sendCommercialRequest(input: {
     internetMessageId,
     fromAddress: `${from.name} <${from.address}>`,
     replyTo,
-    toAddress: contact.email,
+    toAddress: toEmail,
     subject,
     bodySnapshot: bodies.text,
     htmlSnapshot: bodies.html,
@@ -341,8 +372,9 @@ export async function sendCommercialRequest(input: {
     metadata: {
       provider: result.provider,
       providerMessageId: result.providerMessageId,
-      toDomain: contact.email.split("@")[1],
+      toDomain: toEmail.split("@")[1],
       inboundCapture: Boolean(captureReplyTo),
+      manual: Boolean(recipient.manual),
     },
   });
 
@@ -353,8 +385,11 @@ function validateReadyRequest(request: CommercialRequest): string | null {
   if (!request.origin?.name || !request.destination?.name) {
     return "Origin and destination are required before sending";
   }
-  if (!request.recipient?.contactId) {
-    return "Select a commercial recipient before sending";
+  if (!request.recipient) {
+    return "Select a commercial recipient or enter a destination email before sending";
+  }
+  if (!request.recipient.email?.trim()) {
+    return "Destination recipient email is required before sending";
   }
   if (!request.aiDraft?.subject?.trim() || !request.aiDraft?.body?.trim()) {
     return "A reviewed subject and message are required before sending";

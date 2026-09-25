@@ -140,13 +140,16 @@ export interface CommercialCargoDetails {
 }
 
 export interface CommercialRecipientSnapshot {
-  contactId: string;
+  /** Present when chosen from the curated commercial directory. */
+  contactId?: string;
   organizationName: string;
   contactType: CommercialContactType;
   portId: string;
   portName: string;
   email?: string;
   sourceUrl: string;
+  /** True when the user entered recipient details manually (not directory). */
+  manual?: boolean;
 }
 
 export interface CommercialAiDraft {

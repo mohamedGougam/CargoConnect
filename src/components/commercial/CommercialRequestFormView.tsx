@@ -70,6 +70,9 @@ export function CommercialRequestFormView({
   const [dangerousGoods, setDangerousGoods] = useState(false);
   const [oversized, setOversized] = useState(false);
   const [recipientId, setRecipientId] = useState("");
+  const [recipientManual, setRecipientManual] = useState(false);
+  const [recipientOrg, setRecipientOrg] = useState("");
+  const [recipientEmail, setRecipientEmail] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
 
@@ -197,10 +200,27 @@ export function CommercialRequestFormView({
             missingEmail?: boolean;
           };
           if (!cancelled) {
-            setContacts(cData.contacts ?? []);
+            const list = cData.contacts ?? [];
+            setContacts(list);
             setSuggestedId(cData.suggested?.id);
-            setRecipientId(cData.suggested?.id ?? "");
             setMissingEmail(Boolean(cData.missingEmail));
+
+            if (req.recipient?.manual || (!req.recipient?.contactId && req.recipient?.email)) {
+              setRecipientManual(true);
+              setRecipientId("");
+              setRecipientOrg(req.recipient.organizationName ?? "");
+              setRecipientEmail(req.recipient.email ?? "");
+            } else if (list.length === 0) {
+              setRecipientManual(true);
+              setRecipientId("");
+              setRecipientOrg(req.recipient?.organizationName ?? "");
+              setRecipientEmail(req.recipient?.email ?? "");
+            } else {
+              setRecipientManual(false);
+              setRecipientId(
+                req.recipient?.contactId ?? cData.suggested?.id ?? "",
+              );
+            }
           }
         }
       } catch (err) {
@@ -222,7 +242,21 @@ export function CommercialRequestFormView({
     [contacts, recipientId],
   );
 
-  function regenerateDraft(nextRecipient?: CommercialContact) {
+  function recipientPayload() {
+    if (!recipientManual && recipientId) {
+      return { contactId: recipientId };
+    }
+    if (recipientEmail.trim()) {
+      return {
+        manual: true as const,
+        organizationName: recipientOrg.trim() || undefined,
+        email: recipientEmail.trim(),
+      };
+    }
+    return undefined;
+  }
+
+  function regenerateDraft(nextRecipient?: CommercialContact | { organizationName?: string }) {
     if (!request) return;
     const draft = generateCommercialMessageDraft({
       type: request.type,
@@ -242,7 +276,11 @@ export function CommercialRequestFormView({
         : request.selectedVessel?.name,
       noVesselPreference,
       additionalNotes,
-      recipientOrganization: (nextRecipient ?? selectedContact)?.organizationName,
+      recipientOrganization:
+        nextRecipient?.organizationName ??
+        (recipientManual
+          ? recipientOrg || undefined
+          : selectedContact?.organizationName),
       dangerousGoods,
       oversizedProjectCargo: oversized,
       handlingRequirements,
@@ -283,7 +321,7 @@ export function CommercialRequestFormView({
             companyName,
             contactEmail,
             contactPhone,
-            recipient: recipientId ? { contactId: recipientId } : undefined,
+            recipient: recipientPayload(),
             aiDraft: {
               subject,
               body,
@@ -368,7 +406,7 @@ export function CommercialRequestFormView({
             companyName,
             contactEmail,
             contactPhone,
-            recipient: recipientId ? { contactId: recipientId } : undefined,
+            recipient: recipientPayload(),
             aiDraft: {
               subject,
               body,
@@ -642,20 +680,22 @@ export function CommercialRequestFormView({
 
         <CommercialSection title="Recipient">
           <p className="mb-3 text-xs text-slate-400">
-            Suggested from destination port commercial directory. You choose
-            who the request is prepared for — nothing is sent automatically.
+            Suggested from destination port commercial directory, or enter a
+            destination email manually. You choose who the request is prepared
+            for — nothing is sent automatically.
           </p>
           {contacts.length === 0 ? (
-            <p className="text-sm text-amber-100/80">
-              No curated contacts for this destination yet.
+            <p className="mb-3 text-sm text-amber-100/80">
+              No curated contacts for this destination yet. Enter the
+              destination broker or agent below.
             </p>
           ) : (
-            <div className="space-y-2">
+            <div className="mb-3 space-y-2">
               {contacts.map((c) => (
                 <label
                   key={c.id}
                   className={`flex cursor-pointer gap-3 rounded-xl border px-3 py-3 transition ${
-                    recipientId === c.id
+                    !recipientManual && recipientId === c.id
                       ? "border-teal-300/35 bg-teal-400/10"
                       : "border-white/10 bg-black/20 hover:border-white/20"
                   }`}
@@ -663,8 +703,9 @@ export function CommercialRequestFormView({
                   <input
                     type="radio"
                     name="recipient"
-                    checked={recipientId === c.id}
+                    checked={!recipientManual && recipientId === c.id}
                     onChange={() => {
+                      setRecipientManual(false);
                       setRecipientId(c.id);
                       regenerateDraft(c);
                     }}
@@ -696,12 +737,70 @@ export function CommercialRequestFormView({
                   </span>
                 </label>
               ))}
+              <label
+                className={`flex cursor-pointer gap-3 rounded-xl border px-3 py-3 transition ${
+                  recipientManual
+                    ? "border-teal-300/35 bg-teal-400/10"
+                    : "border-white/10 bg-black/20 hover:border-white/20"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="recipient"
+                  checked={recipientManual}
+                  onChange={() => {
+                    setRecipientManual(true);
+                    setRecipientId("");
+                    regenerateDraft({ organizationName: recipientOrg });
+                  }}
+                  className="mt-1"
+                />
+                <span className="text-sm font-medium text-white">
+                  Enter destination recipient manually
+                </span>
+              </label>
             </div>
           )}
-          {missingEmail ? (
+
+          {(recipientManual || contacts.length === 0) && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Labeled label="Destination organization">
+                <input
+                  className={inputClass}
+                  value={recipientOrg}
+                  onChange={(e) => {
+                    setRecipientManual(true);
+                    setRecipientId("");
+                    setRecipientOrg(e.target.value);
+                  }}
+                  onBlur={() =>
+                    regenerateDraft({ organizationName: recipientOrg })
+                  }
+                  placeholder="Broker / agent company"
+                  autoComplete="organization"
+                />
+              </Labeled>
+              <Labeled label="Destination email">
+                <input
+                  type="email"
+                  className={inputClass}
+                  value={recipientEmail}
+                  onChange={(e) => {
+                    setRecipientManual(true);
+                    setRecipientId("");
+                    setRecipientEmail(e.target.value);
+                  }}
+                  placeholder="quotes@example.com"
+                  autoComplete="email"
+                  required={contacts.length === 0}
+                />
+              </Labeled>
+            </div>
+          )}
+          {missingEmail && !recipientManual && contacts.length > 0 ? (
             <p className="mt-3 text-[11px] text-amber-100/70">
-              No verified email for this destination — you can still prepare the
-              draft.
+              No verified email for this destination — enter a recipient
+              manually, or prepare the draft for later.
             </p>
           ) : null}
         </CommercialSection>
@@ -826,10 +925,21 @@ export function CommercialRequestFormView({
           <div className="mb-4 rounded-xl border border-amber-300/30 bg-amber-950/40 px-4 py-4 text-sm text-amber-50">
             <p className="font-medium">Send request to:</p>
             <p className="mt-1">
-              {selectedContact?.organizationName ?? request.recipient?.organizationName}
+              {recipientManual
+                ? recipientOrg ||
+                  request.recipient?.organizationName ||
+                  "Commercial recipient"
+                : (selectedContact?.organizationName ??
+                  request.recipient?.organizationName)}
             </p>
             <p className="text-xs text-amber-100/75">
-              {selectedContact?.email ?? request.recipient?.email ?? "No email"}
+              {recipientManual
+                ? recipientEmail ||
+                  request.recipient?.email ||
+                  "No email"
+                : (selectedContact?.email ??
+                  request.recipient?.email ??
+                  "No email")}
             </p>
             <div className="mt-3 flex gap-2">
               <button
