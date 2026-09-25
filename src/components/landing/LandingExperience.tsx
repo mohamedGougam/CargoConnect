@@ -12,6 +12,7 @@ import { VesselDetailPanel } from "@/components/vessel/VesselDetailPanel";
 import { DemoOperatorControls } from "@/components/demo/DemoOperatorControls";
 import { VisualThemeToggle } from "@/components/map/VisualThemeToggle";
 import { MapFoundationToggle } from "@/components/map/MapFoundationToggle";
+import { AppearanceToggle } from "@/components/ui/AppearanceToggle";
 import {
   RouteSearchProvider,
   useRouteSearch,
@@ -423,6 +424,11 @@ function LandingExperienceInner() {
       />
 
       {searchChromeVisible ? <DemoOperatorControls variant="map" /> : null}
+      {searchChromeVisible ? (
+        <div className="pointer-events-auto absolute bottom-4 left-4 z-30">
+          <AppearanceToggle />
+        </div>
+      ) : null}
       {searchChromeVisible ? <VisualThemeToggle /> : null}
       {searchChromeVisible ? <MapFoundationToggle /> : null}
     </div>

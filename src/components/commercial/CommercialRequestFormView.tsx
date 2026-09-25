@@ -13,8 +13,7 @@ import { loadPendingIntentLocal } from "@/lib/commercial/intent";
 import { formatVesselType } from "@/lib/format";
 import { CommercialSection, CommercialShell } from "@/components/commercial/CommercialShell";
 
-const inputClass =
-  "w-full rounded-xl border border-white/12 bg-black/25 px-3 py-2.5 text-sm text-white outline-none focus:border-teal-300/40";
+const inputClass = "cc-input";
 
 export function CommercialRequestFormView({
   type,
@@ -966,7 +965,7 @@ export function CommercialRequestFormView({
           <button
             type="submit"
             disabled={saving || sending || Boolean(sendResult)}
-            className="rounded-full border border-white/15 px-4 py-2 text-sm text-slate-200 hover:border-white/30 disabled:opacity-50"
+            className="cc-btn-secondary disabled:opacity-50"
           >
             {saving ? "Saving…" : "Save draft"}
           </button>
@@ -974,7 +973,7 @@ export function CommercialRequestFormView({
             type="button"
             disabled={saving || sending || Boolean(sendResult)}
             onClick={(e) => void onSubmit(e as unknown as FormEvent, true)}
-            className="rounded-full bg-teal-400/90 px-5 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-300 disabled:opacity-50"
+            className="cc-btn-primary disabled:opacity-50"
           >
             {type === "QUOTE" ? "Mark quote ready" : "Request Reservation"}
           </button>
@@ -988,13 +987,20 @@ export function CommercialRequestFormView({
                 !ready)
             }
             onClick={() => setConfirmSend(true)}
-            className="rounded-full border border-teal-300/40 bg-teal-400/15 px-4 py-2 text-sm font-medium text-teal-100 hover:bg-teal-400/25 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-full border px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40"
+            style={{
+              borderColor:
+                "color-mix(in srgb, var(--cc-teal, #5eead4) 40%, transparent)",
+              background: "var(--cc-accent-soft, rgba(45,212,191,0.15))",
+              color: "var(--cc-section-label, #5eead4)",
+            }}
           >
             {demoMode ? "Simulate Request" : "Send Request"}
           </button>
           <Link
             href="/commercial/requests"
-            className="text-xs text-slate-400 underline hover:text-slate-200"
+            className="text-xs underline"
+            style={{ color: "var(--cc-muted, #94a3b8)" }}
           >
             My requests
           </Link>
@@ -1013,7 +1019,10 @@ function Labeled({
 }) {
   return (
     <label className="mb-3 block">
-      <span className="mb-1.5 block text-[11px] font-medium tracking-wide text-slate-500 uppercase">
+      <span
+        className="mb-1.5 block text-[11px] font-medium tracking-wide uppercase"
+        style={{ color: "var(--cc-muted-soft, #64748b)" }}
+      >
         {label}
       </span>
       {children}

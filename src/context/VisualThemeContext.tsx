@@ -18,6 +18,12 @@ import {
   type OverlayTheme,
   type VisualThemeId,
 } from "@/lib/map/visualThemes";
+import {
+  applyUiAppearance,
+  appearanceForMapTheme,
+  notifyAppearanceChange,
+  UI_APPEARANCE_STORAGE_KEY,
+} from "@/lib/ui/appearance";
 
 type VisualThemeContextValue = {
   themeId: VisualThemeId;
@@ -79,6 +85,15 @@ export function VisualThemeProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
+    // Keep commercial UI appearance coherent with Day View map choice
+    const appearance = appearanceForMapTheme(id);
+    try {
+      window.localStorage.setItem(UI_APPEARANCE_STORAGE_KEY, appearance);
+    } catch {
+      /* ignore */
+    }
+    applyUiAppearance(document.documentElement, appearance);
+    notifyAppearanceChange(appearance);
   }, []);
 
   const value = useMemo(

@@ -1,4 +1,5 @@
 import { AuthForm } from "@/components/auth/AuthForm";
+import { AppearanceToggle } from "@/components/ui/AppearanceToggle";
 
 export default async function AuthPage({
   searchParams,
@@ -10,7 +11,17 @@ export default async function AuthPage({
   const mode = params.mode === "login" ? "login" : "signup";
 
   return (
-    <main className="min-h-dvh overflow-y-auto bg-[radial-gradient(ellipse_at_top,#122033_0%,#071018_55%)] px-4 py-12">
+    <main
+      className="min-h-dvh overflow-y-auto px-4 py-12"
+      style={{
+        background:
+          "radial-gradient(ellipse at top, var(--cc-page-glow, #122033) 0%, var(--cc-page, #071018) 55%)",
+        color: "var(--cc-page-fg, #e8eef5)",
+      }}
+    >
+      <div className="mb-4 flex justify-end">
+        <AppearanceToggle />
+      </div>
       <AuthForm initialMode={mode} nextPath={nextPath} />
     </main>
   );

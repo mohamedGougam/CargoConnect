@@ -38,23 +38,32 @@ export function MyRequestsView() {
       title="My Requests"
       subtitle="Quote and reservation requests you prepared in CargoConnect."
     >
-      {loading ? <p className="text-sm text-slate-400">Loading…</p> : null}
+      {loading ? (
+        <p className="text-sm" style={{ color: "var(--cc-muted)" }}>
+          Loading…
+        </p>
+      ) : null}
       {error ? (
         <p className="rounded-xl border border-rose-400/25 bg-rose-950/40 px-4 py-3 text-sm text-rose-100">
           {error}
         </p>
       ) : null}
       {!loading && !error && rows.length === 0 ? (
-        <div className="rounded-xl border border-white/8 bg-black/20 px-4 py-6">
-          <p className="text-sm text-slate-300">No commercial requests yet.</p>
-          <p className="mt-1 text-xs text-slate-500">
+        <div
+          className="rounded-xl border px-4 py-6"
+          style={{
+            borderColor: "var(--cc-panel-border)",
+            background: "var(--cc-panel)",
+          }}
+        >
+          <p className="text-sm" style={{ color: "var(--cc-page-fg)" }}>
+            No commercial requests yet.
+          </p>
+          <p className="mt-1 text-xs" style={{ color: "var(--cc-muted)" }}>
             Start from the map with a route search, then request an up-to-date
             quote.
           </p>
-          <Link
-            href="/"
-            className="mt-4 inline-flex rounded-full border border-teal-300/30 px-3 py-1.5 text-xs text-teal-100"
-          >
+          <Link href="/" className="cc-nav-chip cc-nav-chip--accent mt-4">
             Open map
           </Link>
         </div>
@@ -64,24 +73,45 @@ export function MyRequestsView() {
           <Link
             key={row.id}
             href={`/commercial/requests/${row.id}`}
-            className="block rounded-xl border border-white/10 bg-[rgba(12,20,32,0.65)] px-4 py-3 transition hover:border-teal-300/30"
+            className="block rounded-xl border px-4 py-3 transition hover:border-[color:var(--cc-teal)]"
+            style={{
+              borderColor: "var(--cc-panel-border)",
+              background: "var(--cc-panel)",
+            }}
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-medium text-white">
+              <p
+                className="text-sm font-medium"
+                style={{ color: "var(--cc-title)" }}
+              >
                 {row.origin ?? "—"} → {row.destination ?? "—"}
               </p>
               <div className="flex items-center gap-2">
                 {row.status === "RESPONSE_RECEIVED" ? (
-                  <span className="rounded-full border border-teal-300/30 bg-teal-400/10 px-2 py-0.5 text-[10px] text-teal-100">
+                  <span
+                    className="rounded-full border px-2 py-0.5 text-[10px]"
+                    style={{
+                      borderColor:
+                        "color-mix(in srgb, var(--cc-teal) 35%, transparent)",
+                      background: "var(--cc-accent-soft)",
+                      color: "var(--cc-section-label)",
+                    }}
+                  >
                     New response
                   </span>
                 ) : null}
-                <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] tracking-wide text-slate-300 uppercase">
+                <span
+                  className="rounded-full border px-2 py-0.5 text-[10px] tracking-wide uppercase"
+                  style={{
+                    borderColor: "var(--cc-panel-border)",
+                    color: "var(--cc-nav-fg)",
+                  }}
+                >
                   {row.status}
                 </span>
               </div>
             </div>
-            <p className="mt-1 text-[11px] text-slate-500">
+            <p className="mt-1 text-[11px]" style={{ color: "var(--cc-muted)" }}>
               {row.type} · {row.recipient ?? "No recipient"} ·{" "}
               {new Date(row.createdAt).toLocaleString()}
             </p>

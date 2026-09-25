@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Manrope } from "next/font/google";
+import { UiAppearanceProvider } from "@/context/UiAppearanceContext";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -23,9 +24,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`${manrope.variable} ${fraunces.variable} h-full antialiased`}
+      data-cc-ui="night"
     >
-      <body className="h-full overflow-y-auto bg-[#071018] font-sans text-slate-100">
-        {children}
+      <body
+        className="h-full overflow-y-auto font-sans"
+        style={{
+          backgroundColor: "var(--cc-page, #071018)",
+          color: "var(--cc-page-fg, #e8eef5)",
+        }}
+      >
+        <UiAppearanceProvider>{children}</UiAppearanceProvider>
       </body>
     </html>
   );

@@ -95,27 +95,43 @@ export function AuthForm({
         <div className="mb-6 text-center">
           <Link
             href="/"
-            className="font-[family-name:var(--font-fraunces)] text-lg text-white/90"
+            className="font-[family-name:var(--font-fraunces)] text-lg"
+            style={{ color: "var(--cc-title, #fff)" }}
           >
             CargoConnect
           </Link>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-[rgba(10,18,28,0.88)] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
-          <h1 className="font-[family-name:var(--font-fraunces)] text-2xl text-white">
+        <div
+          className="rounded-2xl border p-6 shadow-[var(--cc-chrome-shadow,0_20px_60px_rgba(0,0,0,0.35))]"
+          style={{
+            borderColor: "var(--cc-panel-border, rgba(255,255,255,0.1))",
+            background: "var(--cc-panel, rgba(10,18,28,0.88))",
+          }}
+        >
+          <h1
+            className="font-[family-name:var(--font-fraunces)] text-2xl"
+            style={{ color: "var(--cc-title, #fff)" }}
+          >
             Verify your email
           </h1>
-          <p className="mt-3 text-sm leading-relaxed text-slate-300">
+          <p
+            className="mt-3 text-sm leading-relaxed"
+            style={{ color: "var(--cc-muted, #94a3b8)" }}
+          >
             Account created. We sent a verification link to{" "}
-            <span className="text-white">{email}</span>.
+            <span style={{ color: "var(--cc-title, #fff)" }}>{email}</span>.
           </p>
-          <p className="mt-2 text-xs text-slate-500">
+          <p
+            className="mt-2 text-xs"
+            style={{ color: "var(--cc-muted-soft, #64748b)" }}
+          >
             You can explore the platform now. Live commercial sending unlocks after
             you verify.
           </p>
           <button
             type="button"
             onClick={() => router.replace(nextPath)}
-            className="mt-6 w-full rounded-full bg-teal-400/90 py-2.5 text-sm font-semibold text-slate-950"
+            className="cc-btn-primary mt-6 w-full py-2.5"
           >
             Continue
           </button>
@@ -129,11 +145,15 @@ export function AuthForm({
       <div className="mb-6 text-center">
         <Link
           href="/"
-          className="font-[family-name:var(--font-fraunces)] text-lg text-white/90"
+          className="font-[family-name:var(--font-fraunces)] text-lg"
+          style={{ color: "var(--cc-title, #fff)" }}
         >
           CargoConnect
         </Link>
-        <p className="mt-2 text-sm text-slate-400">
+        <p
+          className="mt-2 text-sm"
+          style={{ color: "var(--cc-muted, #94a3b8)" }}
+        >
           {mode === "signup"
             ? "Create an account to continue your commercial request"
             : "Log in to continue your commercial request"}
@@ -142,17 +162,30 @@ export function AuthForm({
 
       <form
         onSubmit={onSubmit}
-        className="rounded-2xl border border-white/10 bg-[rgba(10,18,28,0.88)] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-md"
+        className="rounded-2xl border p-6 shadow-[var(--cc-chrome-shadow,0_20px_60px_rgba(0,0,0,0.35))] backdrop-blur-md"
+        style={{
+          borderColor: "var(--cc-panel-border, rgba(255,255,255,0.1))",
+          background: "var(--cc-panel, rgba(10,18,28,0.88))",
+        }}
       >
-        <div className="mb-5 flex rounded-full border border-white/10 bg-black/20 p-1">
+        <div
+          className="mb-5 flex rounded-full border p-1"
+          style={{
+            borderColor: "var(--cc-panel-border, rgba(255,255,255,0.1))",
+            background: "var(--cc-input-bg, rgba(0,0,0,0.2))",
+          }}
+        >
           <button
             type="button"
             onClick={() => setMode("signup")}
             className={`flex-1 rounded-full py-1.5 text-xs font-medium transition ${
-              mode === "signup"
-                ? "bg-teal-400/90 text-slate-950"
-                : "text-slate-300 hover:text-white"
+              mode === "signup" ? "cc-btn-primary" : ""
             }`}
+            style={
+              mode === "signup"
+                ? undefined
+                : { color: "var(--cc-nav-fg, #cbd5e1)" }
+            }
           >
             Sign up
           </button>
@@ -160,10 +193,13 @@ export function AuthForm({
             type="button"
             onClick={() => setMode("login")}
             className={`flex-1 rounded-full py-1.5 text-xs font-medium transition ${
-              mode === "login"
-                ? "bg-teal-400/90 text-slate-950"
-                : "text-slate-300 hover:text-white"
+              mode === "login" ? "cc-btn-primary" : ""
             }`}
+            style={
+              mode === "login"
+                ? undefined
+                : { color: "var(--cc-nav-fg, #cbd5e1)" }
+            }
           >
             Log in
           </button>
@@ -234,7 +270,7 @@ export function AuthForm({
         <button
           type="submit"
           disabled={busy}
-          className="mt-1 w-full rounded-full bg-teal-400/90 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-teal-300 disabled:opacity-50"
+          className="cc-btn-primary mt-1 w-full py-2.5 disabled:opacity-50"
         >
           {busy ? "Please wait…" : mode === "signup" ? "Create account" : "Log in"}
         </button>
@@ -258,7 +294,10 @@ function Field({
 }) {
   return (
     <label className="mb-3.5 block">
-      <span className="mb-1.5 block text-[11px] font-medium tracking-wide text-slate-400 uppercase">
+      <span
+        className="mb-1.5 block text-[11px] font-medium tracking-wide uppercase"
+        style={{ color: "var(--cc-muted, #94a3b8)" }}
+      >
         {label}
         {required ? " *" : ""}
       </span>
@@ -267,5 +306,4 @@ function Field({
   );
 }
 
-const inputClass =
-  "w-full rounded-xl border border-white/12 bg-black/25 px-3 py-2.5 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-teal-300/40";
+const inputClass = "cc-input";
